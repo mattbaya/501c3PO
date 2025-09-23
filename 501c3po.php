@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: Membership Management System
-Description: Complete membership management system with modular features for organizations
+Plugin Name: 501c3PO
+Description: The nonprofit droid you're looking for - Complete management system for nonprofit organizations
 Version: 2.0.0
 Author: Your Organization
 License: GPL v2 or later

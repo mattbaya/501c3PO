@@ -1,6 +1,6 @@
-# WordPress Membership Management System
+# 501c3PO - The Nonprofit Droid You're Looking For
 
-A comprehensive WordPress plugin for managing organizational memberships with modular features.
+A comprehensive WordPress plugin for managing nonprofit organizations with modular features. May the force be with your fundraising!
 
 ## Features
 

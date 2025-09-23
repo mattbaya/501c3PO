@@ -1,6 +1,6 @@
-=== Membership Management System ===
+=== 501c3PO ===
 Contributors: yourname
-Tags: membership, members, organization, management, events
+Tags: nonprofit, charity, 501c3, membership, donations, volunteers, fundraising
 Requires at least: 5.0
 Tested up to: 6.4
 Stable tag: 2.0.0
@@ -8,7 +8,7 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Complete membership management system with modular features for organizations.
+The nonprofit droid you're looking for - Complete management system for 501(c)(3) organizations.
 
 == Description ==
 
