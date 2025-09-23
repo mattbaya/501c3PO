@@ -1,14 +1,25 @@
 <?php
 /*
 Plugin Name: 501c3PO
+Plugin URI: https://github.com/mattbaya/501c3PO
 Description: The nonprofit droid you're looking for - Complete management system for nonprofit organizations
 Version: 2.0.0
 Author: Your Organization
 License: GPL v2 or later
+Update URI: https://github.com/mattbaya/501c3PO
 */
 
 // Prevent direct access
 defined('ABSPATH') or die('No script kiddies please!');
+
+// Enable automatic updates from GitHub
+require_once plugin_dir_path(__FILE__) . 'includes/class-update-checker.php';
+new FiveOhOnecThreePO_Update_Checker(__FILE__);
+
+// Load WP-CLI commands if available
+if (defined('WP_CLI') && WP_CLI) {
+    require_once plugin_dir_path(__FILE__) . 'includes/class-cli-commands.php';
+}
 
 // Plugin activation hooks
 register_activation_hook(__FILE__, 'mm_create_dashboard_setup');

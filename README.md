@@ -23,10 +23,37 @@ Each feature can be enabled/disabled via the Settings dashboard:
 
 ## Installation
 
-1. Upload the plugin folder to `/wp-content/plugins/`
-2. Activate the plugin through the WordPress admin panel
-3. Configure your organization settings under Membership > Settings
-4. Set up your dashboard password for member access
+### Via Git (Recommended for easy updates)
+```bash
+cd wp-content/plugins
+git clone https://github.com/mattbaya/501c3PO.git
+```
+
+### Traditional WordPress Installation
+1. Download the plugin ZIP file
+2. Upload via WordPress admin panel (Plugins > Add New > Upload)
+
+## Updating
+
+### Method 1: Automatic WordPress Updates
+The plugin checks for updates from GitHub and integrates with WordPress's update system. You'll see update notifications in your WordPress admin panel.
+
+### Method 2: WP-CLI Command
+```bash
+wp 501c3po update
+```
+
+### Method 3: Git Command
+```bash
+cd wp-content/plugins/501c3PO
+git pull origin main
+```
+
+### Method 4: Update Script
+```bash
+cd wp-content/plugins/501c3PO
+./update.sh
+```
 
 ## Configuration
 
