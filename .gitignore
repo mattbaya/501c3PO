@@ -1,0 +1,103 @@
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/backup-db/
+wp-content/backups/
+wp-content/blogs.dir/
+wp-content/cache/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+
+# Environment and config files
+.env
+.env.*
+*.env
+config.php
+*-config.php
+
+# API Keys and sensitive data
+*api-key*
+*api_key*
+*secret*
+*password*
+credentials.php
+keys.php
+
+# Organization-specific files
+*swca*
+*SWCA*
+
+# Development
+.DS_Store
+Thumbs.db
+*.log
+*.sql
+*.sqlite
+node_modules/
+.npm
+vendor/
+composer.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Deployment packages
+deployment-packages/
+*.zip
+*.tar.gz
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+.sass-cache/
+
+# Test data
+test-data/
+sample-data/
+*-sample.*
+*-test.*
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# OS files
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Security
+.htaccess
+.htpasswd
+
+# Custom
+claude-development-package/
+claude-swca-production-package*.zip
+import_*.php
+stripe_*.php
+process_*.php
+fix_*.php
+create_*.php
+debug_*.php
+check_*.php
+test_*.php
+simulate_*.php
+production_*.php
+DIAGNOSTIC_*.php
+FIX_*.php
+VERIFY_*.php
+PRODUCTION_*.php
+*_export_*.php
+*_import_*.php
