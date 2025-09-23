@@ -30,64 +30,28 @@ register_activation_hook(__FILE__, 'mm_initialize_feature_toggles');
 // Initialize plugin
 add_action('init', 'mm_init_shortcodes');
 
-// Include modular features
+// Include core functionality
 require_once plugin_dir_path(__FILE__) . 'includes/core/database.php';
 require_once plugin_dir_path(__FILE__) . 'includes/core/roles.php';
 require_once plugin_dir_path(__FILE__) . 'includes/core/dashboard.php';
-require_once plugin_dir_path(__FILE__) . 'includes/features/email-management.php';
-require_once plugin_dir_path(__FILE__) . 'includes/features/event-management.php';
-require_once plugin_dir_path(__FILE__) . 'includes/features/financial-management.php';
-require_once plugin_dir_path(__FILE__) . 'includes/features/officer-tools.php';
-require_once plugin_dir_path(__FILE__) . 'includes/features/volunteer-management.php';
+require_once plugin_dir_path(__FILE__) . 'includes/core/shortcodes.php';
 
-// Create member tables
-function mm_create_member_tables() {
-    global $wpdb;
-    $charset_collate = $wpdb->get_charset_collate();
-    
-    $table_name = $wpdb->prefix . 'members';
-    
-    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        first_name varchar(100) NOT NULL,
-        last_name varchar(100) NOT NULL,
-        partner_first_name varchar(100),
-        partner_last_name varchar(100),
-        family_members text,
-        email_1 varchar(100),
-        email_2 varchar(100),
-        email_3 varchar(100),
-        email_4 varchar(100),
-        phone varchar(20),
-        alternate_phone varchar(20),
-        address varchar(255),
-        city varchar(100),
-        state varchar(50),
-        zip_code varchar(10),
-        alternate_address varchar(255),
-        membership_type varchar(50),
-        status_current_year varchar(10),
-        status_previous_year varchar(10),
-        membership_amount decimal(10,2),
-        donation_amount decimal(10,2),
-        total_amount decimal(10,2),
-        payment_type varchar(50),
-        business_affiliation varchar(255),
-        on_email_list tinyint(1) DEFAULT 1,
-        notes text,
-        membership_month int,
-        membership_month_previous int,
-        created_at datetime DEFAULT CURRENT_TIMESTAMP,
-        updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        KEY idx_last_name (last_name),
-        KEY idx_email (email_1),
-        KEY idx_status (status_current_year)
-    ) $charset_collate;";
-    
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
+// Include feature modules (if they exist)
+$feature_files = array(
+    'includes/features/email-management.php',
+    'includes/features/event-management.php',
+    'includes/features/financial-management.php',
+    'includes/features/officer-tools.php',
+    'includes/features/volunteer-management.php'
+);
+
+foreach ($feature_files as $file) {
+    $file_path = plugin_dir_path(__FILE__) . $file;
+    if (file_exists($file_path)) {
+        require_once $file_path;
+    }
 }
+
 
 // Initialize feature toggles
 function mm_initialize_feature_toggles() {

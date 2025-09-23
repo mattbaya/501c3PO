@@ -302,5 +302,4 @@ function fiveohonec3po_create_tables() {
     dbDelta($sql);
 }
 
-// Run table creation on plugin activation
-register_activation_hook(__FILE__, 'fiveohonec3po_create_tables');
+// Table creation function is called from main plugin file activation hook
