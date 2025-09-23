@@ -22,18 +22,13 @@ if (defined('WP_CLI') && WP_CLI) {
 }
 
 // Plugin activation hooks
-register_activation_hook(__FILE__, 'mm_create_dashboard_setup');
-register_activation_hook(__FILE__, 'mm_create_custom_roles');
-register_activation_hook(__FILE__, 'mm_create_email_tables');
-register_activation_hook(__FILE__, 'mm_create_event_tables');
-register_activation_hook(__FILE__, 'mm_create_officer_tools_tables');
+register_activation_hook(__FILE__, 'fiveohonec3po_create_tables');
+register_activation_hook(__FILE__, 'fiveohonec3po_create_dashboard_setup');
+register_activation_hook(__FILE__, 'fiveohonec3po_create_custom_roles');
 register_activation_hook(__FILE__, 'mm_initialize_feature_toggles');
-register_activation_hook(__FILE__, 'mm_create_member_tables');
 
 // Initialize plugin
 add_action('init', 'mm_init_shortcodes');
-add_action('init', 'mm_dashboard_auth_check');
-add_action('wp', 'mm_dashboard_password_protection');
 
 // Include modular features
 require_once plugin_dir_path(__FILE__) . 'includes/core/database.php';
