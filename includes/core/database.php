@@ -351,6 +351,26 @@ function five01c3po_create_tables() {
         KEY idx_type (transaction_type)
     ) $charset_collate;";
     dbDelta($sql);
+
+    // Transaction matches table (for linking Stripe, Gravity Forms, and Bank transactions)
+    $table_name = $wpdb->prefix . 'transaction_matches';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        stripe_transaction_id mediumint(9),
+        gravity_form_transaction_id mediumint(9),
+        bank_transaction_id mediumint(9),
+        match_type varchar(50) NOT NULL,
+        match_confidence varchar(20) NOT NULL,
+        notes text,
+        matched_by int,
+        matched_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_stripe (stripe_transaction_id),
+        KEY idx_gravity (gravity_form_transaction_id),
+        KEY idx_bank (bank_transaction_id),
+        KEY idx_confidence (match_confidence)
+    ) $charset_collate;";
+    dbDelta($sql);
 }
 
 // Table creation function is called from main plugin file activation hook

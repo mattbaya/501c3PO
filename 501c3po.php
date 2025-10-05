@@ -46,7 +46,8 @@ $feature_files = array(
     'includes/features/data-export-import.php',
     'includes/features/bank-transactions.php',
     'includes/features/stripe-integration.php',
-    'includes/features/unified-transactions.php'
+    'includes/features/unified-transactions.php',
+    'includes/features/transaction-matching.php'
 );
 
 foreach ($feature_files as $file) {

@@ -129,6 +129,7 @@ function five01c3po_unified_transactions_shortcode($atts) {
     // 1. Stripe API transactions
     if ($source === 'all' || $source === 'stripe') {
         $stripe_table = $wpdb->prefix . 'stripe_transactions';
+        $matches_table = $wpdb->prefix . 'transaction_matches';
         $where = "1=1";
 
         if (!empty($atts['start_date'])) {
@@ -140,19 +141,24 @@ function five01c3po_unified_transactions_shortcode($atts) {
 
         $stripe_txns = $wpdb->get_results("
             SELECT
+                s.id as txn_id,
                 'stripe' as source,
-                stripe_created as date,
-                customer_email as email,
-                description,
-                amount,
-                amount_refunded,
-                net_amount,
-                stripe_fee as fee,
-                status,
-                customer_name as name
-            FROM $stripe_table
+                s.stripe_created as date,
+                s.customer_email as email,
+                s.description,
+                s.amount,
+                s.amount_refunded,
+                s.net_amount,
+                s.stripe_fee as fee,
+                s.status,
+                s.customer_name as name,
+                m.gravity_form_transaction_id,
+                m.bank_transaction_id,
+                m.match_confidence
+            FROM $stripe_table s
+            LEFT JOIN $matches_table m ON s.id = m.stripe_transaction_id
             WHERE $where
-            ORDER BY stripe_created DESC
+            ORDER BY s.stripe_created DESC
         ");
 
         $transactions = array_merge($transactions, $stripe_txns);
@@ -161,6 +167,7 @@ function five01c3po_unified_transactions_shortcode($atts) {
     // 2. Bank transactions
     if ($source === 'all' || $source === 'bank') {
         $bank_table = $wpdb->prefix . 'swca_bank_transactions';
+        $matches_table = $wpdb->prefix . 'transaction_matches';
         $where = "1=1";
 
         if (!empty($atts['start_date'])) {
@@ -172,19 +179,24 @@ function five01c3po_unified_transactions_shortcode($atts) {
 
         $bank_txns = $wpdb->get_results("
             SELECT
+                b.id as txn_id,
                 'bank' as source,
-                post_date as date,
+                b.post_date as date,
                 '' as email,
-                description,
-                credit as amount,
+                b.description,
+                b.credit as amount,
                 0 as amount_refunded,
-                (credit - debit) as net_amount,
+                (b.credit - b.debit) as net_amount,
                 0 as fee,
-                status,
-                '' as name
-            FROM $bank_table
+                b.status,
+                '' as name,
+                m.stripe_transaction_id,
+                m.gravity_form_transaction_id,
+                m.match_confidence
+            FROM $bank_table b
+            LEFT JOIN $matches_table m ON b.id = m.bank_transaction_id
             WHERE $where
-            ORDER BY post_date DESC
+            ORDER BY b.post_date DESC
         ");
 
         $transactions = array_merge($transactions, $bank_txns);
@@ -193,6 +205,7 @@ function five01c3po_unified_transactions_shortcode($atts) {
     // 3. Gravity Forms Stripe transactions
     if ($source === 'all' || $source === 'gravity') {
         $gf_table = 'swca_gf_addon_payment_transaction';
+        $matches_table = $wpdb->prefix . 'transaction_matches';
         $where = "transaction_type = 'payment'";
 
         if (!empty($atts['start_date'])) {
@@ -204,19 +217,24 @@ function five01c3po_unified_transactions_shortcode($atts) {
 
         $gf_txns = $wpdb->get_results("
             SELECT
+                g.id as txn_id,
                 'gravity' as source,
-                date_created as date,
+                g.date_created as date,
                 '' as email,
-                note as description,
-                amount,
+                g.note as description,
+                g.amount,
                 0 as amount_refunded,
-                amount as net_amount,
+                g.amount as net_amount,
                 0 as fee,
                 'completed' as status,
-                '' as name
-            FROM $gf_table
+                '' as name,
+                m.stripe_transaction_id,
+                m.bank_transaction_id,
+                m.match_confidence
+            FROM $gf_table g
+            LEFT JOIN $matches_table m ON g.id = m.gravity_form_transaction_id
             WHERE $where
-            ORDER BY date_created DESC
+            ORDER BY g.date_created DESC
         ");
 
         $transactions = array_merge($transactions, $gf_txns);
@@ -278,6 +296,7 @@ function five01c3po_unified_transactions_shortcode($atts) {
                     <th style="text-align: right;">Fee</th>
                     <th style="text-align: right;">Net</th>
                     <th>Status</th>
+                    <th>Matches</th>
                 </tr>
             </thead>
             <tbody>
@@ -298,6 +317,30 @@ function five01c3po_unified_transactions_shortcode($atts) {
                             $source_color = '#a34a9b';
                             break;
                     }
+
+                    // Build match badges
+                    $match_badges = array();
+                    if (!empty($txn->stripe_transaction_id)) {
+                        $match_badges[] = '<span style="background: #635bff; color: white; padding: 2px 5px; border-radius: 2px; font-size: 9px;">💳 S#' . $txn->stripe_transaction_id . '</span>';
+                    }
+                    if (!empty($txn->gravity_form_transaction_id)) {
+                        $match_badges[] = '<span style="background: #a34a9b; color: white; padding: 2px 5px; border-radius: 2px; font-size: 9px;">📝 G#' . $txn->gravity_form_transaction_id . '</span>';
+                    }
+                    if (!empty($txn->bank_transaction_id)) {
+                        $match_badges[] = '<span style="background: #007cba; color: white; padding: 2px 5px; border-radius: 2px; font-size: 9px;">🏦 B#' . $txn->bank_transaction_id . '</span>';
+                    }
+
+                    // Add confidence indicator
+                    $confidence_icon = '';
+                    if (!empty($txn->match_confidence)) {
+                        if ($txn->match_confidence === 'auto_high') {
+                            $confidence_icon = '<span title="High confidence auto-match" style="color: #00a32a;">✓</span>';
+                        } elseif ($txn->match_confidence === 'auto_medium') {
+                            $confidence_icon = '<span title="Medium confidence auto-match" style="color: #dba617;">⚠</span>';
+                        } elseif ($txn->match_confidence === 'manual') {
+                            $confidence_icon = '<span title="Manual match" style="color: #2271b1;">👤</span>';
+                        }
+                    }
                 ?>
                 <tr>
                     <td><span style="background: <?php echo $source_color; ?>; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px;"><?php echo $source_badge; ?></span></td>
@@ -317,6 +360,13 @@ function five01c3po_unified_transactions_shortcode($atts) {
                         $<?php echo number_format($txn->net_amount, 2); ?>
                     </td>
                     <td><?php echo esc_html($txn->status); ?></td>
+                    <td style="font-size: 11px;">
+                        <?php if (!empty($match_badges)): ?>
+                            <?php echo $confidence_icon; ?> <?php echo implode(' ', $match_badges); ?>
+                        <?php else: ?>
+                            <span style="color: #999;">—</span>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
