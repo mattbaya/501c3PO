@@ -127,8 +127,8 @@ function five01c3po_auto_match_transactions($dry_run = false) {
         }
     }
 
-    // 2. Match Bank → Stripe (harder - by net amount and date range)
-    // Bank transactions can be delayed and combined
+    // 2. Match Bank → Stripe Payouts (using payout_arrival_date)
+    // Group Stripe transactions by payout date and match to bank deposits
     $bank_txns = $wpdb->get_results("
         SELECT * FROM $bank_table
         WHERE credit > 0
@@ -136,45 +136,79 @@ function five01c3po_auto_match_transactions($dry_run = false) {
         ORDER BY post_date DESC
     ");
 
+    $results['debug'][] = "Unmatched bank transactions: " . count($bank_txns);
+
     foreach ($bank_txns as $bank_txn) {
         $bank_amount = floatval($bank_txn->credit);
-        $bank_date = strtotime($bank_txn->post_date);
+        $bank_date = $bank_txn->post_date;
 
-        // Strategy 1: Look for exact net amount match within 7 days BEFORE bank date
-        // (Stripe transactions happen first, bank deposit comes later)
-        $stripe_match = $wpdb->get_row($wpdb->prepare("
-            SELECT * FROM $stripe_table
-            WHERE net_amount = %f
-            AND stripe_created >= DATE_SUB(%s, INTERVAL 7 DAY)
-            AND stripe_created <= %s
+        // NEW PAYOUT-BASED MATCHING
+        // Group Stripe transactions by payout_arrival_date and match to bank deposit
+        $payout_groups = $wpdb->get_results($wpdb->prepare("
+            SELECT
+                payout_arrival_date,
+                COUNT(*) as txn_count,
+                SUM(net_amount) as payout_net_total,
+                SUM(stripe_fee) as payout_fees_total,
+                GROUP_CONCAT(id) as stripe_ids
+            FROM $stripe_table
+            WHERE payout_arrival_date BETWEEN DATE_SUB(%s, INTERVAL 2 DAY) AND DATE_ADD(%s, INTERVAL 2 DAY)
             AND id NOT IN (SELECT stripe_transaction_id FROM $matches_table WHERE stripe_transaction_id IS NOT NULL)
-            ORDER BY ABS(DATEDIFF(stripe_created, %s)) ASC
-            LIMIT 1
-        ", $bank_amount, $bank_txn->post_date, $bank_txn->post_date, $bank_txn->post_date));
+            GROUP BY payout_arrival_date
+            HAVING payout_net_total > 0
+            ORDER BY ABS(DATEDIFF(payout_arrival_date, %s)) ASC
+        ", $bank_date, $bank_date, $bank_date));
 
-        if ($stripe_match) {
-            $days_diff = abs((strtotime($stripe_match->stripe_created) - $bank_date) / 86400);
+        $best_match = null;
+        $best_diff = PHP_FLOAT_MAX;
+
+        // Find best matching payout group
+        foreach ($payout_groups as $payout_group) {
+            $payout_total = floatval($payout_group->payout_net_total);
+            $amount_diff = abs($payout_total - $bank_amount);
+
+            // Consider match if within $1.00
+            if ($amount_diff <= 1.00 && $amount_diff < $best_diff) {
+                $best_match = $payout_group;
+                $best_diff = $amount_diff;
+            }
+        }
+
+        if ($best_match) {
+            $days_diff = abs((strtotime($best_match->payout_arrival_date) - strtotime($bank_date)));
+            $days_diff_rounded = round($days_diff / 86400);
+
+            // Determine confidence
             $confidence = 'auto_high';
-
-            if ($days_diff > 3) {
+            if ($best_diff > 0.10 || $days_diff_rounded > 1) {
                 $confidence = 'auto_medium';
             }
 
-            $match_data = array(
-                'stripe_transaction_id' => $stripe_match->id,
-                'bank_transaction_id' => $bank_txn->id,
-                'match_type' => 'bank_stripe_exact',
-                'match_confidence' => $confidence,
-                'notes' => sprintf(
-                    'Auto-matched: Net amount $%.2f, %d days apart',
-                    $bank_amount,
-                    round($days_diff)
-                ),
-                'matched_by' => get_current_user_id()
-            );
+            $stripe_ids = explode(',', $best_match->stripe_ids);
+            $txn_count = intval($best_match->txn_count);
 
+            // Create match for each Stripe transaction in the payout
             if (!$dry_run) {
-                $wpdb->insert($matches_table, $match_data);
+                foreach ($stripe_ids as $idx => $stripe_id) {
+                    $match_data = array(
+                        'stripe_transaction_id' => intval($stripe_id),
+                        'bank_transaction_id' => $bank_txn->id,
+                        'match_type' => ($idx === 0) ? 'bank_stripe_payout' : 'bank_stripe_payout_part',
+                        'match_confidence' => $confidence,
+                        'notes' => sprintf(
+                            'Payout match: %d charges on %s = $%.2f → Bank $%.2f on %s (diff: $%.2f, %d days)',
+                            $txn_count,
+                            $best_match->payout_arrival_date,
+                            floatval($best_match->payout_net_total),
+                            $bank_amount,
+                            $bank_date,
+                            $best_diff,
+                            $days_diff_rounded
+                        ),
+                        'matched_by' => get_current_user_id()
+                    );
+                    $wpdb->insert($matches_table, $match_data);
+                }
             }
 
             if ($confidence === 'auto_high') {
@@ -184,75 +218,15 @@ function five01c3po_auto_match_transactions($dry_run = false) {
             }
 
             $results['details'][] = sprintf(
-                "✓ Matched Bank #%d → Stripe #%d ($%.2f, %d days apart) [%s confidence]",
+                "✓ Payout: Bank #%d (%s, $%.2f) → %d Stripe charges (%s, $%.2f) [%s]",
                 $bank_txn->id,
-                $stripe_match->id,
+                $bank_date,
                 $bank_amount,
-                round($days_diff),
+                $txn_count,
+                $best_match->payout_arrival_date,
+                floatval($best_match->payout_net_total),
                 $confidence
             );
-            continue;
-        }
-
-        // Strategy 2: Look for combined transactions (bank deposit = sum of multiple Stripe)
-        // Find multiple Stripe transactions that sum to bank amount within date range
-        $potential_matches = $wpdb->get_results($wpdb->prepare("
-            SELECT * FROM $stripe_table
-            WHERE stripe_created >= DATE_SUB(%s, INTERVAL 7 DAY)
-            AND stripe_created <= %s
-            AND id NOT IN (SELECT stripe_transaction_id FROM $matches_table WHERE stripe_transaction_id IS NOT NULL)
-            AND net_amount <= %f
-            ORDER BY stripe_created DESC
-        ", $bank_txn->post_date, $bank_txn->post_date, $bank_amount));
-
-        // Try to find combination that sums to bank amount (within $0.50)
-        if (count($potential_matches) >= 2 && count($potential_matches) <= 10) {
-            $combination = five01c3po_find_sum_combination($potential_matches, $bank_amount, 0.50);
-
-            if ($combination && count($combination) >= 2) {
-                $total = array_sum(array_column($combination, 'net_amount'));
-                $days_diff = abs((strtotime($combination[0]->stripe_created) - $bank_date) / 86400);
-
-                $match_data = array(
-                    'bank_transaction_id' => $bank_txn->id,
-                    'match_type' => 'bank_stripe_combined',
-                    'match_confidence' => 'auto_medium',
-                    'notes' => sprintf(
-                        'Auto-matched: Combined %d Stripe transactions totaling $%.2f (Bank: $%.2f, diff: $%.2f)',
-                        count($combination),
-                        $total,
-                        $bank_amount,
-                        abs($total - $bank_amount)
-                    ),
-                    'matched_by' => get_current_user_id()
-                );
-
-                if (!$dry_run) {
-                    // Insert main match record
-                    $wpdb->insert($matches_table, $match_data);
-                    $match_id = $wpdb->insert_id;
-
-                    // Link each Stripe transaction to this match
-                    foreach ($combination as $stripe_txn) {
-                        $wpdb->insert($matches_table, array(
-                            'stripe_transaction_id' => $stripe_txn->id,
-                            'bank_transaction_id' => $bank_txn->id,
-                            'match_type' => 'bank_stripe_combined_part',
-                            'match_confidence' => 'auto_medium',
-                            'notes' => "Part of combined match #$match_id",
-                            'matched_by' => get_current_user_id()
-                        ));
-                    }
-                }
-
-                $results['bank_stripe_matches_medium']++;
-                $results['details'][] = sprintf(
-                    "✓ Matched Bank #%d → %d Stripe transactions ($%.2f combined)",
-                    $bank_txn->id,
-                    count($combination),
-                    $total
-                );
-            }
         }
     }
 
