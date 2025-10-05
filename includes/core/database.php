@@ -342,13 +342,20 @@ function five01c3po_create_tables() {
         payment_method varchar(50),
         receipt_url varchar(500),
         stripe_created timestamp NOT NULL,
+        payout_id varchar(255),
+        payout_date date,
+        payout_arrival_date date,
+        payout_status varchar(50),
+        balance_transaction_id varchar(255),
         synced_at datetime DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         UNIQUE KEY unique_charge (stripe_charge_id),
         KEY idx_member (member_id),
         KEY idx_email (customer_email),
         KEY idx_date (stripe_created),
-        KEY idx_type (transaction_type)
+        KEY idx_type (transaction_type),
+        KEY idx_payout (payout_id),
+        KEY idx_payout_date (payout_date)
     ) $charset_collate;";
     dbDelta($sql);
 

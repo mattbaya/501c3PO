@@ -299,7 +299,7 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
     $starting_after = null;
 
     while ($has_more) {
-        $endpoint = "charges?limit=100&created[gte]=$start_timestamp&expand[]=data.customer&expand[]=data.balance_transaction";
+        $endpoint = "charges?limit=100&created[gte]=$start_timestamp&expand[]=data.customer&expand[]=data.balance_transaction&expand[]=data.balance_transaction.payout";
         if ($starting_after) {
             $endpoint .= "&starting_after=$starting_after";
         }
@@ -391,10 +391,37 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
         $refund_amount = $refunds_by_charge[$charge['id']] ?? 0;
         $net_amount = $amount - $refund_amount;
 
-        // Get Stripe fee from balance transaction if available
+        // Get Stripe fee and payout data from balance transaction if available
         $stripe_fee = 0;
+        $payout_id = null;
+        $payout_date = null;
+        $payout_arrival_date = null;
+        $payout_status = null;
+        $balance_txn_id = null;
+
         if (isset($charge['balance_transaction']) && is_array($charge['balance_transaction'])) {
-            $stripe_fee = ($charge['balance_transaction']['fee'] ?? 0) / 100;
+            $balance_txn = $charge['balance_transaction'];
+            $stripe_fee = ($balance_txn['fee'] ?? 0) / 100;
+            $balance_txn_id = $balance_txn['id'] ?? null;
+
+            // Get payout information
+            if (isset($balance_txn['payout'])) {
+                if (is_string($balance_txn['payout'])) {
+                    // Payout ID only - need to fetch full payout details
+                    $payout_id = $balance_txn['payout'];
+                } elseif (is_array($balance_txn['payout'])) {
+                    // Payout object expanded
+                    $payout_id = $balance_txn['payout']['id'] ?? null;
+                    $payout_status = $balance_txn['payout']['status'] ?? null;
+
+                    if (isset($balance_txn['payout']['created'])) {
+                        $payout_date = date('Y-m-d', $balance_txn['payout']['created']);
+                    }
+                    if (isset($balance_txn['payout']['arrival_date'])) {
+                        $payout_arrival_date = date('Y-m-d', $balance_txn['payout']['arrival_date']);
+                    }
+                }
+            }
         }
 
         // Find member by email
@@ -437,7 +464,12 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
             'customer_name' => $charge['billing_details']['name'] ?? '',
             'payment_method' => $charge['payment_method_details']['type'] ?? '',
             'receipt_url' => $charge['receipt_url'] ?? '',
-            'stripe_created' => date('Y-m-d H:i:s', $charge['created'])
+            'stripe_created' => date('Y-m-d H:i:s', $charge['created']),
+            'payout_id' => $payout_id,
+            'payout_date' => $payout_date,
+            'payout_arrival_date' => $payout_arrival_date,
+            'payout_status' => $payout_status,
+            'balance_transaction_id' => $balance_txn_id
         );
 
         // Check if transaction already exists
@@ -447,13 +479,29 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
         ));
 
         if ($existing) {
-            // Update if refund amount changed
+            // Update if refund amount or payout data changed
+            $needs_update = false;
+
             if ($existing->amount_refunded != $refund_amount) {
+                $needs_update = true;
+            }
+
+            // Check if payout data is new/different
+            if ($payout_id && $existing->payout_id != $payout_id) {
+                $needs_update = true;
+            }
+
+            if ($needs_update) {
                 $wpdb->update(
                     $stripe_table,
                     array(
                         'amount_refunded' => $refund_amount,
                         'net_amount' => $net_amount,
+                        'payout_id' => $payout_id,
+                        'payout_date' => $payout_date,
+                        'payout_arrival_date' => $payout_arrival_date,
+                        'payout_status' => $payout_status,
+                        'balance_transaction_id' => $balance_txn_id,
                         'synced_at' => current_time('mysql')
                     ),
                     array('stripe_charge_id' => $charge['id'])

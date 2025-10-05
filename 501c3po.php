@@ -35,6 +35,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/core/database.php';
 require_once plugin_dir_path(__FILE__) . 'includes/core/roles.php';
 require_once plugin_dir_path(__FILE__) . 'includes/core/dashboard.php';
 require_once plugin_dir_path(__FILE__) . 'includes/core/shortcodes.php';
+require_once plugin_dir_path(__FILE__) . 'includes/core/migrate-add-payout-columns.php';
 
 // Include feature modules (if they exist)
 $feature_files = array(
