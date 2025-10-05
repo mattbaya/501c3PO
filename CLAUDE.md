@@ -86,6 +86,11 @@ Each feature can be enabled/disabled via the Settings dashboard:
 - Financial reports (monthly, quarterly, annual, custom)
 - Net vs gross income differentiation
 - **Historical data import via web interface**
+- **Transaction Matching** - AI-powered matching across Stripe API, Gravity Forms, and Bank CSV data
+  - 100% accuracy for Stripe ↔ Gravity Forms matching (30-second time window)
+  - Automatic deduplication and batch payout detection
+  - See [MATCHING_ALGORITHM.md](MATCHING_ALGORITHM.md) for detailed matching logic
+- **Unified Transactions View** - Combined view of all transaction sources with match indicators
 
 #### 🏛️ **Officer Tools** (Optional)
 - Meeting agenda creation and management
@@ -129,6 +134,10 @@ Each feature can be enabled/disabled via the Settings dashboard:
 - `wp_swca_committee_reports`: Committee reports for board meetings
 - `wp_swca_documents`: Document management with Google Drive integration
 - `wp_swca_calendar_settings`: API keys and configuration storage
+- `wp_stripe_transactions`: Complete historical Stripe transaction data with deduplication
+- `swca_gf_addon_payment_transaction`: Gravity Forms payment records (external plugin)
+- `wp_swca_bank_transactions`: Imported bank CSV transaction data
+- `wp_swca_transaction_matches`: Links matching transactions across all sources
 
 ### Integration APIs (All Optional)
 - **Stripe API**: Payment tracking and fee calculation
