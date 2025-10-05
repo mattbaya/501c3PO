@@ -37,7 +37,7 @@ function five01c3po_add_bank_transactions_menu() {
  */
 function five01c3po_bank_transactions_page() {
     global $wpdb;
-    $bank_table = $wpdb->prefix . 'bank_transactions';
+    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
 
     // Handle import
     if (isset($_POST['import_bank_csv']) && !empty($_FILES['bank_csv_file']['tmp_name'])) {
@@ -134,7 +134,7 @@ function five01c3po_bank_transactions_page() {
  */
 function five01c3po_import_bank_csv($file_path) {
     global $wpdb;
-    $bank_table = $wpdb->prefix . 'bank_transactions';
+    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
 
     if (!file_exists($file_path)) {
         return 'File not found';
@@ -207,7 +207,7 @@ function five01c3po_import_bank_csv($file_path) {
  */
 function five01c3po_display_recent_bank_transactions() {
     global $wpdb;
-    $bank_table = $wpdb->prefix . 'bank_transactions';
+    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
 
     $transactions = $wpdb->get_results("SELECT * FROM $bank_table ORDER BY post_date DESC LIMIT 20");
 
@@ -298,7 +298,7 @@ function five01c3po_bank_transactions_shortcode($atts) {
         'type' => '', // credit, debit, or empty for all
     ), $atts);
 
-    $bank_table = $wpdb->prefix . 'bank_transactions';
+    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
 
     // Build query
     $where = '';

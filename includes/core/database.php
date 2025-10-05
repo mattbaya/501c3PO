@@ -83,7 +83,7 @@ function five01c3po_create_tables() {
     dbDelta($sql);
 
     // Bank transactions table
-    $table_name = $wpdb->prefix . 'bank_transactions';
+    $table_name = $wpdb->prefix . 'swca_bank_transactions';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         account_number varchar(50),
