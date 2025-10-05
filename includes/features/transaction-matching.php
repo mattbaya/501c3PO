@@ -122,7 +122,7 @@ function five01c3po_auto_match_transactions($dry_run = false) {
                 $gf_txn->id,
                 $stripe_match->id,
                 $gf_amount,
-                date('Y-m-d', $gf_timestamp)
+                substr($gf_datetime, 0, 10)
             );
         }
     }
