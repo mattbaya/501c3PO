@@ -322,6 +322,35 @@ function five01c3po_create_tables() {
         UNIQUE KEY unique_setting (setting_name)
     ) $charset_collate;";
     dbDelta($sql);
+
+    // Stripe transactions table (for complete historical Stripe data)
+    $table_name = $wpdb->prefix . 'stripe_transactions';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        stripe_charge_id varchar(255) NOT NULL,
+        transaction_type varchar(20) NOT NULL,
+        member_id mediumint(9),
+        customer_email varchar(255),
+        amount decimal(10,2) NOT NULL,
+        amount_refunded decimal(10,2) DEFAULT 0.00,
+        net_amount decimal(10,2) NOT NULL,
+        stripe_fee decimal(10,2) DEFAULT 0.00,
+        currency varchar(10) DEFAULT 'usd',
+        status varchar(50) NOT NULL,
+        description text,
+        customer_name varchar(255),
+        payment_method varchar(50),
+        receipt_url varchar(500),
+        stripe_created timestamp NOT NULL,
+        synced_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_charge (stripe_charge_id),
+        KEY idx_member (member_id),
+        KEY idx_email (customer_email),
+        KEY idx_date (stripe_created),
+        KEY idx_type (transaction_type)
+    ) $charset_collate;";
+    dbDelta($sql);
 }
 
 // Table creation function is called from main plugin file activation hook

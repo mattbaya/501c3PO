@@ -143,6 +143,9 @@ function five01c3po_stripe_integration_page() {
                 <ul>
                     <li><strong>Charges Downloaded:</strong> <?php echo $sync_results['charges_count']; ?></li>
                     <li><strong>Refunds Downloaded:</strong> <?php echo $sync_results['refunds_count']; ?></li>
+                    <li><strong>New Transactions Stored:</strong> <?php echo $sync_results['new_transactions']; ?></li>
+                    <li><strong>Updated (Refunds Changed):</strong> <?php echo $sync_results['updated_transactions']; ?></li>
+                    <li><strong>Duplicates Skipped:</strong> <?php echo $sync_results['duplicate_transactions']; ?></li>
                     <li><strong>Members Matched:</strong> <?php echo $sync_results['members_matched']; ?></li>
                     <li><strong>Total Revenue:</strong> $<?php echo number_format($sync_results['total_revenue'], 2); ?></li>
                 </ul>
@@ -212,8 +215,15 @@ function five01c3po_stripe_integration_page() {
                     <tr>
                         <th scope="row">Days to Sync</th>
                         <td>
-                            <input type="number" name="days_back" value="30" min="1" max="365">
-                            <p class="description">How many days back should we sync? (default: 30)</p>
+                            <input type="number" name="days_back" value="30" min="1" max="3650" style="width: 100px;">
+                            <p class="description">
+                                How many days back should we sync?
+                                <br><strong>Recommendations:</strong>
+                                <br>• 30 days - Recent transactions only
+                                <br>• 365 days - Last year
+                                <br>• <strong>3650 days (10 years)</strong> - Complete historical data (recommended for first sync)
+                                <br><em>Note: Pagination handles any amount of data automatically. Duplicates are detected and skipped.</em>
+                            </p>
                         </td>
                     </tr>
                 </table>
@@ -269,6 +279,9 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
         'refunds_count' => 0,
         'members_matched' => 0,
         'total_revenue' => 0,
+        'new_transactions' => 0,
+        'updated_transactions' => 0,
+        'duplicate_transactions' => 0,
         'details' => ''
     );
 
@@ -280,69 +293,179 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
 
     $start_timestamp = time() - ($days_back * 24 * 60 * 60);
 
-    // Download charges
-    $charges_data = five01c3po_stripe_api_call("charges?limit=100&created[gte]=$start_timestamp&expand[]=data.customer", $api_key);
+    // Download ALL charges with pagination
+    $all_charges = array();
+    $has_more = true;
+    $starting_after = null;
 
-    if (!$charges_data || !isset($charges_data['data'])) {
-        $results['details'] = 'Failed to download charges from Stripe';
-        return $results;
+    while ($has_more) {
+        $endpoint = "charges?limit=100&created[gte]=$start_timestamp&expand[]=data.customer&expand[]=data.balance_transaction";
+        if ($starting_after) {
+            $endpoint .= "&starting_after=$starting_after";
+        }
+
+        $charges_data = five01c3po_stripe_api_call($endpoint, $api_key);
+
+        if (!$charges_data || !isset($charges_data['data'])) {
+            if (empty($all_charges)) {
+                $results['details'] = 'Failed to download charges from Stripe';
+                return $results;
+            }
+            break;
+        }
+
+        $all_charges = array_merge($all_charges, $charges_data['data']);
+        $has_more = $charges_data['has_more'] ?? false;
+
+        if ($has_more && !empty($charges_data['data'])) {
+            $starting_after = end($charges_data['data'])['id'];
+        } else {
+            $has_more = false;
+        }
+
+        // Safety limit: stop after 10,000 charges
+        if (count($all_charges) >= 10000) {
+            break;
+        }
     }
 
-    $results['charges_count'] = count($charges_data['data']);
+    $results['charges_count'] = count($all_charges);
     $details = "Stripe Sync Results:\n\n";
 
-    // Download refunds
-    $refunds_data = five01c3po_stripe_api_call("refunds?limit=100&created[gte]=$start_timestamp", $api_key);
-    $results['refunds_count'] = isset($refunds_data['data']) ? count($refunds_data['data']) : 0;
+    // Download ALL refunds with pagination
+    $all_refunds = array();
+    $has_more = true;
+    $starting_after = null;
+
+    while ($has_more) {
+        $endpoint = "refunds?limit=100&created[gte]=$start_timestamp";
+        if ($starting_after) {
+            $endpoint .= "&starting_after=$starting_after";
+        }
+
+        $refunds_data = five01c3po_stripe_api_call($endpoint, $api_key);
+
+        if (!$refunds_data || !isset($refunds_data['data'])) {
+            break;
+        }
+
+        $all_refunds = array_merge($all_refunds, $refunds_data['data']);
+        $has_more = $refunds_data['has_more'] ?? false;
+
+        if ($has_more && !empty($refunds_data['data'])) {
+            $starting_after = end($refunds_data['data'])['id'];
+        } else {
+            $has_more = false;
+        }
+
+        // Safety limit
+        if (count($all_refunds) >= 10000) {
+            break;
+        }
+    }
+
+    $results['refunds_count'] = count($all_refunds);
 
     // Build refunds lookup by charge ID
     $refunds_by_charge = array();
-    if (isset($refunds_data['data'])) {
-        foreach ($refunds_data['data'] as $refund) {
-            $charge_id = $refund['charge'] ?? '';
-            if (!isset($refunds_by_charge[$charge_id])) {
-                $refunds_by_charge[$charge_id] = 0;
-            }
-            $refunds_by_charge[$charge_id] += $refund['amount'] / 100; // Convert cents to dollars
+    foreach ($all_refunds as $refund) {
+        $charge_id = $refund['charge'] ?? '';
+        if (!isset($refunds_by_charge[$charge_id])) {
+            $refunds_by_charge[$charge_id] = 0;
         }
+        $refunds_by_charge[$charge_id] += $refund['amount'] / 100; // Convert cents to dollars
     }
 
     // Process charges and match to members
     $member_table = $wpdb->prefix . 'swca_members';
+    $stripe_table = $wpdb->prefix . 'stripe_transactions';
     $matched_emails = array();
 
-    foreach ($charges_data['data'] as $charge) {
+    foreach ($all_charges as $charge) {
         if ($charge['status'] !== 'succeeded') {
             continue;
         }
 
         $email = $charge['billing_details']['email'] ?? $charge['receipt_email'] ?? '';
-        if (empty($email)) {
-            continue;
-        }
-
         $amount = $charge['amount'] / 100; // Convert cents to dollars
         $refund_amount = $refunds_by_charge[$charge['id']] ?? 0;
         $net_amount = $amount - $refund_amount;
 
+        // Get Stripe fee from balance transaction if available
+        $stripe_fee = 0;
+        if (isset($charge['balance_transaction']) && is_array($charge['balance_transaction'])) {
+            $stripe_fee = ($charge['balance_transaction']['fee'] ?? 0) / 100;
+        }
+
         // Find member by email
-        $member = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $member_table WHERE email_1 = %s OR email_2 = %s OR email_3 = %s OR email_4 = %s LIMIT 1",
-            $email, $email, $email, $email
+        $member_id = null;
+        if (!empty($email)) {
+            $member = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $member_table WHERE email_1 = %s OR email_2 = %s OR email_3 = %s OR email_4 = %s LIMIT 1",
+                $email, $email, $email, $email
+            ));
+
+            if ($member) {
+                $member_id = $member->id;
+                $matched_emails[$email] = ($matched_emails[$email] ?? 0) + $net_amount;
+                $results['total_revenue'] += $net_amount;
+
+                $details .= sprintf(
+                    "%s - $%.2f (Refund: $%.2f) - %s %s\n",
+                    date('Y-m-d', $charge['created']),
+                    $amount,
+                    $refund_amount,
+                    $member->first_name,
+                    $member->last_name
+                );
+            }
+        }
+
+        // Prepare transaction data
+        $transaction_data = array(
+            'stripe_charge_id' => $charge['id'],
+            'transaction_type' => 'charge',
+            'member_id' => $member_id,
+            'customer_email' => $email,
+            'amount' => $amount,
+            'amount_refunded' => $refund_amount,
+            'net_amount' => $net_amount,
+            'stripe_fee' => $stripe_fee,
+            'currency' => strtolower($charge['currency'] ?? 'usd'),
+            'status' => $charge['status'],
+            'description' => $charge['description'] ?? '',
+            'customer_name' => $charge['billing_details']['name'] ?? '',
+            'payment_method' => $charge['payment_method_details']['type'] ?? '',
+            'receipt_url' => $charge['receipt_url'] ?? '',
+            'stripe_created' => date('Y-m-d H:i:s', $charge['created'])
+        );
+
+        // Check if transaction already exists
+        $existing = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $stripe_table WHERE stripe_charge_id = %s",
+            $charge['id']
         ));
 
-        if ($member) {
-            $matched_emails[$email] = ($matched_emails[$email] ?? 0) + $net_amount;
-            $results['total_revenue'] += $net_amount;
-
-            $details .= sprintf(
-                "%s - $%.2f (Refund: $%.2f) - %s %s\n",
-                date('Y-m-d', $charge['created']),
-                $amount,
-                $refund_amount,
-                $member->first_name,
-                $member->last_name
-            );
+        if ($existing) {
+            // Update if refund amount changed
+            if ($existing->amount_refunded != $refund_amount) {
+                $wpdb->update(
+                    $stripe_table,
+                    array(
+                        'amount_refunded' => $refund_amount,
+                        'net_amount' => $net_amount,
+                        'synced_at' => current_time('mysql')
+                    ),
+                    array('stripe_charge_id' => $charge['id'])
+                );
+                $results['updated_transactions']++;
+            } else {
+                $results['duplicate_transactions']++;
+            }
+        } else {
+            // Insert new transaction
+            $wpdb->insert($stripe_table, $transaction_data);
+            $results['new_transactions']++;
         }
     }
 

@@ -45,7 +45,8 @@ $feature_files = array(
     'includes/features/volunteer-management.php',
     'includes/features/data-export-import.php',
     'includes/features/bank-transactions.php',
-    'includes/features/stripe-integration.php'
+    'includes/features/stripe-integration.php',
+    'includes/features/unified-transactions.php'
 );
 
 foreach ($feature_files as $file) {
