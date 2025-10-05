@@ -34,13 +34,25 @@ function five01c3po_auto_match_transactions($dry_run = false) {
         'bank_stripe_matches_high' => 0,
         'bank_stripe_matches_medium' => 0,
         'bank_stripe_matches_low' => 0,
-        'details' => array()
+        'details' => array(),
+        'debug' => array()
     );
 
     $matches_table = $wpdb->prefix . 'transaction_matches';
     $stripe_table = $wpdb->prefix . 'stripe_transactions';
     $bank_table = $wpdb->prefix . 'swca_bank_transactions';
     $gf_table = 'swca_gf_addon_payment_transaction';
+
+    // Debug: Check table counts
+    $stripe_count = $wpdb->get_var("SELECT COUNT(*) FROM $stripe_table");
+    $gf_count = $wpdb->get_var("SELECT COUNT(*) FROM $gf_table WHERE transaction_type = 'payment'");
+    $bank_count = $wpdb->get_var("SELECT COUNT(*) FROM $bank_table");
+    $bank_credit_count = $wpdb->get_var("SELECT COUNT(*) FROM $bank_table WHERE credit > 0");
+
+    $results['debug'][] = "Stripe transactions: $stripe_count";
+    $results['debug'][] = "Gravity Forms payments: $gf_count";
+    $results['debug'][] = "Bank transactions total: $bank_count";
+    $results['debug'][] = "Bank transactions with credit > 0: $bank_credit_count";
 
     // 1. Match Gravity Forms → Stripe (by amount and timestamp)
     // Gravity Forms should have exact timestamps matching Stripe
@@ -50,6 +62,23 @@ function five01c3po_auto_match_transactions($dry_run = false) {
         AND id NOT IN (SELECT gravity_form_transaction_id FROM $matches_table WHERE gravity_form_transaction_id IS NOT NULL)
         ORDER BY date_created DESC
     ");
+
+    $results['debug'][] = "Unmatched Gravity Forms transactions: " . count($gravity_txns);
+
+    // Sample first few GF and Stripe for debugging
+    if (count($gravity_txns) > 0) {
+        $sample_gf = array_slice($gravity_txns, 0, 3);
+        foreach ($sample_gf as $idx => $gf) {
+            $results['debug'][] = sprintf("Sample GF #%d: ID=%d, Amount=$%.2f, Date=%s",
+                $idx + 1, $gf->id, floatval($gf->amount), $gf->date_created);
+        }
+    }
+
+    $sample_stripe = $wpdb->get_results("SELECT * FROM $stripe_table ORDER BY stripe_created DESC LIMIT 3");
+    foreach ($sample_stripe as $idx => $st) {
+        $results['debug'][] = sprintf("Sample Stripe #%d: ID=%d, Amount=$%.2f, Date=%s",
+            $idx + 1, $st->id, floatval($st->amount), $st->stripe_created);
+    }
 
     foreach ($gravity_txns as $gf_txn) {
         // Look for Stripe transaction with matching amount within 60 seconds
@@ -364,9 +393,15 @@ function five01c3po_transaction_matching_page() {
                     <li><strong>Bank → Stripe (High Confidence):</strong> <?php echo $match_results['bank_stripe_matches_high']; ?> matches</li>
                     <li><strong>Bank → Stripe (Medium Confidence):</strong> <?php echo $match_results['bank_stripe_matches_medium']; ?> matches</li>
                 </ul>
+                <?php if (!empty($match_results['debug'])): ?>
+                    <details open>
+                        <summary><strong>🐛 Debug Information</strong></summary>
+                        <pre style="max-height: 300px; overflow-y: auto; background: #f5f5f5; padding: 10px; border-left: 4px solid #2271b1;"><?php echo esc_html(implode("\n", $match_results['debug'])); ?></pre>
+                    </details>
+                <?php endif; ?>
                 <?php if (!empty($match_results['details'])): ?>
                     <details>
-                        <summary>View Details (<?php echo count($match_results['details']); ?> matches)</summary>
+                        <summary>View Match Details (<?php echo count($match_results['details']); ?> matches)</summary>
                         <pre style="max-height: 400px; overflow-y: auto;"><?php echo esc_html(implode("\n", $match_results['details'])); ?></pre>
                     </details>
                 <?php endif; ?>
