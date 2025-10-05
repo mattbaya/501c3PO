@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="501c3POlogo.png" alt="501c3PO Logo" width="400">
+</p>
+
 # 501c3PO - The Nonprofit Droid You're Looking For
 
 A comprehensive WordPress plugin for managing nonprofit organizations with modular features. May the force be with your fundraising!
@@ -9,6 +13,7 @@ A comprehensive WordPress plugin for managing nonprofit organizations with modul
 - **Dashboard System** - Password-protected member dashboard
 - **Data Export/Import** - Full database migration and CSV export
 - **Role-Based Access Control** - Custom WordPress roles for different permission levels
+- **Transaction Matching** - AI-powered matching across Stripe, Gravity Forms, and Bank data
 
 ### Optional Modular Features
 Each feature can be enabled/disabled via the Settings dashboard:
@@ -17,6 +22,10 @@ Each feature can be enabled/disabled via the Settings dashboard:
 - **🎉 Event Management** - Event creation with RSVP tracking
 - **🙋 Volunteer Signups** - Coordinate volunteer opportunities
 - **💰 Financial Management** - Track income, expenses, and payment processing
+  - **Stripe Integration** - Sync all historical Stripe transactions with AES-256 encrypted API keys
+  - **Bank Transaction Import** - CSV import for reconciliation
+  - **Unified Transactions View** - See all transactions from all sources in one place
+  - **Intelligent Matching** - Auto-match transactions across systems (100% accuracy for Stripe ↔ Gravity Forms)
 - **🏛️ Officer Tools** - Meeting agendas, minutes, and document management
 - **👥 Committee Management** - Committee structure and membership tracking
 - **📁 Document Management** - File organization with cloud storage integration
