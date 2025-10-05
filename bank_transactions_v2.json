@@ -1,0 +1,362 @@
+[
+  {
+    "date": "01/02",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 33.68,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "01/03",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 291,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "01/23",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 96.8,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "01/28",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 33.68,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "01/31",
+    "type": "income",
+    "category": "Interest",
+    "description": "Interest Credit",
+    "amount": 3.35,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "01/06",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #660",
+    "amount": 5.32,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "01/28",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #662",
+    "amount": 125,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "01/21",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #661",
+    "amount": 698,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "01/28",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #663",
+    "amount": 209.17,
+    "source": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "02/14",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 150,
+    "source": "MountainOne Bank Statement_02_Feb 2025.pdf",
+    "period": "Feb 01, 2025 to Feb 28, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "02/28",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 35,
+    "source": "MountainOne Bank Statement_02_Feb 2025.pdf",
+    "period": "Feb 01, 2025 to Feb 28, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "02/28",
+    "type": "income",
+    "category": "Interest",
+    "description": "Interest Credit",
+    "amount": 2.81,
+    "source": "MountainOne Bank Statement_02_Feb 2025.pdf",
+    "period": "Feb 01, 2025 to Feb 28, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "02/26",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #664",
+    "amount": 30,
+    "source": "MountainOne Bank Statement_02_Feb 2025.pdf",
+    "period": "Feb 01, 2025 to Feb 28, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "02/26",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #665",
+    "amount": 150.61,
+    "source": "MountainOne Bank Statement_02_Feb 2025.pdf",
+    "period": "Feb 01, 2025 to Feb 28, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/10",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 33.68,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/10",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 35,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/19",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID800948598",
+    "amount": 8,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/20",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 125.14,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/20",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 85,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/20",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 75,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/20",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 35,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/31",
+    "type": "income",
+    "category": "Interest",
+    "description": "Interest Credit",
+    "amount": 3.97,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/07",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #666",
+    "amount": 502.34,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "03/14",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #667",
+    "amount": 79.96,
+    "source": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "04/15",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 135,
+    "source": "MountainOne Bank Statement_04_Apr 2025.pdf",
+    "period": "Apr 01, 2025 to Apr 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "04/23",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID1800948598",
+    "amount": 38.23,
+    "source": "MountainOne Bank Statement_04_Apr 2025.pdf",
+    "period": "Apr 01, 2025 to Apr 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "04/29",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 453.75,
+    "source": "MountainOne Bank Statement_04_Apr 2025.pdf",
+    "period": "Apr 01, 2025 to Apr 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "04/30",
+    "type": "income",
+    "category": "Interest",
+    "description": "Interest Credit",
+    "amount": 4.1,
+    "source": "MountainOne Bank Statement_04_Apr 2025.pdf",
+    "period": "Apr 01, 2025 to Apr 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "04/01",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #670",
+    "amount": 150,
+    "source": "MountainOne Bank Statement_04_Apr 2025.pdf",
+    "period": "Apr 01, 2025 to Apr 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "04/28",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #673",
+    "amount": 204,
+    "source": "MountainOne Bank Statement_04_Apr 2025.pdf",
+    "period": "Apr 01, 2025 to Apr 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "05/05",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID1800948598",
+    "amount": 34.71,
+    "source": "MountainOne Bank Statement_05_May 2025.pdf",
+    "period": "May 01, 2025 to May 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "05/23",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 4.55,
+    "source": "MountainOne Bank Statement_05_May 2025.pdf",
+    "period": "May 01, 2025 to May 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "05/31",
+    "type": "income",
+    "category": "Interest",
+    "description": "Interest Credit",
+    "amount": 4.2,
+    "source": "MountainOne Bank Statement_05_May 2025.pdf",
+    "period": "May 01, 2025 to May 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "05/21",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #668",
+    "amount": 175,
+    "source": "MountainOne Bank Statement_05_May 2025.pdf",
+    "period": "May 01, 2025 to May 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "05/12",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #675",
+    "amount": 27.18,
+    "source": "MountainOne Bank Statement_05_May 2025.pdf",
+    "period": "May 01, 2025 to May 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "05/23",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #676",
+    "amount": 250,
+    "source": "MountainOne Bank Statement_05_May 2025.pdf",
+    "period": "May 01, 2025 to May 31, 2025",
+    "year": "2025"
+  }
+]

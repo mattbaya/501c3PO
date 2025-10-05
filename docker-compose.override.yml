@@ -1,0 +1,27 @@
+services:
+  almalinux-dev:
+    environment:
+      # Claude Flow environment variables
+      - CLAUDE_FLOW_CONFIG=/home/developer/claude-flow/claude-flow.config.json
+      - CLAUDE_FLOW_MEMORY_DIR=/home/developer/claude-flow/memory
+      - CLAUDE_FLOW_COORDINATION_DIR=/home/developer/claude-flow/coordination
+      - CLAUDE_FLOW_WORKSPACE=/home/developer/workspace
+      - CLAUDE_FLOW_TELEMETRY=enabled
+      - CLAUDE_FLOW_CACHE=enabled
+      - CLAUDE_FLOW_MAX_AGENTS=10
+      - CLAUDE_FLOW_DEFAULT_TOPOLOGY=hierarchical
+    volumes:
+      # Additional volumes for Claude Flow
+      - ./claude-flow:/home/developer/claude-flow
+      - ./workspace/claude-sessions:/home/developer/claude-flow/memory/sessions
+    command: |
+      bash -c "
+        # Initialize Claude Flow on container start
+        if [ ! -f /home/developer/.claude-flow-initialized ]; then
+          echo '🐝 First-time Claude Flow setup...'
+          /home/developer/setup-claude-flow.sh
+          touch /home/developer/.claude-flow-initialized
+        fi
+        # Start bash with Claude Flow ready
+        exec /bin/bash
+      "

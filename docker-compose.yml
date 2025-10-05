@@ -1,0 +1,32 @@
+services:
+  almalinux-dev:
+    build: .
+    image: almalinux-dev:latest
+    container_name: almalinux-dev-container
+    hostname: almalinux-dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/home/developer/scripts
+      - ./workspace:/home/developer/workspace
+      - ./.env:/home/developer/.env
+      - ~/.config/gam:/home/developer/.config/gam
+      - ~/.ssh:/home/developer/.ssh:ro
+      - ~/.gitconfig:/home/developer/.gitconfig:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8080:8080"  # For code-server
+      - "3000:3000"  # For Node.js apps
+      - "5001:5000"  # For Python apps
+      - "8000:8000"  # For Django/FastAPI
+      - "8888:8888"  # For JupyterLab
+      - "80:80"      # For Apache HTTP
+      - "443:443"    # For Apache HTTPS
+    environment:
+      - TZ=UTC
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE  # For debugging tools
+    security_opt:
+      - seccomp:unconfined  # For debugging tools

@@ -1,0 +1,26 @@
+#!/bin/bash
+# Claude Flow wrapper for Gemini Pro with load balancing
+
+# Load balance between multiple Gemini keys
+if [ ! -z "$GEMINI_API_KEY" ] && [ ! -z "$GEMINI_API_KEY_2" ]; then
+    # Use random selection for load balancing
+    if [ $((RANDOM % 2)) -eq 0 ]; then
+        export GOOGLE_API_KEY="$GEMINI_API_KEY"
+        echo "🔑 Using Gemini API Key #1"
+    else
+        export GOOGLE_API_KEY="$GEMINI_API_KEY_2" 
+        echo "🔑 Using Gemini API Key #2"
+    fi
+elif [ ! -z "$GEMINI_API_KEY" ]; then
+    export GOOGLE_API_KEY="$GEMINI_API_KEY"
+    echo "🔑 Using Primary Gemini API Key"
+elif [ ! -z "$GEMINI_API_KEY_2" ]; then
+    export GOOGLE_API_KEY="$GEMINI_API_KEY_2"
+    echo "🔑 Using Secondary Gemini API Key"
+else
+    echo "❌ No Gemini API key found!"
+    exit 1
+fi
+
+# Run Claude Flow with Gemini configuration
+claude-flow "$@" --provider google --model gemini-1.5-flash

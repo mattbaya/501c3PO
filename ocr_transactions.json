@@ -1,0 +1,82 @@
+[
+  {
+    "date": "06/04",
+    "type": "income",
+    "category": "ACH Credit",
+    "description": "ACH Credit TRANSFER ID1800948598",
+    "amount": 34.71,
+    "source": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Jun 01, 2025 to Jun 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "06/05",
+    "type": "income",
+    "category": "ACH Credit",
+    "description": "ACH Credit TRANSFER ID4270465600",
+    "amount": 67.36,
+    "source": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Jun 01, 2025 to Jun 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "06/06",
+    "type": "income",
+    "category": "ACH Credit",
+    "description": "ACH Credit TRANSFER ID4270465600",
+    "amount": 101.04,
+    "source": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Jun 01, 2025 to Jun 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "06/11",
+    "type": "income",
+    "category": "ACH Credit",
+    "description": "ACH Credit TRANSFER ID4270465600",
+    "amount": 130.48,
+    "source": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Jun 01, 2025 to Jun 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "06/12",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit BILL PMT STRIPE STRIPE STRIPE STRIPE Williamstown Rur ID9026297628",
+    "amount": 193,
+    "source": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Jun 01, 2025 to Jun 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "06/25",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 38.19,
+    "source": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Jun 01, 2025 to Jun 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "06/27",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 50,
+    "source": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Jun 01, 2025 to Jun 30, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "06/30",
+    "type": "income",
+    "category": "Interest",
+    "description": "Interest Credit",
+    "amount": 4.11,
+    "source": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Jun 01, 2025 to Jun 30, 2025",
+    "year": "2025"
+  }
+]

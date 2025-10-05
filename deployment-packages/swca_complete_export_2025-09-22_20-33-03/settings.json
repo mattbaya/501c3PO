@@ -1,0 +1,19 @@
+{
+    "enabled_features": [],
+    "api_keys": {
+        "stripe_live_public_key": "",
+        "stripe_live_secret_key": "[HIDDEN FOR SECURITY]",
+        "google_client_id": "",
+        "google_client_secret": "[HIDDEN FOR SECURITY]"
+    },
+    "dashboard_child_pages": [
+        47,
+        48,
+        49,
+        51,
+        52
+    ],
+    "export_date": "2025-09-22 20:33:03",
+    "wordpress_version": "6.8.2",
+    "plugin_version": "1.2"
+}

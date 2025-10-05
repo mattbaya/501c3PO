@@ -1,0 +1,17 @@
+#!/bin/bash
+# Claude Flow wrapper for Claude API
+
+export PROVIDER="claude"
+export MODEL="claude-3-5-sonnet-20241022"
+
+if [ -z "$CLAUDE_API_KEY" ]; then
+    echo "❌ No Claude API key found!"
+    echo "Set CLAUDE_API_KEY in .env file"
+    exit 1
+fi
+
+export API_KEY="$CLAUDE_API_KEY"
+echo "🔵 Using Claude API"
+
+# Run Claude Flow with Claude configuration
+npx claude-flow@alpha "$@" --provider claude --model claude-3-5-sonnet-20241022

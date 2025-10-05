@@ -1,0 +1,162 @@
+[
+  {
+    "date": "08/05",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 34.39,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/11",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Cash",
+    "amount": 2.16,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/12",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 127.37,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/13",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID1800948598",
+    "amount": 1500.00,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/18",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 1040.00,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/18",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 480.00,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/18",
+    "type": "income",
+    "category": "Deposit",
+    "description": "Deposit",
+    "amount": 110.00,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/20",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 34.75,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/25",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 39.26,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/27",
+    "type": "income",
+    "category": "Stripe Deposit",
+    "description": "ACH Credit TRANSFER STRIPE ID4270465600",
+    "amount": 50.00,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/31",
+    "type": "income",
+    "category": "Interest",
+    "description": "Interest Credit",
+    "amount": 4.71,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/11",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #680",
+    "amount": 170.91,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/12",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #681",
+    "amount": 63.28,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/19",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #683",
+    "amount": 285.95,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/20",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #685",
+    "amount": 1500.00,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  },
+  {
+    "date": "08/18",
+    "type": "expense",
+    "category": "Check Payment",
+    "description": "Check #686",
+    "amount": 299.00,
+    "source": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Aug 01, 2025 to Aug 31, 2025",
+    "year": "2025"
+  }
+]

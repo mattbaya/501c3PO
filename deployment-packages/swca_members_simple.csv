@@ -1,0 +1,11 @@
+first_name,last_name,email_1,phone,address,city,state,zip_code,membership_type,status_2024_2025,membership_amount,total_amount,payment_type
+Robert,Abel,rabel@truenorthfs.com,413-281-4770,323 Hopper Road,Williamstown,MA,,Family,Unpaid,0.00,0.00,
+Antje,Adam,antjemadam2002@yahoo.com,516-343-5119,63 Knickerbocker Rd,Manhasset,NY,,Family,Unpaid,0.00,0.00,
+Lisa,Argento,silver630@msn.com,914-262-2634,885 Hancock Road,Williamstown,MA,,Family,Paid,35.00,100.00,Check
+Daniel,Arick,,413-458-5046,197 Sloan Road,Williamstown,MA,,Individual,Unpaid,0.00,0.00,
+Laurie,Bank,lbank2002@yahoo.com,413-458-0103,1190 NW Hill Road,Williamstown,MA,,Family,Paid,35.00,35.00,Check
+Matt,Baya,matt@baya.net,413-334-3834,478 Hancock Road,Williamstown,MA,,Family,Paid,0.00,5.00,Credit
+Carolyn,Behr,carolynbehr@yahoo.com,413-458-5557,294 Blair Rd,Williamstown,MA,,Individual,Paid,35.00,35.00,Credit
+Carol,Bengtson,carolynbengtson@gmail.com,413-458-1154,124 Hopper Rd,Williamstown,MA,,Individual,Paid,35.00,35.00,Credit
+Steve,Berman,steveberman@gmail.com,413-458-5847,1476 Cold Spring Rd,Williamstown,MA,,Individual,Paid,35.00,35.00,Check
+Barbara,Blackburn,bblackburn@williams.edu,413-458-8957,52 Lakewood Dr,Williamstown,MA,,Individual,Paid,35.00,35.00,Check

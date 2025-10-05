@@ -1,0 +1,58 @@
+[
+  {
+    "file": "MountainOne Bank Statement_01_Jan 2025.pdf",
+    "period": "Jan 01, 2025 to Jan 31, 2025",
+    "beginBalance": 7868.51,
+    "endBalance": 7289.53,
+    "transactionCount": 9
+  },
+  {
+    "file": "MountainOne Bank Statement_02_Feb 2025.pdf",
+    "period": "Feb 01, 2025 to Feb 28, 2025",
+    "beginBalance": 7289.53,
+    "endBalance": 7296.73,
+    "transactionCount": 3
+  },
+  {
+    "file": "MountainOne Bank Statement_03_Mar 2025.pdf",
+    "period": "Mar 01, 2025 to Mar 31, 2025",
+    "beginBalance": 7296.73,
+    "endBalance": 10152.22,
+    "transactionCount": 5
+  },
+  {
+    "file": "MountainOne Bank Statement_04_Apr 2025.pdf",
+    "period": "Apr 01, 2025 to Apr 30, 2025",
+    "beginBalance": 10152.22,
+    "endBalance": 10044.3,
+    "transactionCount": 4
+  },
+  {
+    "file": "MountainOne Bank Statement_05_May 2025.pdf",
+    "period": "May 01, 2025 to May 31, 2025",
+    "beginBalance": 10044.3,
+    "endBalance": 9623.78,
+    "transactionCount": 6
+  },
+  {
+    "file": "MountainOne Bank Statement_06_Jun 2025.pdf",
+    "period": "Unknown",
+    "beginBalance": 0,
+    "endBalance": 0,
+    "transactionCount": 0
+  },
+  {
+    "file": "MountainOne Bank Statement_07_Jul 2025.pdf",
+    "period": "Unknown",
+    "beginBalance": 0,
+    "endBalance": 0,
+    "transactionCount": 0
+  },
+  {
+    "file": "MountainOne Bank Statement_08_Aug 2025.pdf",
+    "period": "Unknown",
+    "beginBalance": 0,
+    "endBalance": 0,
+    "transactionCount": 0
+  }
+]
