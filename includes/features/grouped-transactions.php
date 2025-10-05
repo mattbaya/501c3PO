@@ -135,6 +135,7 @@ function five01c3po_grouped_transactions_page() {
                 m.*,
                 s.stripe_charge_id, s.stripe_created, s.amount as stripe_amount, s.net_amount as stripe_net,
                 s.stripe_fee, s.customer_email, s.description as stripe_desc, s.status as stripe_status,
+                s.payout_arrival_date, s.payout_status,
                 g.transaction_id as gf_txn_id, g.date_created as gf_date, g.amount as gf_amount,
                 g.lead_id, g.transaction_type as gf_type,
                 b.post_date as bank_date, b.credit as bank_amount, b.description as bank_desc,
@@ -169,10 +170,16 @@ function five01c3po_grouped_transactions_page() {
                         $time_diff = $diff . 's';
                     }
 
+                    // Show payout info
+                    $payout_info = '';
+                    if ($match->payout_arrival_date) {
+                        $payout_info = 'Payout: ' . $match->payout_arrival_date;
+                    }
+
                     $rows_html .= sprintf(
                         '<div class="txn-row stripe-row">
                             <div><span class="source-badge badge-stripe">STRIPE</span></div>
-                            <div class="date-column">%s</div>
+                            <div class="date-column">%s<br><small style="color: #666;">%s</small></div>
                             <div class="amount-column">$%.2f</div>
                             <div>%s</div>
                             <div class="amount-column">$%.2f</div>
@@ -180,6 +187,7 @@ function five01c3po_grouped_transactions_page() {
                             <div>%s</div>
                         </div>',
                         date('Y-m-d H:i:s', strtotime($match->stripe_created)),
+                        $payout_info,
                         floatval($match->stripe_amount),
                         substr($match->customer_email ?: 'N/A', 0, 30),
                         floatval($match->stripe_net),
@@ -288,10 +296,12 @@ function five01c3po_grouped_transactions_page() {
                         <div>Fee</div>
                         <div>Status</div>
                     </div>';
+                    $payout_info = $txn->payout_arrival_date ? '<br><small>Payout: ' . $txn->payout_arrival_date . '</small>' : '';
+
                     echo sprintf(
                         '<div class="txn-row stripe-row">
                             <div><span class="source-badge badge-stripe">STRIPE</span></div>
-                            <div class="date-column">%s</div>
+                            <div class="date-column">%s%s</div>
                             <div class="amount-column">$%.2f</div>
                             <div>%s</div>
                             <div class="amount-column">$%.2f</div>
@@ -299,6 +309,7 @@ function five01c3po_grouped_transactions_page() {
                             <div>%s</div>
                         </div>',
                         date('Y-m-d H:i:s', strtotime($txn->stripe_created)),
+                        $payout_info,
                         floatval($txn->amount),
                         substr($txn->customer_email ?: 'N/A', 0, 30),
                         floatval($txn->net_amount),
