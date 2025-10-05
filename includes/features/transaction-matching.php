@@ -341,6 +341,21 @@ function five01c3po_transaction_matching_page() {
     <div class="wrap">
         <h1>🔗 Transaction Matching</h1>
 
+        <?php if ($total_stripe == 0): ?>
+            <div class="notice notice-warning">
+                <h3>⚠️ No Stripe Data Found</h3>
+                <p>The Stripe transactions table is empty. You need to sync Stripe data before matching can work.</p>
+                <p><strong>Next Steps:</strong></p>
+                <ol>
+                    <li>Go to <a href="<?php echo admin_url('admin.php?page=501c3PO-stripe-sync'); ?>"><strong>💳 Stripe Sync</strong></a></li>
+                    <li>Enter your officer passphrase or Stripe API key</li>
+                    <li>Set <strong>Days to Sync: 3650</strong> (for complete historical data)</li>
+                    <li>Click "Sync Transactions Now"</li>
+                    <li>Return here and run "Auto-Match"</li>
+                </ol>
+            </div>
+        <?php endif; ?>
+
         <?php if ($match_results): ?>
             <div class="notice notice-success">
                 <h3>Auto-Matching Complete!</h3>
