@@ -47,7 +47,8 @@ $feature_files = array(
     'includes/features/bank-transactions.php',
     'includes/features/stripe-integration.php',
     'includes/features/unified-transactions.php',
-    'includes/features/transaction-matching.php'
+    'includes/features/transaction-matching.php',
+    'includes/features/grouped-transactions.php'
 );
 
 foreach ($feature_files as $file) {
