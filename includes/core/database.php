@@ -81,7 +81,29 @@ function fiveohonec3po_create_tables() {
         KEY idx_type (transaction_type)
     ) $charset_collate;";
     dbDelta($sql);
-    
+
+    // Bank transactions table
+    $table_name = $wpdb->prefix . 'bank_transactions';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        account_number varchar(50),
+        post_date date NOT NULL,
+        check_number varchar(20),
+        description text NOT NULL,
+        debit decimal(10,2) DEFAULT 0.00,
+        credit decimal(10,2) DEFAULT 0.00,
+        status varchar(50),
+        balance decimal(10,2) DEFAULT 0.00,
+        member_id mediumint(9),
+        notes text,
+        imported_date datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_post_date (post_date),
+        KEY idx_member (member_id),
+        KEY idx_status (status)
+    ) $charset_collate;";
+    dbDelta($sql);
+
     // Email campaigns table
     $table_name = $wpdb->prefix . 'emails';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
