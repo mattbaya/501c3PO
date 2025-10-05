@@ -306,7 +306,7 @@ function swca_dashboard_auth_check() {
     // Handle password submission
     if (isset($_POST['swca_dashboard_password']) && isset($_POST['swca_dashboard_submit'])) {
         $submitted_password = sanitize_text_field($_POST['swca_dashboard_password']);
-        $correct_password = 'F1v3C0rn3rs';
+        $correct_password = npo_get_dashboard_password();
         
         if ($submitted_password === $correct_password) {
             // Set authentication cookie that expires in 24 hours
@@ -330,7 +330,7 @@ function swca_dashboard_auth_check() {
 
 // Check if user has access to dashboard pages
 function swca_is_dashboard_authenticated() {
-    $correct_password = 'F1v3C0rn3rs';
+    $correct_password = npo_get_dashboard_password();
     $expected_hash = hash('sha256', $correct_password . 'swca_salt');
     
     return isset($_COOKIE['swca_dashboard_auth']) && $_COOKIE['swca_dashboard_auth'] === $expected_hash;
@@ -2905,10 +2905,10 @@ function swca_member_directory_handler($atts) {
 
 function swca_create_custom_roles() {
     // Remove existing custom roles first
-    remove_role('swca_member');
-    remove_role('swca_officer');
-    remove_role('swca_treasurer');
-    remove_role('swca_committee_chair');
+    remove_role(npo_get_role_slug('member'));
+    remove_role(npo_get_role_slug('officer'));
+    remove_role(npo_get_role_slug('treasurer'));
+    remove_role(npo_get_role_slug('committee_chair'));
     
     // Define capabilities
     $member_caps = array(
@@ -2985,10 +2985,10 @@ function swca_create_custom_roles() {
     );
     
     // Create roles
-    add_role('swca_member', 'SWCA Member', $member_caps);
-    add_role('swca_officer', 'SWCA Officer', $officer_caps);
-    add_role('swca_treasurer', 'SWCA Treasurer', $treasurer_caps);
-    add_role('swca_committee_chair', 'SWCA Committee Chair', $committee_chair_caps);
+    add_role(npo_get_role_slug('member'), 'SWCA Member', $member_caps);
+    add_role(npo_get_role_slug('officer'), 'SWCA Officer', $officer_caps);
+    add_role(npo_get_role_slug('treasurer'), 'SWCA Treasurer', $treasurer_caps);
+    add_role(npo_get_role_slug('committee_chair'), 'SWCA Committee Chair', $committee_chair_caps);
     
     // Add capabilities to administrator
     $admin = get_role('administrator');
@@ -5868,14 +5868,14 @@ function swca_process_import_file($uploaded_file, $post_data) {
                             // Update existing member
                             unset($member_data['id']);
                             $wpdb->update(
-                                $wpdb->prefix . 'swca_members',
+                                npo_get_table_name('members'),
                                 $member_data,
                                 array('id' => $existing->id)
                             );
                         } else {
                             // Insert new member
                             unset($member_data['id']);
-                            $wpdb->insert($wpdb->prefix . 'swca_members', $member_data);
+                            $wpdb->insert(npo_get_table_name('members'), $member_data);
                         }
                         $imported_members++;
                     }

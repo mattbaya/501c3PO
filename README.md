@@ -1,406 +1,238 @@
-# AlmaLinux 9 Development Container
+# 501c3PO - Non-Profit Membership Management System
 
-🚀 A comprehensive development environment based on AlmaLinux 9 with all essential tools, web server stack, and modern CLI utilities.
+🏛️ **A complete, organization-neutral membership management system for non-profit organizations built as a WordPress plugin.**
 
-## 🎨 Features
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue)](https://wordpress.org/)
+[![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple)](https://www.php.net/)
 
-### **Colorful Welcome Banner**
-- Rainbow "BayaDev" ASCII art using toilet
-- Container information and tool summary
-- Personalized MOTD (Message of the Day)
+## Overview
 
-### **Programming Languages & Runtimes**
-- **Python 3.9** with development packages
-- **Node.js 20.19.4** with npm, yarn, pnpm (upgraded for Claude Flow)
-- **Go 1.22** with full toolchain
-- **Rust** with Cargo package manager
-- **Java 17 OpenJDK** with Maven
-- **PHP 8.0** with comprehensive extensions
+501c3PO is a comprehensive membership management solution designed for neighborhood associations, community groups, and similar non-profit organizations. The plugin is **completely organization-neutral** and configures itself to your specific organization during an initial setup wizard.
 
-### **Web Server Stack**
-- **Apache HTTP Server 2.4** with SSL support and self-signed certificates
-- **MariaDB** full installation for WordPress development
-- **PHP-FPM** configured for optimal performance
-- **Server monitoring** with server-info and server-status pages
-- **Database support** for MariaDB, MySQL, PostgreSQL, SQLite
-- **HTTPS Proxy** configuration for secure WordPress development
+Unlike other membership plugins, 501c3PO adapts to YOUR organization:
+- ✅ **Custom Branding** - Uses your organization name throughout
+- ✅ **Dynamic Database** - Table names based on your org prefix
+- ✅ **Custom Roles** - WordPress roles named after your organization
+- ✅ **Flexible Features** - Enable only what you need
 
-### **Development Tools**
-- **Build Tools:** gcc, g++, make, cmake, automake, autoconf
-- **Version Control:** git, svn, mercurial, GitHub CLI
-- **Editors:** vim, nano, VS Code Server (code-server)
-- **Package Managers:** pip, pipenv, poetry, npm, yarn, cargo, maven
+## Key Features
 
-### **Modern CLI Utilities**
-- **File Management:** eza (modern ls), bat (syntax highlighting cat)
-- **Search Tools:** ripgrep, fd-find, fzf (fuzzy finder)
-- **Text Processing:** jq, yq, xmlstarlet
-- **Multiplexing:** tmux, screen, zsh with oh-my-zsh
+### Core Features (Always Available)
+- **Member Management** - Complete member profiles with categories and tags
+- **Dashboard System** - Password-protected member dashboard
+- **Individual Member Profiles** - Comprehensive member history and contact details
+- **Data Export/Import** - Complete migration packages and CSV export
+- **Web-Based Administration** - All tools accessible via WordPress admin
+- **Role-Based Access Control** - Custom roles automatically created for your org
 
-### **DevOps & Cloud Tools**
-- **Containers:** Docker CLI, docker-compose
-- **Kubernetes:** kubectl, helm
-- **Infrastructure:** Terraform, Ansible
-- **Cloud Platforms:** AWS CLI, Azure CLI
-- **Google Services:** GAM (Google Apps Manager), Gemini CLI
+### Optional Modular Features
+Enable/disable via Settings dashboard:
 
-### **AI Development Tools**
-- **Claude CLI** (@anthropic-ai/claude-code)
-- **Claude Flow** (claude-flow@alpha) v2.0.0-alpha.101 - AI orchestration and swarm coordination
-- **Gemini CLI** (Google's generative AI)
-- **OpenCode AI** development assistant
-- **Multi-provider API support** (Gemini, OpenAI, Claude with load balancing)
+- 📧 **Email Management** - Bulk email with approval workflow and scheduling
+- 🎉 **Event Management** - RSVP system with Google Calendar integration
+- 🙋 **Volunteer Signups** - SignUpGenius-style volunteer coordination
+- 💰 **Financial Management** - Income/expense tracking with Stripe integration
+- 🏛️ **Officer Tools** - Agendas, minutes, and administrative documents
+- 👥 **Committee Management** - Committee structure and membership tracking
+- 📁 **Document Management** - File upload with Google Drive organization
 
-### **WordPress Development Stack**
-- **Main Plugin**: SWCA Membership Management System
-- **Purpose**: Complete non-profit membership management with modular features
-- **Architecture**: Web-based administration with no CLI dependencies
-- **Features**: Email management, event coordination, financial tracking, committee management
-- **Access**: Password-protected dashboard at `/dashboard` (password: F1v3C0rn3rs)
-- **Roles**: Custom WordPress roles for Member, Officer, Treasurer, Committee Chair
-- **Integration**: Stripe, Google Calendar, Gmail, Google Drive APIs (optional)
-- **Deployment**: Production-ready package at `deployment-packages/swca-membership-management.zip`
-- **Administration**: All tools accessible via WordPress admin interface (CRM menu)
-- **Status**: ✅ Production-tested with 197 members, all undefined property warnings fixed
+## Quick Start
 
-### **Database Clients**
-- PostgreSQL client
-- MySQL client  
-- Redis client
-- SQLite with development libraries
+### Installation
 
-### **Python Data Science Stack**
-- **Core Libraries:** pandas, numpy, matplotlib
-- **Development:** black, flake8, pylint, pytest
-- **Interactive:** JupyterLab, IPython
-- **Web Frameworks:** Support for Django, FastAPI
-
-### **System Monitoring & Debugging**
-- **Performance:** htop, iotop, sysstat
-- **Process:** lsof, strace, pstree
-- **Network:** tcpdump, nmap, telnet, ssh clients
-
-## 🚀 Quick Start
-
-### **Using Docker Compose (Recommended)**
-
-1. **Clone this repository:**
+1. **Download the Plugin**
    ```bash
-   git clone <repository-url>
-   cd almalinux-dev-container
+   # Clone the repository
+   git clone https://github.com/mattbaya/501c3PO.git
+   cd 501c3PO
    ```
 
-2. **Build and start the container:**
-   ```bash
-   docker-compose up -d
-   ```
+2. **Deploy to WordPress**
+   - Upload `deployment-packages/nonprofit-membership-management.zip` to your WordPress site
+   - Or install via: Plugins → Add New → Upload Plugin
+   - Activate the plugin
 
-3. **Access the container:**
-   ```bash
-   docker exec -it almalinux-dev-container bash
-   ```
+3. **Complete Setup Wizard**
+   - After activation, click "Setup NPO Plugin"
+   - Enter your organization details:
+     - Organization Full Name (e.g., "South Williamstown Community Association")
+     - Organization Abbreviation (e.g., "SWCA")
+     - Database Prefix (e.g., "swca")
+     - Organization Slug (e.g., "swca")
+     - Dashboard Password
+   - Click "Complete Setup"
 
-4. **Initialize Claude Flow (first time only):**
-   ```bash
-   # Claude Flow will auto-initialize on first container start
-   # Or manually run:
-   ~/setup-claude-flow.sh
-   ```
+4. **Configure Your System**
+   - Import your members via CRM → Data Import Tools
+   - Enable features in Dashboard → Settings
+   - Add API keys for integrations (optional)
 
-### **Using Docker directly**
+## Configuration
+
+### Organization Settings
+
+The plugin stores organization-specific settings in WordPress options:
+
+```php
+// Example configuration (set via setup wizard)
+'org_name' => 'Your Community Association',
+'org_short_name' => 'YCA',
+'org_prefix' => 'yca',  // Database tables: wp_yca_members
+'org_slug' => 'yca',    // URLs: yoursite.com/yca/dashboard
+'dashboard_password' => 'your-secure-password'
+```
+
+### Database Tables
+
+The plugin creates 15+ tables with your custom prefix:
+
+- `wp_{prefix}_members` - Member data
+- `wp_{prefix}_financial_transactions` - Finances
+- `wp_{prefix}_emails` - Email campaigns
+- `wp_{prefix}_events` - Event management
+- `wp_{prefix}_volunteer_slots` - Volunteers
+- And more...
+
+### WordPress Roles
+
+Four custom roles are automatically created:
+
+- **{ORG} Member** - Basic access
+- **{ORG} Officer** - Manage emails, events, members
+- **{ORG} Treasurer** - Full financial access
+- **{ORG} Committee Chair** - Committee management
+
+## API Integrations (Optional)
+
+Configure via Dashboard → Settings:
+
+- **Stripe** - Payment tracking and fee calculation
+- **Google Calendar** - Automatic event creation
+- **Gmail** - OAuth-based bulk email
+- **Google Drive** - Document organization
+- **Google Analytics** - Usage tracking
+
+## Development
+
+### Prerequisites
+
+- Docker and Docker Compose
+- PHP 7.4+
+- WordPress 5.0+
+- MariaDB or MySQL
+
+### Development Environment
 
 ```bash
-# Build the image
-docker build -t almalinux-dev .
+# Start development container
+docker-compose up -d
 
-# Run the container
-docker run -it --name almalinux-dev-container \
-  -p 80:80 -p 443:443 -p 8080:8080 -p 3000:3000 \
-  -p 5001:5000 -p 8000:8000 -p 8888:8888 \
-  -v $(pwd)/workspace:/home/developer/workspace \
-  almalinux-dev bash
-```
-
-## 🌐 Web Services
-
-The container exposes several web services:
-
-| Service | Port | URL | Description |
-|---------|------|-----|-------------|
-| Apache HTTP | 80 | http://localhost | Main web server |
-| Apache HTTPS | 443 | https://localhost | SSL web server (proxy to WordPress) |
-| WordPress | 8080 | http://localhost:8080 | PHP dev server (proxied via HTTPS) |
-| SWCA Dashboard | 8080 | http://localhost:8080/dashboard | Membership management system (password: F1v3C0rn3rs) |
-| SWCA Admin Tools | 8080 | http://localhost:8080/wp-admin | CRM menu with web-based administrative tools |
-| VS Code Server | 8080 | http://localhost:8080 | Browser-based VS Code |
-| JupyterLab | 8888 | http://localhost:8888 | Data science notebook |
-| Node.js Apps | 3000 | http://localhost:3000 | Development server |
-| Python Apps | 5001 | http://localhost:5001 | Flask/Django apps |
-| FastAPI/Django | 8000 | http://localhost:8000 | API development |
-
-### **Apache Monitoring Pages**
-- **Server Status:** http://localhost/server-status
-- **Server Info:** http://localhost/server-info
-- **Auto Status:** http://localhost/server-status?auto (machine-readable)
-
-## 📁 Directory Structure
-
-```
-/
-├── home/developer/          # User home directory
-│   └── workspace/          # Mounted workspace volume
-├── var/www/html/           # Apache document root
-│   ├── index.html         # Welcome page
-│   └── info.php           # PHP information page
-├── etc/httpd/conf.d/      # Apache configuration
-│   ├── php-fpm.conf       # PHP-FPM proxy configuration
-│   └── server-info-status.conf  # Server monitoring
-└── deployment-packages/    # Production deployment files
-    ├── swca-membership-management.zip  # Complete WordPress plugin
-    └── INSTALLATION_GUIDE.md          # Deployment documentation
-```
-
-## 📦 Production Deployment
-
-### **SWCA Membership Management Plugin**
-
-Ready-to-deploy WordPress plugin with complete web-based administration:
-
-- **Package**: `deployment-packages/swca-membership-management.zip` (58KB)
-- **Installation**: Upload via WordPress admin → Plugins → Add New → Upload Plugin
-- **Features**: All administrative tools integrated into web interface
-- **No CLI Required**: Everything accessible through WordPress admin panel
-
-#### **Web-Based Administrative Tools**
-| Tool | Location | Purpose |
-|------|----------|----------|
-| Main Dashboard | CRM → SWCA Dashboard | Overview and quick actions |
-| Export/Import | CRM → Export & Import | Complete data migration packages |
-| Stripe Refunds | CRM → Stripe Refunds | Process refunds with secure API input |
-| Data Import | CRM → Data Import Tools | Historical membership data upload |
-| Financial Mgmt | CRM → Financial Management | Income/expense tracking |
-| Member Tools | CRM → Member Tools | Member management utilities |
-
-#### **Key Deployment Features**
-- ✅ **Web-Only Administration** - No SSH/CLI access required
-- ✅ **Secure API Handling** - Stripe keys entered via form, never stored
-- ✅ **File Upload Interface** - CSV import via browser
-- ✅ **Preview & Confirmation** - Review all changes before applying
-- ✅ **Complete Migration** - Export/import entire database between servers
-- ✅ **Multi-Year Tracking** - Historical membership data comparison
-- ✅ **Table Prefix Compatibility** - Works with any WordPress table prefix configuration
-- ✅ **Production-Tested** - Successfully deployed with 197+ members, all warnings resolved
-
-### **Installation Guide**
-Complete deployment instructions available in `deployment-packages/INSTALLATION_GUIDE.md`
-
-## 🔧 Configuration
-
-### **Environment Variables**
-- `LANG=en_US.UTF-8` - System locale
-- `LC_ALL=en_US.UTF-8` - Locale settings
-- `PATH` - Includes Go, Rust, and local binaries
-- `GOPATH=/home/developer/go` - Go workspace
-- `JAVA_HOME=/usr/lib/jvm/java-17-openjdk` - Java installation
-
-### **Volume Mounts**
-- `./workspace:/home/developer/workspace` - Development workspace
-- `~/.config/gam:/home/developer/.config/gam` - GAM configuration
-- `~/.ssh:/home/developer/.ssh:ro` - SSH keys (read-only)
-- `~/.gitconfig:/home/developer/.gitconfig:ro` - Git config (read-only)
-- `/var/run/docker.sock:/var/run/docker.sock` - Docker-in-Docker
-
-### **User Configuration**
-- **Default User:** `developer`
-- **Sudo Access:** Full sudo privileges without password
-- **Shell:** bash with enhanced prompt
-- **Home Directory:** `/home/developer`
-
-## 🛠️ Usage Examples
-
-### **Claude Flow AI Orchestration**
-```bash
-# Launch Non-Profit Plugin Development Menu
-./launch-nonprofit-plugin.sh
-
-# Initialize a development swarm
-npx claude-flow@alpha swarm init --topology hierarchical --max-agents 12
-
-# Start a SPARC TDD project
-npx claude-flow@alpha sparc tdd "create WordPress feature"
-
-# Direct SPARC TDD workflow
-./claude-flow-gemini sparc tdd "create WordPress feature"
-
-# Check swarm status
-npx claude-flow@alpha swarm status
-
-# Monitor real-time progress
-npx claude-flow@alpha swarm monitor
-
-# List stored memories
-npx claude-flow@alpha memory list
-```
-
-### **WordPress Development**
-```bash
-# Start WordPress development server
-docker exec almalinux-dev-container bash -c "cd /home/developer/wordpress-test/wordpress && php -S 0.0.0.0:8080" &
-
-# Start Apache with SSL
-sudo /usr/sbin/httpd
-
-# Access WordPress & SWCA System
-# WordPress: http://localhost:8080
-# SWCA Dashboard: http://localhost:8080/dashboard (password: F1v3C0rn3rs)
-# WordPress Admin: http://localhost:8080/wp-admin (admin/admin123)
-# HTTPS Proxy: https://localhost:443
-
-# Deploy plugin updates (development only)
-docker cp /Users/mjb9/scripts/almalinux-dev-container/swca-membership-export-corrected.php almalinux-dev-container:/var/www/html/wp-content/plugins/swca-membership-export-corrected/swca-membership-export-corrected.php
-
-# Production deployment
-# Upload deployment-packages/swca-membership-management.zip via WordPress admin
-# All administrative tools available at: CRM > [Tool Name]
-
-# Test with Chromium
-chromium-browser --headless --no-sandbox --disable-dev-shm-usage --dump-dom http://localhost:8080/dashboard
-```
-
-### **Web Development**
-```bash
-# Start Apache and PHP-FPM (in container)
-sudo /usr/sbin/httpd
-sudo /usr/sbin/php-fpm --daemonize
-
-# Create a PHP project
-echo "<?php echo 'Hello World!'; ?>" > /var/www/html/hello.php
-```
-
-### **Python Development**
-```bash
-# Create virtual environment
-python3 -m venv myproject
-source myproject/bin/activate
-
-# Install packages
-pip install flask django fastapi
-
-# Start JupyterLab
-jupyter lab --ip=0.0.0.0 --port=8888 --allow-root
-```
-
-### **Node.js Development**
-```bash
-# Create new project
-npm init -y
-npm install express
-
-# Start development server
-npm run dev
-```
-
-### **Go Development**
-```bash
-# Initialize Go module
-go mod init myproject
-
-# Build and run
-go build -o app main.go
-./app
-```
-
-### **Container Operations**
-```bash
-# Access container shell
+# Access container
 docker exec -it almalinux-dev-container bash
 
-# Check container logs
-docker-compose logs -f
+# Start WordPress development server
+cd /home/developer/wordpress-test/wordpress
+php -S 0.0.0.0:8080
 
-# Stop container
-docker-compose down
-
-# Rebuild container
-docker-compose build --no-cache
+# Access at http://localhost:8080
 ```
 
-## 🔍 Monitoring & Debugging
+### Environment Variables
 
-### **System Monitoring**
+Create a `.env` file (not committed to git):
+
 ```bash
-# Process monitoring
-htop                    # Interactive process viewer
-iotop                   # I/O monitoring
-ps aux | grep nginx     # Process listing
+# Organization Configuration (for development/testing)
+ORG_NAME="Your Organization Name"
+ORG_SHORT_NAME="YON"
+ORG_PREFIX="yon"
+ORG_SLUG="your-org"
+DASHBOARD_PASSWORD="your-password"
 
-# Performance analysis
-strace -p <pid>         # System call tracing
-lsof -i :80            # Open files/network connections
+# API Keys
+GEMINI_API_KEY=your_key
+OPENAI_API_KEY=your_key
+CLAUDE_API_KEY=your_key
 ```
 
-### **Apache Monitoring**
-- **Real-time Status:** http://localhost/server-status
-- **Configuration Info:** http://localhost/server-info?config
-- **Module List:** http://localhost/server-info?list
+## Project Structure
 
-### **Container Health**
-```bash
-# Check running services
-docker exec almalinux-dev-container ps aux
-
-# Test web services
-curl http://localhost/server-status
-curl http://localhost:8080  # VS Code Server
+```
+501c3PO/
+├── deployment-packages/
+│   └── nonprofit-membership-management/
+│       ├── nonprofit-membership-management.php  # Main plugin file
+│       ├── includes/
+│       │   ├── config-helpers.php              # Configuration utilities
+│       │   └── setup-wizard.php                # First-run setup
+│       └── README.md
+├── includes/
+│   ├── config-helpers.php      # Configuration helper functions
+│   └── setup-wizard.php        # WordPress setup wizard
+├── refactor-to-generic.php     # Refactoring script
+├── CLAUDE.md                   # Development environment docs
+└── README.md                   # This file
 ```
 
-## 🧪 Development Workflows
+## Deployment
 
-### **Full-Stack Development**
-1. **Backend:** Python/FastAPI or Node.js/Express on port 8000/3000
-2. **Frontend:** React/Vue development server on port 3000
-3. **Database:** PostgreSQL/MySQL clients for database connections
-4. **Code Editor:** VS Code Server on port 8080
-5. **Monitoring:** Apache server-status for performance metrics
+### Production Deployment
 
-### **Data Science Workflow**
-1. **Environment:** JupyterLab on port 8888
-2. **Libraries:** pandas, numpy, matplotlib pre-installed
-3. **Databases:** SQLite, PostgreSQL, MySQL clients available
-4. **Version Control:** Git with GitHub CLI integration
+1. **Package Location:** `deployment-packages/nonprofit-membership-management.zip`
+2. **Size:** ~60KB
+3. **Requirements:** WordPress 5.0+, PHP 7.4+, MySQL/MariaDB
 
-### **DevOps Workflow**
-1. **Infrastructure:** Terraform for provisioning
-2. **Configuration:** Ansible for automation
-3. **Containers:** Docker-in-Docker for containerization
-4. **Orchestration:** kubectl and helm for Kubernetes
-5. **Cloud:** AWS CLI and Azure CLI for cloud operations
+### Web-Based Administration
 
-## 📝 Build Information
+All tools accessible via WordPress admin (no SSH required):
 
-- **Base Image:** AlmaLinux 9 (Sage Margay)
-- **Architecture:** Multi-arch (amd64/arm64)
-- **Container Size:** ~2.5GB (includes all tools and dependencies)
-- **Build Time:** ~15-20 minutes (depending on network)
+| Tool | Location | Purpose |
+|------|----------|----------|
+| Setup Wizard | Setup NPO Plugin | Initial configuration |
+| Dashboard | /dashboard | Member portal |
+| Data Import | CRM → Data Import | CSV uploads |
+| Export/Import | CRM → Export & Import | Data migration |
+| Settings | Dashboard → Settings | Feature toggles |
 
-## 🤝 Contributing
+## Migration from SWCA
+
+If migrating from an existing SWCA installation:
+
+1. Setup wizard will detect existing SWCA tables
+2. Form pre-fills with SWCA settings
+3. Existing data is preserved
+4. Plugin uses existing database tables
+
+## Documentation
+
+- **Installation Guide:** `deployment-packages/INSTALLATION_GUIDE.md`
+- **Development Guide:** `CLAUDE.md`
+- **API Documentation:** Coming soon
+
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test the build: `docker-compose build`
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## License
 
-This project is open source and available under the MIT License.
+This project is licensed under the GPL v3 License - see the LICENSE file for details.
 
-## 🔗 Related Projects
+## Credits
 
-- [AlmaLinux](https://almalinux.org/) - Enterprise Linux distribution
-- [Docker](https://docker.com/) - Containerization platform
-- [VS Code Server](https://github.com/coder/code-server) - Browser-based VS Code
+**Author:** Matt Baya
+**Version:** 2.0.0
+**Repository:** https://github.com/mattbaya/501c3PO
+
+## Support
+
+- **Issues:** [GitHub Issues](https://github.com/mattbaya/501c3PO/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/mattbaya/501c3PO/discussions)
 
 ---
 
-**Built with ❤️ for developers who want a complete, ready-to-use development environment!**
+**Built with ❤️ for non-profit organizations**

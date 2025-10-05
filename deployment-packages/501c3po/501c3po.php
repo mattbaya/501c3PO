@@ -1,12 +1,16 @@
 <?php
 /*
-Plugin Name: SWCA Membership Export
-Description: SWCA membership display with correct export functionality
+Plugin Name: Non-Profit Membership Management
+Description: Complete membership management system for non-profit organizations/ with correct export functionality
 Version: 1.2
 */
 
 // Prevent direct access
 defined('ABSPATH') or die('No script kiddies please!');
+
+// Load configuration helpers
+require_once plugin_dir_path(__FILE__) . 'includes/config-helpers.php';
+require_once plugin_dir_path(__FILE__) . 'includes/setup-wizard.php';
 
 // Plugin activation hook
 register_activation_hook(__FILE__, 'swca_create_members_table');
@@ -288,7 +292,7 @@ add_action('admin_init', 'swca_update_member_schema');
 function swca_create_members_table() {
     global $wpdb;
     
-    $table_name = $wpdb->prefix . 'swca_members';
+    $table_name = npo_get_table_name('members');
     
     $charset_collate = $wpdb->get_charset_collate();
     
@@ -389,7 +393,7 @@ function swca_dashboard_auth_check() {
     // Handle password submission
     if (isset($_POST['swca_dashboard_password']) && isset($_POST['swca_dashboard_submit'])) {
         $submitted_password = sanitize_text_field($_POST['swca_dashboard_password']);
-        $correct_password = 'F1v3C0rn3rs';
+        $correct_password = npo_get_dashboard_password();
         
         if ($submitted_password === $correct_password) {
             // Set authentication cookie that expires in 24 hours
@@ -413,7 +417,7 @@ function swca_dashboard_auth_check() {
 
 // Check if user has access to dashboard pages
 function swca_is_dashboard_authenticated() {
-    $correct_password = 'F1v3C0rn3rs';
+    $correct_password = npo_get_dashboard_password();
     $expected_hash = hash('sha256', $correct_password . 'swca_salt');
     
     return isset($_COOKIE['swca_dashboard_auth']) && $_COOKIE['swca_dashboard_auth'] === $expected_hash;
@@ -3187,10 +3191,10 @@ function swca_member_directory_handler($atts) {
 
 function swca_create_custom_roles() {
     // Remove existing custom roles first
-    remove_role('swca_member');
-    remove_role('swca_officer');
-    remove_role('swca_treasurer');
-    remove_role('swca_committee_chair');
+    remove_role(npo_get_role_slug('member'));
+    remove_role(npo_get_role_slug('officer'));
+    remove_role(npo_get_role_slug('treasurer'));
+    remove_role(npo_get_role_slug('committee_chair'));
     
     // Define capabilities
     $member_caps = array(
@@ -3267,10 +3271,10 @@ function swca_create_custom_roles() {
     );
     
     // Create roles
-    add_role('swca_member', 'SWCA Member', $member_caps);
-    add_role('swca_officer', 'SWCA Officer', $officer_caps);
-    add_role('swca_treasurer', 'SWCA Treasurer', $treasurer_caps);
-    add_role('swca_committee_chair', 'SWCA Committee Chair', $committee_chair_caps);
+    add_role(npo_get_role_slug('member'), 'SWCA Member', $member_caps);
+    add_role(npo_get_role_slug('officer'), 'SWCA Officer', $officer_caps);
+    add_role(npo_get_role_slug('treasurer'), 'SWCA Treasurer', $treasurer_caps);
+    add_role(npo_get_role_slug('committee_chair'), 'SWCA Committee Chair', $committee_chair_caps);
     
     // Add capabilities to administrator
     $admin = get_role('administrator');

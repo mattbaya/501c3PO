@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: SWCA Membership Export
-Description: SWCA membership display with correct export functionality
+Plugin Name: Non-Profit Membership Management
+Description: Complete membership management system for non-profit organizations/ with correct export functionality
 Version: 1.2
 */
 
@@ -288,26 +288,26 @@ function swca_update_member_schema() {
     global $wpdb;
     
     // Check if we need to add notes column
-    $notes_column = $wpdb->get_results("SHOW COLUMNS FROM wp_swca_members LIKE 'notes'");
+    $notes_column = $wpdb->get_results("SHOW COLUMNS FROM ' . npo_get_table_name('members') . ' LIKE 'notes'");
     if (empty($notes_column)) {
-        $wpdb->query("ALTER TABLE wp_swca_members ADD COLUMN notes LONGTEXT NULL AFTER status_2023_2024");
+        $wpdb->query("ALTER TABLE ' . npo_get_table_name('members') . ' ADD COLUMN notes LONGTEXT NULL AFTER status_2023_2024");
     }
     
     // Check if we need to add categories column
-    $categories_column = $wpdb->get_results("SHOW COLUMNS FROM wp_swca_members LIKE 'categories'");
+    $categories_column = $wpdb->get_results("SHOW COLUMNS FROM ' . npo_get_table_name('members') . ' LIKE 'categories'");
     if (empty($categories_column)) {
-        $wpdb->query("ALTER TABLE wp_swca_members ADD COLUMN categories TEXT NULL AFTER notes");
+        $wpdb->query("ALTER TABLE ' . npo_get_table_name('members') . ' ADD COLUMN categories TEXT NULL AFTER notes");
     }
     
     // Check if we need to add tags column
-    $tags_column = $wpdb->get_results("SHOW COLUMNS FROM wp_swca_members LIKE 'tags'");
+    $tags_column = $wpdb->get_results("SHOW COLUMNS FROM ' . npo_get_table_name('members') . ' LIKE 'tags'");
     if (empty($tags_column)) {
-        $wpdb->query("ALTER TABLE wp_swca_members ADD COLUMN tags TEXT NULL AFTER categories");
+        $wpdb->query("ALTER TABLE ' . npo_get_table_name('members') . ' ADD COLUMN tags TEXT NULL AFTER categories");
     }
     
     // Create member notes table for detailed notes with timestamps
     $charset_collate = $wpdb->get_charset_collate();
-    $sql_notes = "CREATE TABLE IF NOT EXISTS wp_swca_member_notes (
+    $sql_notes = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('member_notes') . ' (
         id int(11) NOT NULL AUTO_INCREMENT,
         member_id int(11) NOT NULL,
         note_text LONGTEXT NOT NULL,
@@ -321,7 +321,7 @@ function swca_update_member_schema() {
         KEY note_type (note_type),
         KEY created_by (created_by),
         KEY created_date (created_date),
-        FOREIGN KEY (member_id) REFERENCES wp_swca_members(id) ON DELETE CASCADE
+        FOREIGN KEY (member_id) REFERENCES ' . npo_get_table_name('members') . '(id) ON DELETE CASCADE
     ) $charset_collate;";
     
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -333,7 +333,7 @@ function swca_dashboard_auth_check() {
     // Handle password submission
     if (isset($_POST['swca_dashboard_password']) && isset($_POST['swca_dashboard_submit'])) {
         $submitted_password = sanitize_text_field($_POST['swca_dashboard_password']);
-        $correct_password = 'F1v3C0rn3rs';
+        $correct_password = npo_get_dashboard_password();
         
         if ($submitted_password === $correct_password) {
             // Set authentication cookie that expires in 24 hours
@@ -357,7 +357,7 @@ function swca_dashboard_auth_check() {
 
 // Check if user has access to dashboard pages
 function swca_is_dashboard_authenticated() {
-    $correct_password = 'F1v3C0rn3rs';
+    $correct_password = npo_get_dashboard_password();
     $expected_hash = hash('sha256', $correct_password . 'swca_salt');
     
     return isset($_COOKIE['swca_dashboard_auth']) && $_COOKIE['swca_dashboard_auth'] === $expected_hash;
@@ -660,7 +660,7 @@ function swca_stats_handler($atts) {
             SUM(CASE WHEN status_2024_2025 = 'Paid' THEN 1 ELSE 0 END) as paid_2024,
             SUM(CASE WHEN status_2023_2024 = 'Paid' THEN 1 ELSE 0 END) as paid_2023,
             SUM(CASE WHEN status_2024_2025 = 'Paid' AND status_2023_2024 = 'Paid' THEN 1 ELSE 0 END) as paid_both_years
-        FROM wp_swca_members
+        FROM ' . npo_get_table_name('members') . '
     ");
     
     if (!$stats) {
@@ -691,7 +691,7 @@ function swca_list_handler($atts) {
     global $wpdb;
     
     // Get all members with first name, last name, email, phone, and both years' status
-    $members = $wpdb->get_results("SELECT id, first_name, last_name, email_1, phone, status_2024_2025, status_2023_2024 FROM wp_swca_members ORDER BY last_name, first_name");
+    $members = $wpdb->get_results("SELECT id, first_name, last_name, email_1, phone, status_2024_2025, status_2023_2024 FROM ' . npo_get_table_name('members') . ' ORDER BY last_name, first_name");
     
     if (!$members) {
         return '<p>No members found</p>';
@@ -838,9 +838,9 @@ function swca_admin_dashboard() {
     global $wpdb;
     
     // Get quick stats
-    $total_members = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_members");
-    $paid_2024_25 = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_members WHERE status_2024_2025 = 'Paid'");
-    $notes_count = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_member_notes") ?: 0;
+    $total_members = $wpdb->get_var("SELECT COUNT(*) FROM ' . npo_get_table_name('members') . '");
+    $paid_2024_25 = $wpdb->get_var("SELECT COUNT(*) FROM ' . npo_get_table_name('members') . ' WHERE status_2024_2025 = 'Paid'");
+    $notes_count = $wpdb->get_var("SELECT COUNT(*) FROM ' . npo_get_table_name('member_notes') . '") ?: 0;
     
     ?>
     <div class="wrap">
@@ -1069,7 +1069,7 @@ function swca_export_page() {
                     SUM(CASE WHEN membership_type = 'Family' THEN 1 ELSE 0 END) as family_members,
                     SUM(CASE WHEN membership_type = 'Individual' THEN 1 ELSE 0 END) as individual_members,
                     SUM(total_amount) as total_revenue
-                FROM wp_swca_members
+                FROM ' . npo_get_table_name('members') . '
             ");
             
             if ($stats) {
@@ -1147,7 +1147,7 @@ function swca_export_members() {
         $where_clause = ' WHERE ' . implode(' AND ', $where_conditions);
     }
     
-    $query = "SELECT {$select_fields} FROM wp_swca_members{$where_clause} ORDER BY last_name, first_name";
+    $query = "SELECT {$select_fields} FROM ' . npo_get_table_name('members') . '{$where_clause} ORDER BY last_name, first_name";
     $members = $wpdb->get_results($query, ARRAY_A);
     
     if (empty($members)) {
@@ -1252,7 +1252,7 @@ function swca_fiscal_table_handler($atts) {
     
     // Get all members
     $members = $wpdb->get_results("
-        SELECT * FROM wp_swca_members 
+        SELECT * FROM ' . npo_get_table_name('members') . ' 
         ORDER BY last_name, first_name
         LIMIT 200
     ");
@@ -1511,7 +1511,7 @@ function swca_current_membership_handler($atts) {
     
     // Get all members
     $members = $wpdb->get_results("
-        SELECT * FROM wp_swca_members 
+        SELECT * FROM ' . npo_get_table_name('members') . ' 
         ORDER BY last_name, first_name
     ");
     
@@ -1671,7 +1671,7 @@ function swca_historical_membership_handler($atts) {
     
     // Get all members with historical data
     $members = $wpdb->get_results("
-        SELECT * FROM wp_swca_members 
+        SELECT * FROM ' . npo_get_table_name('members') . ' 
         WHERE (status_2024_2025 IS NOT NULL AND status_2024_2025 != '') 
            OR (status_2023_2024 IS NOT NULL AND status_2023_2024 != '')
         ORDER BY last_name, first_name
@@ -1956,7 +1956,7 @@ function swca_financial_transactions_handler($atts) {
             SUM(CASE WHEN transaction_type = 'income' THEN net_amount ELSE 0 END) as total_net_income,
             SUM(CASE WHEN transaction_type = 'expense' THEN gross_amount ELSE 0 END) as total_expenses,
             COUNT(*) as total_transactions
-        FROM wp_swca_financial_transactions 
+        FROM ' . npo_get_table_name('financial_transactions') . ' 
         WHERE transaction_date BETWEEN %s AND %s
     ", $start_date, $end_date));
     
@@ -1998,8 +1998,8 @@ function swca_financial_transactions_handler($atts) {
     // Transactions table
     $transactions = $wpdb->get_results($wpdb->prepare("
         SELECT ft.*, m.first_name, m.last_name 
-        FROM wp_swca_financial_transactions ft
-        LEFT JOIN wp_swca_members m ON ft.member_id = m.id
+        FROM ' . npo_get_table_name('financial_transactions') . ' ft
+        LEFT JOIN ' . npo_get_table_name('members') . ' m ON ft.member_id = m.id
         WHERE ft.transaction_date BETWEEN %s AND %s
         ORDER BY ft.transaction_date DESC, ft.created_at DESC
         LIMIT 100
@@ -2073,7 +2073,7 @@ function swca_sync_stripe_transactions($api_key) {
         
         // Check if we already have this transaction
         $existing = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM wp_swca_financial_transactions WHERE stripe_charge_id = %s",
+            "SELECT id FROM ' . npo_get_table_name('financial_transactions') . ' WHERE stripe_charge_id = %s",
             $charge['id']
         ));
         
@@ -2098,7 +2098,7 @@ function swca_sync_stripe_transactions($api_key) {
         $email = $charge['billing_details']['email'] ?? '';
         if (!empty($email)) {
             $member = $wpdb->get_row($wpdb->prepare(
-                "SELECT id FROM wp_swca_members WHERE email_1 = %s OR email_2 = %s OR email_3 = %s OR email_4 = %s LIMIT 1",
+                "SELECT id FROM ' . npo_get_table_name('members') . ' WHERE email_1 = %s OR email_2 = %s OR email_3 = %s OR email_4 = %s LIMIT 1",
                 $email, $email, $email, $email
             ));
             if ($member) {
@@ -2120,7 +2120,7 @@ function swca_sync_stripe_transactions($api_key) {
         }
         
         // Insert transaction
-        $wpdb->insert('wp_swca_financial_transactions', array(
+        $wpdb->insert('' . npo_get_table_name('financial_transactions') . '', array(
             'transaction_date' => date('Y-m-d', $charge['created']),
             'transaction_type' => 'income',
             'category' => $category,
@@ -2152,7 +2152,7 @@ function swca_member_profile_handler($atts) {
     
     // Get member data
     $member = $wpdb->get_row($wpdb->prepare("
-        SELECT * FROM wp_swca_members WHERE id = %d
+        SELECT * FROM ' . npo_get_table_name('members') . ' WHERE id = %d
     ", $member_id));
     
     if (!$member) {
@@ -2376,7 +2376,7 @@ function swca_member_profile_handler($atts) {
         $is_private = isset($_POST['is_private']) ? 1 : 0;
         
         if (!empty($note_text)) {
-            $wpdb->insert('wp_swca_member_notes', array(
+            $wpdb->insert('' . npo_get_table_name('member_notes') . '', array(
                 'member_id' => $member_id,
                 'note_text' => $note_text,
                 'note_type' => $note_type,
@@ -2392,7 +2392,7 @@ function swca_member_profile_handler($atts) {
         $categories = sanitize_text_field($_POST['categories']);
         $tags = sanitize_text_field($_POST['tags']);
         
-        $wpdb->update('wp_swca_members', 
+        $wpdb->update('' . npo_get_table_name('members') . '', 
             array(
                 'categories' => $categories,
                 'tags' => $tags
@@ -2405,7 +2405,7 @@ function swca_member_profile_handler($atts) {
     // Member Notes Section
     $notes = $wpdb->get_results($wpdb->prepare("
         SELECT n.*, u.display_name 
-        FROM wp_swca_member_notes n
+        FROM ' . npo_get_table_name('member_notes') . ' n
         LEFT JOIN wp_users u ON n.created_by = u.ID
         WHERE n.member_id = %d 
         ORDER BY n.created_date DESC
@@ -2572,7 +2572,7 @@ function swca_member_directory_handler($atts) {
     
     // Get all members with contact information and filtering
     $members = $wpdb->get_results("
-        SELECT * FROM wp_swca_members 
+        SELECT * FROM ' . npo_get_table_name('members') . ' 
         $where_sql
         ORDER BY last_name, first_name
     ");
@@ -2581,7 +2581,7 @@ function swca_member_directory_handler($atts) {
     $all_categories = array();
     $all_tags = array();
     
-    $all_members = $wpdb->get_results("SELECT categories, tags FROM wp_swca_members WHERE categories IS NOT NULL OR tags IS NOT NULL");
+    $all_members = $wpdb->get_results("SELECT categories, tags FROM ' . npo_get_table_name('members') . ' WHERE categories IS NOT NULL OR tags IS NOT NULL");
     
     foreach ($all_members as $member) {
         if (!empty($member->categories)) {
@@ -2932,10 +2932,10 @@ function swca_member_directory_handler($atts) {
 
 function swca_create_custom_roles() {
     // Remove existing custom roles first
-    remove_role('swca_member');
-    remove_role('swca_officer');
-    remove_role('swca_treasurer');
-    remove_role('swca_committee_chair');
+    remove_role(npo_get_role_slug('member'));
+    remove_role(npo_get_role_slug('officer'));
+    remove_role(npo_get_role_slug('treasurer'));
+    remove_role(npo_get_role_slug('committee_chair'));
     
     // Define capabilities
     $member_caps = array(
@@ -3012,10 +3012,10 @@ function swca_create_custom_roles() {
     );
     
     // Create roles
-    add_role('swca_member', 'SWCA Member', $member_caps);
-    add_role('swca_officer', 'SWCA Officer', $officer_caps);
-    add_role('swca_treasurer', 'SWCA Treasurer', $treasurer_caps);
-    add_role('swca_committee_chair', 'SWCA Committee Chair', $committee_chair_caps);
+    add_role(npo_get_role_slug('member'), 'SWCA Member', $member_caps);
+    add_role(npo_get_role_slug('officer'), 'SWCA Officer', $officer_caps);
+    add_role(npo_get_role_slug('treasurer'), 'SWCA Treasurer', $treasurer_caps);
+    add_role(npo_get_role_slug('committee_chair'), 'SWCA Committee Chair', $committee_chair_caps);
     
     // Add capabilities to administrator
     $admin = get_role('administrator');
@@ -3036,7 +3036,7 @@ function swca_create_email_tables() {
     $charset_collate = $wpdb->get_charset_collate();
     
     // Email drafts and campaigns table
-    $sql_emails = "CREATE TABLE IF NOT EXISTS wp_swca_emails (
+    $sql_emails = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('emails') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         title varchar(255) NOT NULL,
         content longtext NOT NULL,
@@ -3062,7 +3062,7 @@ function swca_create_email_tables() {
     ) $charset_collate;";
     
     // Email recipients tracking
-    $sql_recipients = "CREATE TABLE IF NOT EXISTS wp_swca_email_recipients (
+    $sql_recipients = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('email_recipients') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         email_id mediumint(9) NOT NULL,
         member_id int(11) NOT NULL,
@@ -3076,12 +3076,12 @@ function swca_create_email_tables() {
         KEY email_id (email_id),
         KEY member_id (member_id),
         KEY status (status),
-        FOREIGN KEY (email_id) REFERENCES wp_swca_emails(id) ON DELETE CASCADE,
-        FOREIGN KEY (member_id) REFERENCES wp_swca_members(id) ON DELETE CASCADE
+        FOREIGN KEY (email_id) REFERENCES ' . npo_get_table_name('emails') . '(id) ON DELETE CASCADE,
+        FOREIGN KEY (member_id) REFERENCES ' . npo_get_table_name('members') . '(id) ON DELETE CASCADE
     ) $charset_collate;";
     
     // Email templates
-    $sql_templates = "CREATE TABLE IF NOT EXISTS wp_swca_email_templates (
+    $sql_templates = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('email_templates') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         name varchar(255) NOT NULL,
         subject varchar(255) NOT NULL,
@@ -3107,7 +3107,7 @@ function swca_create_email_tables() {
         <p style="color: #666; font-style: italic;">Connecting wine enthusiasts in the heart of Texas</p>
     </div>';
     
-    $wpdb->insert('wp_swca_email_templates', array(
+    $wpdb->insert('' . npo_get_table_name('email_templates') . '', array(
         'name' => 'SWCA Default Letterhead',
         'subject' => 'SWCA Newsletter',
         'content' => $letterhead_content . '<p>Your newsletter content goes here...</p>',
@@ -3176,7 +3176,7 @@ function swca_email_dashboard_handler($atts) {
             SUM(CASE WHEN status = 'pending_approval' THEN 1 ELSE 0 END) as pending,
             SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled,
             SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent
-        FROM wp_swca_emails
+        FROM ' . npo_get_table_name('emails') . '
     ");
     
     $output .= '<div class="email-grid">';
@@ -3201,7 +3201,7 @@ function swca_email_dashboard_handler($atts) {
     // Recent emails list
     $emails = $wpdb->get_results($wpdb->prepare("
         SELECT e.*, u.display_name as created_by_name, a.display_name as approved_by_name
-        FROM wp_swca_emails e
+        FROM ' . npo_get_table_name('emails') . ' e
         LEFT JOIN wp_users u ON e.created_by = u.ID
         LEFT JOIN wp_users a ON e.approved_by = a.ID
         ORDER BY e.created_date DESC
@@ -3256,7 +3256,7 @@ function swca_email_dashboard_handler($atts) {
 function swca_create_email_draft($data) {
     global $wpdb;
     
-    $wpdb->insert('wp_swca_emails', array(
+    $wpdb->insert('' . npo_get_table_name('emails') . '', array(
         'title' => sanitize_text_field($data['title']),
         'subject' => sanitize_text_field($data['subject']),
         'content' => wp_kses_post($data['content']),
@@ -3274,7 +3274,7 @@ function swca_approve_email($email_id) {
     if (!current_user_can('swca_approve_emails')) return false;
     
     global $wpdb;
-    return $wpdb->update('wp_swca_emails', 
+    return $wpdb->update('' . npo_get_table_name('emails') . '', 
         array(
             'status' => 'approved',
             'approved_by' => get_current_user_id()
@@ -3287,7 +3287,7 @@ function swca_schedule_email($email_id, $schedule_date) {
     if (!current_user_can('swca_schedule_emails')) return false;
     
     global $wpdb;
-    return $wpdb->update('wp_swca_emails', 
+    return $wpdb->update('' . npo_get_table_name('emails') . '', 
         array(
             'status' => 'scheduled',
             'scheduled_date' => sanitize_text_field($schedule_date)
@@ -3414,7 +3414,7 @@ function swca_create_event_tables() {
     $charset_collate = $wpdb->get_charset_collate();
     
     // Events table
-    $sql_events = "CREATE TABLE IF NOT EXISTS wp_swca_events (
+    $sql_events = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('events') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         title varchar(255) NOT NULL,
         description longtext,
@@ -3445,7 +3445,7 @@ function swca_create_event_tables() {
     ) $charset_collate;";
     
     // Event RSVPs
-    $sql_rsvps = "CREATE TABLE IF NOT EXISTS wp_swca_event_rsvps (
+    $sql_rsvps = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('event_rsvps') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         event_id mediumint(9) NOT NULL,
         member_id int(11) NOT NULL,
@@ -3462,12 +3462,12 @@ function swca_create_event_tables() {
         KEY event_id (event_id),
         KEY member_id (member_id),
         KEY rsvp_status (rsvp_status),
-        FOREIGN KEY (event_id) REFERENCES wp_swca_events(id) ON DELETE CASCADE,
-        FOREIGN KEY (member_id) REFERENCES wp_swca_members(id) ON DELETE CASCADE
+        FOREIGN KEY (event_id) REFERENCES ' . npo_get_table_name('events') . '(id) ON DELETE CASCADE,
+        FOREIGN KEY (member_id) REFERENCES ' . npo_get_table_name('members') . '(id) ON DELETE CASCADE
     ) $charset_collate;";
     
     // Volunteer signup slots (SignUpGenius style)
-    $sql_volunteer_slots = "CREATE TABLE IF NOT EXISTS wp_swca_volunteer_slots (
+    $sql_volunteer_slots = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('volunteer_slots') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         event_id mediumint(9) NOT NULL,
         slot_title varchar(255) NOT NULL,
@@ -3484,11 +3484,11 @@ function swca_create_event_tables() {
         PRIMARY KEY (id),
         KEY event_id (event_id),
         KEY start_time (start_time),
-        FOREIGN KEY (event_id) REFERENCES wp_swca_events(id) ON DELETE CASCADE
+        FOREIGN KEY (event_id) REFERENCES ' . npo_get_table_name('events') . '(id) ON DELETE CASCADE
     ) $charset_collate;";
     
     // Volunteer signups
-    $sql_volunteer_signups = "CREATE TABLE IF NOT EXISTS wp_swca_volunteer_signups (
+    $sql_volunteer_signups = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('volunteer_signups') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         slot_id mediumint(9) NOT NULL,
         member_id int(11) NOT NULL,
@@ -3501,12 +3501,12 @@ function swca_create_event_tables() {
         PRIMARY KEY (id),
         KEY slot_id (slot_id),
         KEY member_id (member_id),
-        FOREIGN KEY (slot_id) REFERENCES wp_swca_volunteer_slots(id) ON DELETE CASCADE,
-        FOREIGN KEY (member_id) REFERENCES wp_swca_members(id) ON DELETE CASCADE
+        FOREIGN KEY (slot_id) REFERENCES ' . npo_get_table_name('volunteer_slots') . '(id) ON DELETE CASCADE,
+        FOREIGN KEY (member_id) REFERENCES ' . npo_get_table_name('members') . '(id) ON DELETE CASCADE
     ) $charset_collate;";
     
     // Google Calendar integration settings
-    $sql_calendar_settings = "CREATE TABLE IF NOT EXISTS wp_swca_calendar_settings (
+    $sql_calendar_settings = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('calendar_settings') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         setting_name varchar(100) NOT NULL UNIQUE,
         setting_value longtext,
@@ -3581,8 +3581,8 @@ function swca_event_dashboard_handler($atts) {
             COUNT(*) as total_events,
             SUM(CASE WHEN status = 'published' AND event_date > NOW() THEN 1 ELSE 0 END) as upcoming,
             SUM(CASE WHEN status = 'published' AND event_date <= NOW() THEN 1 ELSE 0 END) as past,
-            (SELECT COUNT(*) FROM wp_swca_event_rsvps WHERE rsvp_status = 'yes') as total_rsvps
-        FROM wp_swca_events 
+            (SELECT COUNT(*) FROM ' . npo_get_table_name('event_rsvps') . ' WHERE rsvp_status = 'yes') as total_rsvps
+        FROM ' . npo_get_table_name('events') . ' 
         WHERE status != 'cancelled'
     ");
     
@@ -3590,9 +3590,9 @@ function swca_event_dashboard_handler($atts) {
         SELECT 
             COUNT(*) as total_slots,
             SUM(volunteers_needed) as total_needed,
-            (SELECT COUNT(*) FROM wp_swca_volunteer_signups) as total_signups
-        FROM wp_swca_volunteer_slots vs
-        JOIN wp_swca_events e ON vs.event_id = e.id
+            (SELECT COUNT(*) FROM ' . npo_get_table_name('volunteer_signups') . ') as total_signups
+        FROM ' . npo_get_table_name('volunteer_slots') . ' vs
+        JOIN ' . npo_get_table_name('events') . ' e ON vs.event_id = e.id
         WHERE e.status = 'published' AND e.event_date > NOW()
     ");
     
@@ -3629,9 +3629,9 @@ function swca_event_dashboard_handler($atts) {
         SELECT e.*, 
                COUNT(r.id) as rsvp_count,
                SUM(CASE WHEN r.rsvp_status = 'yes' THEN 1 ELSE 0 END) as yes_count,
-               (SELECT COUNT(*) FROM wp_swca_volunteer_slots vs WHERE vs.event_id = e.id) as volunteer_slots
-        FROM wp_swca_events e
-        LEFT JOIN wp_swca_event_rsvps r ON e.id = r.event_id
+               (SELECT COUNT(*) FROM ' . npo_get_table_name('volunteer_slots') . ' vs WHERE vs.event_id = e.id) as volunteer_slots
+        FROM ' . npo_get_table_name('events') . ' e
+        LEFT JOIN ' . npo_get_table_name('event_rsvps') . ' r ON e.id = r.event_id
         WHERE e.status = 'published' AND e.event_date > NOW()
         GROUP BY e.id
         ORDER BY e.event_date ASC
@@ -3685,7 +3685,7 @@ function swca_create_event($data) {
     
     global $wpdb;
     
-    $event_id = $wpdb->insert('wp_swca_events', array(
+    $event_id = $wpdb->insert('' . npo_get_table_name('events') . '', array(
         'title' => sanitize_text_field($data['title']),
         'description' => wp_kses_post($data['description']),
         'event_date' => sanitize_text_field($data['event_date']),
@@ -3722,7 +3722,7 @@ function swca_handle_rsvp($data) {
     $event_id = intval($data['event_id']);
     $rsvp_status = sanitize_text_field($data['rsvp_status']);
     
-    $wpdb->replace('wp_swca_event_rsvps', array(
+    $wpdb->replace('' . npo_get_table_name('event_rsvps') . '', array(
         'event_id' => $event_id,
         'member_id' => $member_id,
         'rsvp_status' => $rsvp_status,
@@ -3739,7 +3739,7 @@ function swca_handle_volunteer_signup($data) {
     $member_id = get_current_user_id();
     $slot_id = intval($data['slot_id']);
     
-    $wpdb->insert('wp_swca_volunteer_signups', array(
+    $wpdb->insert('' . npo_get_table_name('volunteer_signups') . '', array(
         'slot_id' => $slot_id,
         'member_id' => $member_id,
         'notes' => sanitize_text_field($data['notes']),
@@ -4272,7 +4272,7 @@ function swca_get_all_settings() {
     global $wpdb;
     
     $settings = array();
-    $results = $wpdb->get_results("SELECT setting_name, setting_value FROM wp_swca_calendar_settings");
+    $results = $wpdb->get_results("SELECT setting_name, setting_value FROM ' . npo_get_table_name('calendar_settings') . '");
     
     foreach ($results as $row) {
         $settings[$row->setting_name] = $row->setting_value;
@@ -4301,7 +4301,7 @@ function swca_save_settings($data) {
         if (isset($data[$setting_name])) {
             $value = sanitize_text_field($data[$setting_name]);
             
-            $wpdb->replace('wp_swca_calendar_settings', array(
+            $wpdb->replace('' . npo_get_table_name('calendar_settings') . '', array(
                 'setting_name' => $setting_name,
                 'setting_value' => $value,
                 'updated_date' => current_time('mysql')
@@ -4325,7 +4325,7 @@ function swca_create_officer_tools_tables() {
     $charset_collate = $wpdb->get_charset_collate();
     
     // Meeting agendas table
-    $sql_agendas = "CREATE TABLE IF NOT EXISTS wp_swca_agendas (
+    $sql_agendas = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('agendas') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         title varchar(255) NOT NULL,
         meeting_date datetime NOT NULL,
@@ -4346,7 +4346,7 @@ function swca_create_officer_tools_tables() {
     ) $charset_collate;";
     
     // Meeting minutes table
-    $sql_minutes = "CREATE TABLE IF NOT EXISTS wp_swca_minutes (
+    $sql_minutes = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('minutes') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         agenda_id mediumint(9),
         title varchar(255) NOT NULL,
@@ -4367,11 +4367,11 @@ function swca_create_officer_tools_tables() {
         KEY agenda_id (agenda_id),
         KEY meeting_date (meeting_date),
         KEY status (status),
-        FOREIGN KEY (agenda_id) REFERENCES wp_swca_agendas(id) ON DELETE SET NULL
+        FOREIGN KEY (agenda_id) REFERENCES ' . npo_get_table_name('agendas') . '(id) ON DELETE SET NULL
     ) $charset_collate;";
     
     // Financial reports table
-    $sql_reports = "CREATE TABLE IF NOT EXISTS wp_swca_financial_reports (
+    $sql_reports = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('financial_reports') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         report_name varchar(255) NOT NULL,
         report_type enum('monthly','quarterly','annual','event','custom') DEFAULT 'monthly',
@@ -4393,7 +4393,7 @@ function swca_create_officer_tools_tables() {
     ) $charset_collate;";
     
     // Document uploads and Google Drive integration
-    $sql_documents = "CREATE TABLE IF NOT EXISTS wp_swca_documents (
+    $sql_documents = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('documents') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         filename varchar(255) NOT NULL,
         original_filename varchar(255) NOT NULL,
@@ -4419,7 +4419,7 @@ function swca_create_officer_tools_tables() {
     ) $charset_collate;";
     
     // Google Drive folder structure mapping
-    $sql_drive_folders = "CREATE TABLE IF NOT EXISTS wp_swca_drive_folders (
+    $sql_drive_folders = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('drive_folders') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         folder_name varchar(255) NOT NULL,
         folder_path varchar(500) NOT NULL,
@@ -4437,7 +4437,7 @@ function swca_create_officer_tools_tables() {
     ) $charset_collate;";
     
     // Committee management tables
-    $sql_committees = "CREATE TABLE IF NOT EXISTS wp_swca_committees (
+    $sql_committees = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('committees') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         committee_name varchar(255) NOT NULL,
         committee_description text,
@@ -4459,7 +4459,7 @@ function swca_create_officer_tools_tables() {
     ) $charset_collate;";
     
     // Committee membership table
-    $sql_committee_members = "CREATE TABLE IF NOT EXISTS wp_swca_committee_members (
+    $sql_committee_members = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('committee_members') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         committee_id mediumint(9) NOT NULL,
         member_id int(11) NOT NULL,
@@ -4475,12 +4475,12 @@ function swca_create_officer_tools_tables() {
         KEY member_id (member_id),
         KEY role (role),
         KEY status (status),
-        FOREIGN KEY (committee_id) REFERENCES wp_swca_committees(id) ON DELETE CASCADE,
-        FOREIGN KEY (member_id) REFERENCES wp_swca_members(id) ON DELETE CASCADE
+        FOREIGN KEY (committee_id) REFERENCES ' . npo_get_table_name('committees') . '(id) ON DELETE CASCADE,
+        FOREIGN KEY (member_id) REFERENCES ' . npo_get_table_name('members') . '(id) ON DELETE CASCADE
     ) $charset_collate;";
     
     // Committee reports table
-    $sql_committee_reports = "CREATE TABLE IF NOT EXISTS wp_swca_committee_reports (
+    $sql_committee_reports = "CREATE TABLE IF NOT EXISTS ' . npo_get_table_name('committee_reports') . ' (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         committee_id mediumint(9) NOT NULL,
         report_title varchar(255) NOT NULL,
@@ -4502,7 +4502,7 @@ function swca_create_officer_tools_tables() {
         KEY committee_id (committee_id),
         KEY submitted_for_meeting_date (submitted_for_meeting_date),
         KEY status (status),
-        FOREIGN KEY (committee_id) REFERENCES wp_swca_committees(id) ON DELETE CASCADE
+        FOREIGN KEY (committee_id) REFERENCES ' . npo_get_table_name('committees') . '(id) ON DELETE CASCADE
     ) $charset_collate;";
     
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -4555,12 +4555,12 @@ function swca_initialize_default_committees($fiscal_year) {
     foreach ($default_committees as $committee) {
         // Check if committee already exists for this fiscal year
         $existing = $wpdb->get_var($wpdb->prepare("
-            SELECT id FROM wp_swca_committees 
+            SELECT id FROM ' . npo_get_table_name('committees') . ' 
             WHERE committee_name = %s AND fiscal_year = %s
         ", $committee['name'], $fiscal_year));
         
         if (!$existing) {
-            $wpdb->insert('wp_swca_committees', array(
+            $wpdb->insert('' . npo_get_table_name('committees') . '', array(
                 'committee_name' => $committee['name'],
                 'committee_description' => $committee['description'],
                 'status' => 'active',
@@ -4622,9 +4622,9 @@ function swca_officer_tools_dashboard_handler($atts) {
     // Quick statistics
     $stats = $wpdb->get_row("
         SELECT 
-            (SELECT COUNT(*) FROM wp_swca_agendas WHERE status = 'published' AND meeting_date > NOW()) as upcoming_meetings,
-            (SELECT COUNT(*) FROM wp_swca_minutes WHERE status = 'draft') as pending_minutes,
-            (SELECT COUNT(*) FROM wp_swca_documents WHERE upload_date > DATE_SUB(NOW(), INTERVAL 30 DAY)) as recent_uploads
+            (SELECT COUNT(*) FROM ' . npo_get_table_name('agendas') . ' WHERE status = 'published' AND meeting_date > NOW()) as upcoming_meetings,
+            (SELECT COUNT(*) FROM ' . npo_get_table_name('minutes') . ' WHERE status = 'draft') as pending_minutes,
+            (SELECT COUNT(*) FROM ' . npo_get_table_name('documents') . ' WHERE upload_date > DATE_SUB(NOW(), INTERVAL 30 DAY)) as recent_uploads
     ");
     
     $output .= '<div class="quick-stats">';
@@ -4658,7 +4658,7 @@ function swca_officer_tools_dashboard_handler($atts) {
         
         // Recent agendas
         $recent_agendas = $wpdb->get_results("
-            SELECT * FROM wp_swca_agendas 
+            SELECT * FROM ' . npo_get_table_name('agendas') . ' 
             ORDER BY created_date DESC 
             LIMIT 3
         ");
@@ -4691,7 +4691,7 @@ function swca_officer_tools_dashboard_handler($atts) {
         
         // Recent minutes
         $recent_minutes = $wpdb->get_results("
-            SELECT * FROM wp_swca_minutes 
+            SELECT * FROM ' . npo_get_table_name('minutes') . ' 
             ORDER BY created_date DESC 
             LIMIT 3
         ");
@@ -4725,7 +4725,7 @@ function swca_officer_tools_dashboard_handler($atts) {
         
         // Recent reports
         $recent_reports = $wpdb->get_results("
-            SELECT * FROM wp_swca_financial_reports 
+            SELECT * FROM ' . npo_get_table_name('financial_reports') . ' 
             ORDER BY created_date DESC 
             LIMIT 3
         ");
@@ -4790,8 +4790,8 @@ function swca_officer_tools_dashboard_handler($atts) {
         // Get user's committees (if they're a chair)
         $user_committees = $wpdb->get_results($wpdb->prepare("
             SELECT c.*, cm.role 
-            FROM wp_swca_committees c
-            LEFT JOIN wp_swca_committee_members cm ON c.id = cm.committee_id
+            FROM ' . npo_get_table_name('committees') . ' c
+            LEFT JOIN ' . npo_get_table_name('committee_members') . ' cm ON c.id = cm.committee_id
             WHERE (c.chair_user_id = %d OR c.co_chair_user_id = %d OR cm.member_id = %d) 
             AND c.status = 'active'
             AND c.fiscal_year = %s
@@ -4811,13 +4811,13 @@ function swca_officer_tools_dashboard_handler($atts) {
                 
                 // Get member count
                 $member_count = $wpdb->get_var($wpdb->prepare("
-                    SELECT COUNT(*) FROM wp_swca_committee_members 
+                    SELECT COUNT(*) FROM ' . npo_get_table_name('committee_members') . ' 
                     WHERE committee_id = %d AND status = 'active'
                 ", $committee->id));
                 
                 // Get recent reports count
                 $reports_count = $wpdb->get_var($wpdb->prepare("
-                    SELECT COUNT(*) FROM wp_swca_committee_reports 
+                    SELECT COUNT(*) FROM ' . npo_get_table_name('committee_reports') . ' 
                     WHERE committee_id = %d AND created_date > DATE_SUB(NOW(), INTERVAL 30 DAY)
                 ", $committee->id));
                 
@@ -4887,7 +4887,7 @@ function swca_initialize_drive_folders($fiscal_year) {
         foreach ($categories as $category => $subcategories) {
             $folder_path = $year . '/' . $category;
             
-            $wpdb->insert('wp_swca_drive_folders', array(
+            $wpdb->insert('' . npo_get_table_name('drive_folders') . '', array(
                 'folder_name' => ucfirst($category),
                 'folder_path' => $folder_path,
                 'google_drive_id' => 'placeholder_' . md5($folder_path),
@@ -4898,7 +4898,7 @@ function swca_initialize_drive_folders($fiscal_year) {
             foreach ($subcategories as $subcategory) {
                 $subfolder_path = $year . '/' . $category . '/' . $subcategory;
                 
-                $wpdb->insert('wp_swca_drive_folders', array(
+                $wpdb->insert('' . npo_get_table_name('drive_folders') . '', array(
                     'folder_name' => ucfirst(str_replace('-', ' ', $subcategory)),
                     'folder_path' => $subfolder_path,
                     'google_drive_id' => 'placeholder_' . md5($subfolder_path),
@@ -4915,7 +4915,7 @@ function swca_create_agenda($data) {
     
     global $wpdb;
     
-    return $wpdb->insert('wp_swca_agendas', array(
+    return $wpdb->insert('' . npo_get_table_name('agendas') . '', array(
         'title' => sanitize_text_field($data['title']),
         'meeting_date' => sanitize_text_field($data['meeting_date']),
         'meeting_type' => sanitize_text_field($data['meeting_type']),
@@ -4931,7 +4931,7 @@ function swca_create_minutes($data) {
     
     global $wpdb;
     
-    return $wpdb->insert('wp_swca_minutes', array(
+    return $wpdb->insert('' . npo_get_table_name('minutes') . '', array(
         'agenda_id' => intval($data['agenda_id']),
         'title' => sanitize_text_field($data['title']),
         'meeting_date' => sanitize_text_field($data['meeting_date']),
@@ -4960,13 +4960,13 @@ function swca_generate_financial_report($data) {
             SUM(CASE WHEN transaction_type = 'income' THEN stripe_fee ELSE 0 END) as stripe_fees,
             SUM(CASE WHEN transaction_type = 'income' THEN net_amount ELSE 0 END) as net_income,
             SUM(CASE WHEN transaction_type = 'expense' THEN gross_amount ELSE 0 END) as total_expenses
-        FROM wp_swca_financial_transactions 
+        FROM ' . npo_get_table_name('financial_transactions') . ' 
         WHERE transaction_date BETWEEN %s AND %s
     ", $start_date, $end_date));
     
     $net_income = ($financial_data->net_income ?: 0) - ($financial_data->total_expenses ?: 0);
     
-    return $wpdb->insert('wp_swca_financial_reports', array(
+    return $wpdb->insert('' . npo_get_table_name('financial_reports') . '', array(
         'report_name' => sanitize_text_field($data['report_name']),
         'report_type' => sanitize_text_field($data['report_type']),
         'report_period_start' => $start_date,
@@ -5011,11 +5011,11 @@ function swca_renewal_graph_handler($atts) {
         
         // Count paid and total members for each year (using database status)
         $paid_count = $wpdb->get_var($wpdb->prepare("
-            SELECT COUNT(*) FROM wp_swca_members 
+            SELECT COUNT(*) FROM ' . npo_get_table_name('members') . ' 
             WHERE status_%d_%d = 'Paid'
         ", $year, $year + 1));
         
-        $total_count = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_members");
+        $total_count = $wpdb->get_var("SELECT COUNT(*) FROM ' . npo_get_table_name('members') . '");
         
         $years_data[] = array(
             'year' => $fiscal_year,
@@ -5267,8 +5267,8 @@ function swca_data_migration_handler($atts) {
     }
     
     // Get database statistics
-    $members_count = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_members");
-    $notes_count = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_member_notes");
+    $members_count = $wpdb->get_var("SELECT COUNT(*) FROM ' . npo_get_table_name('members') . '");
+    $notes_count = $wpdb->get_var("SELECT COUNT(*) FROM ' . npo_get_table_name('member_notes') . '");
     $tables = $wpdb->get_results("SHOW TABLES LIKE 'wp_swca_%'");
     
     $output = '<style>
@@ -5461,7 +5461,7 @@ function swca_export_complete_database() {
     wp_mkdir_p($temp_dir);
     
     // Export members with all data
-    $members = $wpdb->get_results("SELECT * FROM wp_swca_members ORDER BY last_name, first_name");
+    $members = $wpdb->get_results("SELECT * FROM ' . npo_get_table_name('members') . ' ORDER BY last_name, first_name");
     $members_file = fopen($temp_dir . '/members.csv', 'w');
     
     // Headers for members CSV
@@ -5494,8 +5494,8 @@ function swca_export_complete_database() {
     // Export member notes
     $notes = $wpdb->get_results("
         SELECT n.*, m.first_name, m.last_name, u.display_name 
-        FROM wp_swca_member_notes n
-        LEFT JOIN wp_swca_members m ON n.member_id = m.id
+        FROM ' . npo_get_table_name('member_notes') . ' n
+        LEFT JOIN ' . npo_get_table_name('members') . ' m ON n.member_id = m.id
         LEFT JOIN wp_users u ON n.created_by = u.ID
         ORDER BY n.created_date DESC
     ");
@@ -5963,7 +5963,7 @@ function swca_ajax_process_complete_export() {
         wp_mkdir_p($temp_dir);
         
         // 1. Export all members data
-        $members = $wpdb->get_results("SELECT * FROM wp_swca_members ORDER BY last_name, first_name", ARRAY_A);
+        $members = $wpdb->get_results("SELECT * FROM ' . npo_get_table_name('members') . ' ORDER BY last_name, first_name", ARRAY_A);
         if ($members) {
             $members_file = fopen($temp_dir . '/members.csv', 'w');
             $headers = array(
@@ -5996,12 +5996,12 @@ function swca_ajax_process_complete_export() {
         }
         
         // 2. Export member notes if table exists
-        $notes_table_exists = $wpdb->get_var("SHOW TABLES LIKE 'wp_swca_member_notes'");
+        $notes_table_exists = $wpdb->get_var("SHOW TABLES LIKE '' . npo_get_table_name('member_notes') . ''");
         if ($notes_table_exists) {
             $notes = $wpdb->get_results("
                 SELECT n.*, CONCAT(m.first_name, ' ', m.last_name) as member_name
-                FROM wp_swca_member_notes n
-                LEFT JOIN wp_swca_members m ON n.member_id = m.id
+                FROM ' . npo_get_table_name('member_notes') . ' n
+                LEFT JOIN ' . npo_get_table_name('members') . ' m ON n.member_id = m.id
                 ORDER BY n.created_date DESC
             ", ARRAY_A);
             
@@ -6279,14 +6279,14 @@ function swca_ajax_process_complete_import() {
                         $existing_member = null;
                         if (!empty($member_data['email_1'])) {
                             $existing_member = $wpdb->get_row($wpdb->prepare(
-                                "SELECT id FROM wp_swca_members WHERE email_1 = %s LIMIT 1",
+                                "SELECT id FROM ' . npo_get_table_name('members') . ' WHERE email_1 = %s LIMIT 1",
                                 $member_data['email_1']
                             ));
                         }
                         
                         if (!$existing_member && !empty($member_data['first_name']) && !empty($member_data['last_name'])) {
                             $existing_member = $wpdb->get_row($wpdb->prepare(
-                                "SELECT id FROM wp_swca_members WHERE first_name = %s AND last_name = %s LIMIT 1",
+                                "SELECT id FROM ' . npo_get_table_name('members') . ' WHERE first_name = %s AND last_name = %s LIMIT 1",
                                 $member_data['first_name'],
                                 $member_data['last_name']
                             ));
@@ -6294,11 +6294,11 @@ function swca_ajax_process_complete_import() {
                         
                         if ($existing_member && $overwrite_data) {
                             // Update existing member
-                            $wpdb->update('wp_swca_members', $member_data, array('id' => $existing_member->id));
+                            $wpdb->update('' . npo_get_table_name('members') . '', $member_data, array('id' => $existing_member->id));
                             $updated_members++;
                         } elseif (!$existing_member) {
                             // Insert new member
-                            $wpdb->insert('wp_swca_members', $member_data);
+                            $wpdb->insert('' . npo_get_table_name('members') . '', $member_data);
                             $imported_members++;
                         }
                     }
@@ -6326,7 +6326,7 @@ function swca_ajax_process_complete_import() {
                             $last_name = $member_name_parts[1];
                             
                             $member = $wpdb->get_row($wpdb->prepare(
-                                "SELECT id FROM wp_swca_members WHERE first_name = %s AND last_name = %s LIMIT 1",
+                                "SELECT id FROM ' . npo_get_table_name('members') . ' WHERE first_name = %s AND last_name = %s LIMIT 1",
                                 $first_name, $last_name
                             ));
                             
@@ -6341,7 +6341,7 @@ function swca_ajax_process_complete_import() {
                                     'updated_date' => $data[8]
                                 );
                                 
-                                $wpdb->insert('wp_swca_member_notes', $note_data);
+                                $wpdb->insert('' . npo_get_table_name('member_notes') . '', $note_data);
                                 $imported_notes++;
                             }
                         }
