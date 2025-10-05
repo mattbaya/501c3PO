@@ -40,7 +40,7 @@ function five01c3po_auto_match_transactions($dry_run = false) {
 
     $matches_table = $wpdb->prefix . 'transaction_matches';
     $stripe_table = $wpdb->prefix . 'stripe_transactions';
-    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
+    $bank_table = 'wp_swca_bank_transactions'; // Using actual table with data
     $gf_table = 'swca_gf_addon_payment_transaction';
 
     // Debug: Check table counts
@@ -81,21 +81,24 @@ function five01c3po_auto_match_transactions($dry_run = false) {
     }
 
     foreach ($gravity_txns as $gf_txn) {
-        // Look for Stripe transaction with matching amount within 60 seconds
+        // Look for Stripe transaction with matching amount within 30 seconds
         $gf_amount = floatval($gf_txn->amount);
-        $gf_timestamp = strtotime($gf_txn->date_created);
+        $gf_datetime = $gf_txn->date_created;
 
-        // Search for Stripe charge within 60 seconds and matching amount
+        // Search for Stripe charge within 30 seconds and matching amount
+        // Fixed: Use TIMESTAMPDIFF instead of UNIX_TIMESTAMP for better accuracy
         $stripe_match = $wpdb->get_row($wpdb->prepare("
             SELECT * FROM $stripe_table
             WHERE amount = %f
-            AND ABS(UNIX_TIMESTAMP(stripe_created) - %d) <= 60
+            AND ABS(TIMESTAMPDIFF(SECOND, stripe_created, %s)) <= 30
             AND id NOT IN (SELECT stripe_transaction_id FROM $matches_table WHERE stripe_transaction_id IS NOT NULL)
-            ORDER BY ABS(UNIX_TIMESTAMP(stripe_created) - %d) ASC
+            ORDER BY ABS(TIMESTAMPDIFF(SECOND, stripe_created, %s)) ASC
             LIMIT 1
-        ", $gf_amount, $gf_timestamp, $gf_timestamp));
+        ", $gf_amount, $gf_datetime, $gf_datetime));
 
         if ($stripe_match) {
+            $time_diff = abs(strtotime($stripe_match->stripe_created) - strtotime($gf_datetime));
+
             $match_data = array(
                 'stripe_transaction_id' => $stripe_match->id,
                 'gravity_form_transaction_id' => $gf_txn->id,
@@ -104,7 +107,7 @@ function five01c3po_auto_match_transactions($dry_run = false) {
                 'notes' => sprintf(
                     'Auto-matched: Amount $%.2f, Time diff: %d seconds',
                     $gf_amount,
-                    abs(UNIX_TIMESTAMP($stripe_match->stripe_created) - $gf_timestamp)
+                    $time_diff
                 ),
                 'matched_by' => get_current_user_id()
             );
@@ -351,7 +354,7 @@ function five01c3po_transaction_matching_page() {
     // Get match statistics
     $matches_table = $wpdb->prefix . 'transaction_matches';
     $stripe_table = $wpdb->prefix . 'stripe_transactions';
-    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
+    $bank_table = 'wp_swca_bank_transactions'; // Using actual table with data
     $gf_table = 'swca_gf_addon_payment_transaction';
 
     $total_stripe = $wpdb->get_var("SELECT COUNT(*) FROM $stripe_table");
@@ -501,7 +504,7 @@ function five01c3po_transaction_review_page() {
 
     $matches_table = $wpdb->prefix . 'transaction_matches';
     $stripe_table = $wpdb->prefix . 'stripe_transactions';
-    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
+    $bank_table = 'wp_swca_bank_transactions'; // Using actual table with data
     $gf_table = 'swca_gf_addon_payment_transaction';
 
     // Get unmatched Stripe transactions
