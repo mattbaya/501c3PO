@@ -404,15 +404,19 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
             $stripe_fee = ($balance_txn['fee'] ?? 0) / 100;
             $balance_txn_id = $balance_txn['id'] ?? null;
 
-            // Get payout information
+            // Use available_on as payout arrival date (when funds become available)
+            if (isset($balance_txn['available_on'])) {
+                $payout_arrival_date = date('Y-m-d', $balance_txn['available_on']);
+                $payout_status = $balance_txn['status'] ?? null; // available, pending, etc.
+            }
+
+            // Try to get payout information if expanded
             if (isset($balance_txn['payout'])) {
                 if (is_string($balance_txn['payout'])) {
-                    // Payout ID only - need to fetch full payout details
                     $payout_id = $balance_txn['payout'];
                 } elseif (is_array($balance_txn['payout'])) {
-                    // Payout object expanded
                     $payout_id = $balance_txn['payout']['id'] ?? null;
-                    $payout_status = $balance_txn['payout']['status'] ?? null;
+                    $payout_status = $balance_txn['payout']['status'] ?? $payout_status;
 
                     if (isset($balance_txn['payout']['created'])) {
                         $payout_date = date('Y-m-d', $balance_txn['payout']['created']);
@@ -488,6 +492,16 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
 
             // Check if payout data is new/different
             if ($payout_id && $existing->payout_id != $payout_id) {
+                $needs_update = true;
+            }
+
+            // Check if payout arrival date is new (even without payout_id)
+            if ($payout_arrival_date && $existing->payout_arrival_date != $payout_arrival_date) {
+                $needs_update = true;
+            }
+
+            // Check if balance transaction ID is new
+            if ($balance_txn_id && $existing->balance_transaction_id != $balance_txn_id) {
                 $needs_update = true;
             }
 
