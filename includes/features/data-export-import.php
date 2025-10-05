@@ -10,37 +10,37 @@ defined('ABSPATH') or die('No script kiddies please!');
 /**
  * Add Export/Import admin page
  */
-add_action('admin_menu', 'mm_add_export_import_menu', 20);
+add_action('admin_menu', 'five01c3po_add_export_import_menu', 20);
 
-function mm_add_export_import_menu() {
+function five01c3po_add_export_import_menu() {
     add_submenu_page(
         'membership-management',
         'Export & Import',
         'Export & Import',
         'manage_options',
         '501c3PO-export-import',
-        'mm_export_import_page'
+        'five01c3po_export_import_page'
     );
 }
 
 /**
  * Render Export/Import admin page
  */
-function mm_export_import_page() {
+function five01c3po_export_import_page() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'swca_members'; // TODO: Make dynamic with org prefix
 
     // Handle CSV import
     if (isset($_POST['import_csv']) && !empty($_FILES['csv_file']['tmp_name'])) {
-        check_admin_referer('mm_import_csv');
-        $result = mm_import_members_csv($_FILES['csv_file']['tmp_name']);
+        check_admin_referer('five01c3po_import_csv');
+        $result = five01c3po_import_members_csv($_FILES['csv_file']['tmp_name']);
         echo '<div class="notice notice-success"><p>' . esc_html($result) . '</p></div>';
     }
 
     // Handle CSV export
     if (isset($_POST['export_csv'])) {
-        check_admin_referer('mm_export_csv');
-        mm_export_members_csv();
+        check_admin_referer('five01c3po_export_csv');
+        five01c3po_export_members_csv();
         return;
     }
 
@@ -61,7 +61,7 @@ function mm_export_import_page() {
             <h2>📥 Import Members from CSV</h2>
             <p>Upload a CSV file with member data to import into the database.</p>
             <form method="post" enctype="multipart/form-data">
-                <?php wp_nonce_field('mm_import_csv'); ?>
+                <?php wp_nonce_field('five01c3po_import_csv'); ?>
                 <table class="form-table">
                     <tr>
                         <th scope="row">CSV File</th>
@@ -79,7 +79,7 @@ function mm_export_import_page() {
             <h2>📤 Export Members to CSV</h2>
             <p>Export all member data to a CSV file for backup or use in other applications.</p>
             <form method="post">
-                <?php wp_nonce_field('mm_export_csv'); ?>
+                <?php wp_nonce_field('five01c3po_export_csv'); ?>
                 <p>This will export all members with all fields to a downloadable CSV file.</p>
                 <?php submit_button('Export All Members to CSV', 'secondary', 'export_csv'); ?>
             </form>
@@ -87,7 +87,7 @@ function mm_export_import_page() {
 
         <div class="card">
             <h2>📊 Recent Members</h2>
-            <?php mm_display_recent_members(); ?>
+            <?php five01c3po_display_recent_members(); ?>
         </div>
     </div>
     <?php
@@ -96,7 +96,7 @@ function mm_export_import_page() {
 /**
  * Import members from CSV file
  */
-function mm_import_members_csv($file_path) {
+function five01c3po_import_members_csv($file_path) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'swca_members'; // TODO: Make dynamic with org prefix
 
@@ -181,7 +181,7 @@ function mm_import_members_csv($file_path) {
 /**
  * Export members to CSV file
  */
-function mm_export_members_csv() {
+function five01c3po_export_members_csv() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'swca_members'; // TODO: Make dynamic with org prefix
 
@@ -216,7 +216,7 @@ function mm_export_members_csv() {
 /**
  * Display recent members in admin
  */
-function mm_display_recent_members() {
+function five01c3po_display_recent_members() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'swca_members'; // TODO: Make dynamic with org prefix
 

@@ -10,16 +10,16 @@ defined('ABSPATH') or die('No script kiddies please!');
 /**
  * Add Bank Transactions menu
  */
-add_action('admin_menu', 'mm_add_bank_transactions_menu', 21);
+add_action('admin_menu', 'five01c3po_add_bank_transactions_menu', 21);
 
-function mm_add_bank_transactions_menu() {
+function five01c3po_add_bank_transactions_menu() {
     add_submenu_page(
         'membership-management',
         'Bank Transactions',
         '🏦 Bank Transactions',
         'manage_options',
         '501c3PO-bank-transactions',
-        'mm_bank_transactions_page'
+        'five01c3po_bank_transactions_page'
     );
 
     add_submenu_page(
@@ -28,27 +28,27 @@ function mm_add_bank_transactions_menu() {
         '💰 Transaction Viewer',
         'manage_options',
         '501c3PO-transaction-viewer',
-        'mm_transaction_viewer_page'
+        'five01c3po_transaction_viewer_page'
     );
 }
 
 /**
  * Bank Transactions page
  */
-function mm_bank_transactions_page() {
+function five01c3po_bank_transactions_page() {
     global $wpdb;
     $bank_table = $wpdb->prefix . 'bank_transactions';
 
     // Handle import
     if (isset($_POST['import_bank_csv']) && !empty($_FILES['bank_csv_file']['tmp_name'])) {
-        check_admin_referer('mm_import_bank');
-        $result = mm_import_bank_csv($_FILES['bank_csv_file']['tmp_name']);
+        check_admin_referer('five01c3po_import_bank');
+        $result = five01c3po_import_bank_csv($_FILES['bank_csv_file']['tmp_name']);
         echo '<div class="notice notice-success"><p>' . esc_html($result) . '</p></div>';
     }
 
     // Handle clear
     if (isset($_POST['clear_bank_data'])) {
-        check_admin_referer('mm_clear_bank');
+        check_admin_referer('five01c3po_clear_bank');
         $wpdb->query("TRUNCATE TABLE $bank_table");
         echo '<div class="notice notice-success"><p>Bank transaction data cleared successfully.</p></div>';
     }
@@ -98,7 +98,7 @@ function mm_bank_transactions_page() {
                 <li><strong>Balance</strong> - Account balance after transaction</li>
             </ul>
             <form method="post" enctype="multipart/form-data">
-                <?php wp_nonce_field('mm_import_bank'); ?>
+                <?php wp_nonce_field('five01c3po_import_bank'); ?>
                 <table class="form-table">
                     <tr>
                         <th scope="row">Bank CSV File</th>
@@ -116,14 +116,14 @@ function mm_bank_transactions_page() {
             <h2>⚠️ Clear Data</h2>
             <p><strong>Warning:</strong> This will permanently delete all bank transactions from the database.</p>
             <form method="post" onsubmit="return confirm('Are you sure you want to delete ALL bank transaction data? This cannot be undone!');">
-                <?php wp_nonce_field('mm_clear_bank'); ?>
+                <?php wp_nonce_field('five01c3po_clear_bank'); ?>
                 <?php submit_button('Clear All Bank Data', 'delete', 'clear_bank_data'); ?>
             </form>
         </div>
 
         <div class="card">
             <h2>📊 Recent Transactions</h2>
-            <?php mm_display_recent_bank_transactions(); ?>
+            <?php five01c3po_display_recent_bank_transactions(); ?>
         </div>
     </div>
     <?php
@@ -132,7 +132,7 @@ function mm_bank_transactions_page() {
 /**
  * Import bank CSV function
  */
-function mm_import_bank_csv($file_path) {
+function five01c3po_import_bank_csv($file_path) {
     global $wpdb;
     $bank_table = $wpdb->prefix . 'bank_transactions';
 
@@ -205,7 +205,7 @@ function mm_import_bank_csv($file_path) {
 /**
  * Display recent bank transactions
  */
-function mm_display_recent_bank_transactions() {
+function five01c3po_display_recent_bank_transactions() {
     global $wpdb;
     $bank_table = $wpdb->prefix . 'bank_transactions';
 
@@ -241,7 +241,7 @@ function mm_display_recent_bank_transactions() {
 /**
  * Transaction Viewer page
  */
-function mm_transaction_viewer_page() {
+function five01c3po_transaction_viewer_page() {
     ?>
     <div class="wrap">
         <h1>💰 Financial Transaction Viewer</h1>
@@ -252,7 +252,7 @@ function mm_transaction_viewer_page() {
             <h2>📊 How to Display Transactions</h2>
             <p>Create a new page (or edit an existing one) and add this shortcode:</p>
             <div style="background: #f0f0f0; padding: 15px; border-radius: 4px; font-family: monospace; margin: 15px 0;">
-                [mm_bank_transactions]
+                [five01c3po_bank_transactions]
             </div>
             <p>This will display all bank transactions in a searchable, sortable table.</p>
 
@@ -267,9 +267,9 @@ function mm_transaction_viewer_page() {
             <h2>📝 Shortcode Options</h2>
             <p>The shortcode accepts optional parameters:</p>
             <ul style="margin-left: 20px;">
-                <li><code>[mm_bank_transactions limit="50"]</code> - Show only 50 most recent transactions</li>
-                <li><code>[mm_bank_transactions type="credit"]</code> - Show only credits (income)</li>
-                <li><code>[mm_bank_transactions type="debit"]</code> - Show only debits (expenses)</li>
+                <li><code>[five01c3po_bank_transactions limit="50"]</code> - Show only 50 most recent transactions</li>
+                <li><code>[five01c3po_bank_transactions type="credit"]</code> - Show only credits (income)</li>
+                <li><code>[five01c3po_bank_transactions type="debit"]</code> - Show only debits (expenses)</li>
             </ul>
         </div>
 
@@ -277,7 +277,7 @@ function mm_transaction_viewer_page() {
             <h2>🔍 Preview</h2>
             <?php
             // Show a preview of the shortcode output
-            echo do_shortcode('[mm_bank_transactions limit="10"]');
+            echo do_shortcode('[five01c3po_bank_transactions limit="10"]');
             ?>
         </div>
     </div>
@@ -287,9 +287,9 @@ function mm_transaction_viewer_page() {
 /**
  * Bank Transactions Shortcode
  */
-add_shortcode('mm_bank_transactions', 'mm_bank_transactions_shortcode');
+add_shortcode('five01c3po_bank_transactions', 'five01c3po_bank_transactions_shortcode');
 
-function mm_bank_transactions_shortcode($atts) {
+function five01c3po_bank_transactions_shortcode($atts) {
     global $wpdb;
 
     // Parse attributes

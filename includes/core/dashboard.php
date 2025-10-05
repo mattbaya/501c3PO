@@ -9,8 +9,8 @@ defined('ABSPATH') or die('No script kiddies please!');
 /**
  * Create dashboard pages on plugin activation
  */
-function fiveohonec3po_create_dashboard_setup() {
-    $org_settings = get_option('mm_organization_settings', array());
+function five01c3po_create_dashboard_setup() {
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $org_name = $org_settings['organization_name'] ?? 'Your Organization';
     $board_portal_slug = $org_settings['board_portal_slug'] ?? 'board-portal';
 
@@ -186,7 +186,7 @@ function fiveohonec3po_create_dashboard_setup() {
         'post_content' => sprintf('<h2>🏦 %s Bank Transaction History</h2>
 <p>Complete history of all bank transactions, deposits, and withdrawals.</p>
 
-[mm_bank_transactions limit="100"]
+[five01c3po_bank_transactions limit="100"]
 
 <h3>Quick Links</h3>
 <p><a href="/%s/financial">← Back to Financial Reports</a> | <a href="/%s">Dashboard</a> | <a href="/%s/financial/fiscal-year-analysis">Fiscal Analysis</a></p>', esc_html($org_name), $board_portal_slug, $board_portal_slug, $board_portal_slug),
@@ -198,7 +198,7 @@ function fiveohonec3po_create_dashboard_setup() {
     ));
 
     // Only create feature pages if enabled
-    $enabled_features = get_option('mm_enabled_features', array());
+    $enabled_features = get_option('five01c3po_enabled_features', array());
 
     if (!empty($enabled_features['email_management'])) {
         $email_dashboard_id = wp_insert_post(array(
@@ -281,7 +281,7 @@ function fiveohonec3po_create_dashboard_setup() {
 /**
  * Hide dashboard pages from public menus
  */
-function fiveohonec3po_hide_dashboard_from_menus($items, $menu, $args) {
+function five01c3po_hide_dashboard_from_menus($items, $menu, $args) {
     if (is_admin()) {
         return $items;
     }
@@ -304,7 +304,7 @@ function fiveohonec3po_hide_dashboard_from_menus($items, $menu, $args) {
 /**
  * Hide dashboard pages from page lists
  */
-function fiveohonec3po_hide_dashboard_from_page_lists($pages) {
+function five01c3po_hide_dashboard_from_page_lists($pages) {
     if (is_admin()) {
         return $pages;
     }
@@ -325,6 +325,6 @@ function fiveohonec3po_hide_dashboard_from_page_lists($pages) {
 }
 
 // Hook functions
-add_filter('wp_get_nav_menu_items', 'fiveohonec3po_hide_dashboard_from_menus', 10, 3);
-add_filter('get_pages', 'fiveohonec3po_hide_dashboard_from_page_lists');
-add_action('wp', 'fiveohonec3po_dashboard_password_protection');
+add_filter('wp_get_nav_menu_items', 'five01c3po_hide_dashboard_from_menus', 10, 3);
+add_filter('get_pages', 'five01c3po_hide_dashboard_from_page_lists');
+add_action('wp', 'five01c3po_dashboard_password_protection');

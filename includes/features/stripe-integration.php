@@ -10,7 +10,7 @@ defined('ABSPATH') or die('No script kiddies please!');
 /**
  * Encrypt Stripe API key with officer passphrase
  */
-function mm_encrypt_stripe_key($api_key, $passphrase) {
+function five01c3po_encrypt_stripe_key($api_key, $passphrase) {
     $cipher = "AES-256-CBC";
     $ivlen = openssl_cipher_iv_length($cipher);
     $iv = openssl_random_pseudo_bytes($ivlen);
@@ -24,7 +24,7 @@ function mm_encrypt_stripe_key($api_key, $passphrase) {
 /**
  * Decrypt Stripe API key with officer passphrase
  */
-function mm_decrypt_stripe_key($encrypted_data, $passphrase) {
+function five01c3po_decrypt_stripe_key($encrypted_data, $passphrase) {
     $cipher = "AES-256-CBC";
 
     $decoded = base64_decode($encrypted_data);
@@ -44,32 +44,32 @@ function mm_decrypt_stripe_key($encrypted_data, $passphrase) {
 /**
  * Verify officer passphrase
  */
-function mm_verify_officer_passphrase($passphrase, $stored_hash) {
+function five01c3po_verify_officer_passphrase($passphrase, $stored_hash) {
     return password_verify($passphrase, $stored_hash);
 }
 
 /**
  * Add Stripe Integration menu
  */
-add_action('admin_menu', 'mm_add_stripe_menu', 22);
+add_action('admin_menu', 'five01c3po_add_stripe_menu', 22);
 
-function mm_add_stripe_menu() {
+function five01c3po_add_stripe_menu() {
     add_submenu_page(
         'membership-management',
         'Stripe Sync',
         '💳 Stripe Sync',
         'manage_options',
         '501c3PO-stripe-sync',
-        'mm_stripe_integration_page'
+        'five01c3po_stripe_integration_page'
     );
 }
 
 /**
  * Stripe Integration page
  */
-function mm_stripe_integration_page() {
+function five01c3po_stripe_integration_page() {
     // Get stored API key from organization settings
-    $org_settings = get_option('mm_organization_settings', array());
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $encrypted_api_key = $org_settings['stripe_api_key_encrypted'] ?? '';
     $passphrase_hash = $org_settings['stripe_passphrase_hash'] ?? '';
     $api_mode = $org_settings['stripe_api_mode'] ?? 'live';
@@ -80,7 +80,7 @@ function mm_stripe_integration_page() {
     $error_message = '';
 
     if (isset($_POST['sync_stripe_transactions'])) {
-        check_admin_referer('mm_stripe_sync');
+        check_admin_referer('five01c3po_stripe_sync');
 
         $manual_api_key = sanitize_text_field($_POST['stripe_api_key'] ?? '');
         $officer_passphrase = $_POST['officer_passphrase'] ?? '';
@@ -101,9 +101,9 @@ function mm_stripe_integration_page() {
                     $error_message = 'Please provide a passphrase to encrypt the API key';
                 } else {
                     // Encrypt and save the API key
-                    $org_settings['stripe_api_key_encrypted'] = mm_encrypt_stripe_key($api_key, $new_passphrase);
+                    $org_settings['stripe_api_key_encrypted'] = five01c3po_encrypt_stripe_key($api_key, $new_passphrase);
                     $org_settings['stripe_passphrase_hash'] = password_hash($new_passphrase, PASSWORD_DEFAULT);
-                    update_option('mm_organization_settings', $org_settings);
+                    update_option('five01c3po_organization_settings', $org_settings);
                     echo '<div class="notice notice-success"><p>✓ Stripe API key encrypted and saved to settings</p></div>';
                     $has_encrypted_key = true;
                 }
@@ -112,11 +112,11 @@ function mm_stripe_integration_page() {
             // Use stored encrypted key
             if (empty($officer_passphrase)) {
                 $error_message = 'Please enter the officer passphrase to decrypt the API key';
-            } elseif (!mm_verify_officer_passphrase($officer_passphrase, $passphrase_hash)) {
+            } elseif (!five01c3po_verify_officer_passphrase($officer_passphrase, $passphrase_hash)) {
                 $error_message = 'Incorrect officer passphrase';
             } else {
                 // Decrypt the stored API key
-                $api_key = mm_decrypt_stripe_key($encrypted_api_key, $officer_passphrase);
+                $api_key = five01c3po_decrypt_stripe_key($encrypted_api_key, $officer_passphrase);
                 if ($api_key === false) {
                     $error_message = 'Failed to decrypt API key';
                 }
@@ -127,7 +127,7 @@ function mm_stripe_integration_page() {
 
         // Perform sync if we have a valid API key
         if (!empty($api_key) && empty($error_message)) {
-            $sync_results = mm_sync_stripe_transactions($api_key, $days_back);
+            $sync_results = five01c3po_sync_stripe_transactions($api_key, $days_back);
         } elseif (!empty($error_message)) {
             echo '<div class="notice notice-error"><p>' . esc_html($error_message) . '</p></div>';
         }
@@ -171,7 +171,7 @@ function mm_stripe_integration_page() {
             <p>Download recent transactions from Stripe and match them to member records.</p>
 
             <form method="post">
-                <?php wp_nonce_field('mm_stripe_sync'); ?>
+                <?php wp_nonce_field('five01c3po_stripe_sync'); ?>
                 <table class="form-table">
                     <?php if ($has_encrypted_key): ?>
                     <tr>
@@ -261,7 +261,7 @@ function mm_stripe_integration_page() {
 /**
  * Sync Stripe transactions
  */
-function mm_sync_stripe_transactions($api_key, $days_back = 30) {
+function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
     global $wpdb;
 
     $results = array(
@@ -281,7 +281,7 @@ function mm_sync_stripe_transactions($api_key, $days_back = 30) {
     $start_timestamp = time() - ($days_back * 24 * 60 * 60);
 
     // Download charges
-    $charges_data = mm_stripe_api_call("charges?limit=100&created[gte]=$start_timestamp&expand[]=data.customer", $api_key);
+    $charges_data = five01c3po_stripe_api_call("charges?limit=100&created[gte]=$start_timestamp&expand[]=data.customer", $api_key);
 
     if (!$charges_data || !isset($charges_data['data'])) {
         $results['details'] = 'Failed to download charges from Stripe';
@@ -292,7 +292,7 @@ function mm_sync_stripe_transactions($api_key, $days_back = 30) {
     $details = "Stripe Sync Results:\n\n";
 
     // Download refunds
-    $refunds_data = mm_stripe_api_call("refunds?limit=100&created[gte]=$start_timestamp", $api_key);
+    $refunds_data = five01c3po_stripe_api_call("refunds?limit=100&created[gte]=$start_timestamp", $api_key);
     $results['refunds_count'] = isset($refunds_data['data']) ? count($refunds_data['data']) : 0;
 
     // Build refunds lookup by charge ID
@@ -355,7 +355,7 @@ function mm_sync_stripe_transactions($api_key, $days_back = 30) {
 /**
  * Make Stripe API call
  */
-function mm_stripe_api_call($endpoint, $api_key) {
+function five01c3po_stripe_api_call($endpoint, $api_key) {
     $url = "https://api.stripe.com/v1/" . $endpoint;
 
     $response = wp_remote_get($url, array(

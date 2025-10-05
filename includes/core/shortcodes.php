@@ -9,24 +9,24 @@ defined('ABSPATH') or die('No script kiddies please!');
 /**
  * Initialize all shortcodes
  */
-function mm_init_shortcodes() {
-    add_shortcode('member_stats', 'fiveohonec3po_stats_shortcode');
-    add_shortcode('member_directory', 'fiveohonec3po_directory_shortcode');
-    add_shortcode('member_dashboard_grid', 'fiveohonec3po_dashboard_grid_shortcode');
-    add_shortcode('member_current_list', 'fiveohonec3po_current_list_shortcode');
-    add_shortcode('member_historical_list', 'fiveohonec3po_historical_list_shortcode');
-    add_shortcode('member_fiscal_table', 'fiveohonec3po_fiscal_table_shortcode');
-    add_shortcode('email_dashboard', 'fiveohonec3po_email_dashboard_shortcode');
-    add_shortcode('event_dashboard', 'fiveohonec3po_event_dashboard_shortcode');
-    add_shortcode('settings_dashboard', 'fiveohonec3po_settings_dashboard_shortcode');
-    add_shortcode('officer_tools_dashboard', 'fiveohonec3po_officer_tools_dashboard_shortcode');
+function five01c3po_init_shortcodes() {
+    add_shortcode('member_stats', 'five01c3po_stats_shortcode');
+    add_shortcode('member_directory', 'five01c3po_directory_shortcode');
+    add_shortcode('member_dashboard_grid', 'five01c3po_dashboard_grid_shortcode');
+    add_shortcode('member_current_list', 'five01c3po_current_list_shortcode');
+    add_shortcode('member_historical_list', 'five01c3po_historical_list_shortcode');
+    add_shortcode('member_fiscal_table', 'five01c3po_fiscal_table_shortcode');
+    add_shortcode('email_dashboard', 'five01c3po_email_dashboard_shortcode');
+    add_shortcode('event_dashboard', 'five01c3po_event_dashboard_shortcode');
+    add_shortcode('settings_dashboard', 'five01c3po_settings_dashboard_shortcode');
+    add_shortcode('officer_tools_dashboard', 'five01c3po_officer_tools_dashboard_shortcode');
 }
 
 /**
  * Helper: Get fiscal year configuration
  */
-function mm_get_fiscal_year_config() {
-    $config = get_option('mm_fiscal_year_config', array());
+function five01c3po_get_fiscal_year_config() {
+    $config = get_option('five01c3po_fiscal_year_config', array());
 
     // Return default if not set
     if (empty($config)) {
@@ -62,8 +62,8 @@ function mm_get_fiscal_year_config() {
 /**
  * Helper: Get current fiscal year config based on today's date
  */
-function mm_get_current_year_config() {
-    $config = mm_get_fiscal_year_config();
+function five01c3po_get_current_year_config() {
+    $config = five01c3po_get_fiscal_year_config();
     $today = date('Y-m-d');
 
     // Find the year that contains today's date
@@ -85,9 +85,9 @@ function mm_get_current_year_config() {
 /**
  * Helper: Get previous fiscal year config
  */
-function mm_get_previous_year_config() {
-    $config = mm_get_fiscal_year_config();
-    $current = mm_get_current_year_config();
+function five01c3po_get_previous_year_config() {
+    $config = five01c3po_get_fiscal_year_config();
+    $current = five01c3po_get_current_year_config();
 
     // Find the index of current year
     $current_index = 0;
@@ -115,9 +115,9 @@ function mm_get_previous_year_config() {
 /**
  * Helper: Get year config by offset (0 = current, 1 = previous, 2 = 2 years ago, etc.)
  */
-function mm_get_year_config_by_offset($offset = 0) {
-    $config = mm_get_fiscal_year_config();
-    $current = mm_get_current_year_config();
+function five01c3po_get_year_config_by_offset($offset = 0) {
+    $config = five01c3po_get_fiscal_year_config();
+    $current = five01c3po_get_current_year_config();
 
     // Find the index of current year
     $current_index = 0;
@@ -139,7 +139,7 @@ function mm_get_year_config_by_offset($offset = 0) {
 /**
  * Stats shortcode
  */
-function fiveohonec3po_stats_shortcode() {
+function five01c3po_stats_shortcode() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'swca_members';  // TODO: Make dynamic with org prefix
 
@@ -152,7 +152,7 @@ function fiveohonec3po_stats_shortcode() {
     $current_year_paid = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE status_2025_2026 = 'paid'");
     $current_year_unpaid = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE status_2025_2026 = 'unpaid'");
     
-    $org_settings = get_option('mm_organization_settings', array());
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $org_name = $org_settings['organization_name'] ?? 'Organization';
     
     ob_start();
@@ -181,7 +181,7 @@ function fiveohonec3po_stats_shortcode() {
 /**
  * Member directory shortcode
  */
-function fiveohonec3po_directory_shortcode() {
+function five01c3po_directory_shortcode() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'swca_members';  // TODO: Make dynamic with org prefix
     
@@ -247,9 +247,9 @@ function fiveohonec3po_directory_shortcode() {
 /**
  * Dashboard grid shortcode
  */
-function fiveohonec3po_dashboard_grid_shortcode() {
-    $enabled_features = get_option('mm_enabled_features', array());
-    $org_settings = get_option('mm_organization_settings', array());
+function five01c3po_dashboard_grid_shortcode() {
+    $enabled_features = get_option('five01c3po_enabled_features', array());
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $org_name = $org_settings['organization_name'] ?? 'Your Organization';
     $board_portal_slug = $org_settings['board_portal_slug'] ?? 'board-portal';
 
@@ -320,7 +320,7 @@ function fiveohonec3po_dashboard_grid_shortcode() {
 /**
  * Current membership list shortcode
  */
-function fiveohonec3po_current_list_shortcode() {
+function five01c3po_current_list_shortcode() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'swca_members';  // TODO: Make dynamic with org prefix
 
@@ -387,7 +387,7 @@ function fiveohonec3po_current_list_shortcode() {
 /**
  * Historical membership list shortcode
  */
-function fiveohonec3po_historical_list_shortcode() {
+function five01c3po_historical_list_shortcode() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'swca_members';  // TODO: Make dynamic with org prefix
 
@@ -439,7 +439,7 @@ function fiveohonec3po_historical_list_shortcode() {
 /**
  * Fiscal table shortcode
  */
-function fiveohonec3po_fiscal_table_shortcode() {
+function five01c3po_fiscal_table_shortcode() {
     global $wpdb;
     $members_table = $wpdb->prefix . 'swca_members';
     $bank_table = $wpdb->prefix . 'swca_bank_transactions'; // Using actual table name
@@ -447,9 +447,9 @@ function fiveohonec3po_fiscal_table_shortcode() {
     $gf_payments_table = 'swca_gf_addon_payment_transaction'; // Gravity Forms payments
 
     // Get fiscal year config
-    $config = mm_get_fiscal_year_config();
-    $current_year = mm_get_current_year_config();
-    $previous_year = mm_get_previous_year_config();
+    $config = five01c3po_get_fiscal_year_config();
+    $current_year = five01c3po_get_current_year_config();
+    $previous_year = five01c3po_get_previous_year_config();
 
     // Get member stats for current year
     $current_paid = $wpdb->get_var($wpdb->prepare(
@@ -630,15 +630,15 @@ function fiveohonec3po_fiscal_table_shortcode() {
     return ob_get_clean();
 }
 
-function fiveohonec3po_email_dashboard_shortcode() {
+function five01c3po_email_dashboard_shortcode() {
     return '<p>Email management feature coming soon!</p>';
 }
 
-function fiveohonec3po_event_dashboard_shortcode() {
+function five01c3po_event_dashboard_shortcode() {
     return '<p>Event management feature coming soon!</p>';
 }
 
-function fiveohonec3po_settings_dashboard_shortcode() {
+function five01c3po_settings_dashboard_shortcode() {
     // Check if user is logged in and has permission
     if (!is_user_logged_in()) {
         return '<p>You must be logged in to access settings.</p>';
@@ -648,8 +648,8 @@ function fiveohonec3po_settings_dashboard_shortcode() {
         return '<p>You do not have permission to access settings.</p>';
     }
 
-    $org_settings = get_option('mm_organization_settings', array());
-    $enabled_features = get_option('mm_enabled_features', array());
+    $org_settings = get_option('five01c3po_organization_settings', array());
+    $enabled_features = get_option('five01c3po_enabled_features', array());
 
     // Handle form submission
     $message = '';
@@ -664,7 +664,7 @@ function fiveohonec3po_settings_dashboard_shortcode() {
             'stripe_api_key' => sanitize_text_field($_POST['stripe_api_key'] ?? ''),
             'stripe_api_mode' => sanitize_text_field($_POST['stripe_api_mode'] ?? 'live')
         );
-        update_option('mm_organization_settings', $new_org_settings);
+        update_option('five01c3po_organization_settings', $new_org_settings);
 
         // Update fiscal year configuration
         $fiscal_type = sanitize_text_field($_POST['fiscal_year_type'] ?? 'custom');
@@ -711,7 +711,7 @@ function fiveohonec3po_settings_dashboard_shortcode() {
             );
         }
 
-        update_option('mm_fiscal_year_config', $fiscal_config);
+        update_option('five01c3po_fiscal_year_config', $fiscal_config);
 
         // Update enabled features
         $new_features = array();
@@ -723,7 +723,7 @@ function fiveohonec3po_settings_dashboard_shortcode() {
         foreach ($all_features as $feature) {
             $new_features[$feature] = isset($_POST['feature_' . $feature]) ? true : false;
         }
-        update_option('mm_enabled_features', $new_features);
+        update_option('five01c3po_enabled_features', $new_features);
 
         $message = '<div style="background: #d4f8ff; padding: 15px; border-radius: 5px; margin: 20px 0;">✅ Settings saved successfully!</div>';
 
@@ -733,7 +733,7 @@ function fiveohonec3po_settings_dashboard_shortcode() {
     }
 
     // Get fiscal year config
-    $fiscal_config = mm_get_fiscal_year_config();
+    $fiscal_config = five01c3po_get_fiscal_year_config();
 
     ob_start();
     ?>
@@ -860,7 +860,7 @@ function fiveohonec3po_settings_dashboard_shortcode() {
                 <div style="background: #f0f8ff; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #0073aa;">
                     <p style="margin: 0; font-size: 13px; color: #666;">
                         <strong>Current Year:</strong> <?php
-                            $current = mm_get_current_year_config();
+                            $current = five01c3po_get_current_year_config();
                             echo esc_html($current['label']);
                         ?> (<?php echo date('M j, Y', strtotime($current['start_date'])); ?> - <?php echo date('M j, Y', strtotime($current['end_date'])); ?>)
                     </p>
@@ -1077,8 +1077,8 @@ function fiveohonec3po_settings_dashboard_shortcode() {
     return ob_get_clean();
 }
 
-function fiveohonec3po_officer_tools_dashboard_shortcode() {
-    $org_settings = get_option('mm_organization_settings', array());
+function five01c3po_officer_tools_dashboard_shortcode() {
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $org_name = $org_settings['organization_name'] ?? 'Your Organization';
     $board_portal_slug = $org_settings['board_portal_slug'] ?? 'board-portal';
 

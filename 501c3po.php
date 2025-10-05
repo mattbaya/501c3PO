@@ -22,13 +22,13 @@ if (defined('WP_CLI') && WP_CLI) {
 }
 
 // Plugin activation hooks
-register_activation_hook(__FILE__, 'fiveohonec3po_create_tables');
-register_activation_hook(__FILE__, 'fiveohonec3po_create_dashboard_setup');
-register_activation_hook(__FILE__, 'fiveohonec3po_create_custom_roles');
-register_activation_hook(__FILE__, 'mm_initialize_feature_toggles');
+register_activation_hook(__FILE__, 'five01c3po_create_tables');
+register_activation_hook(__FILE__, 'five01c3po_create_dashboard_setup');
+register_activation_hook(__FILE__, 'five01c3po_create_custom_roles');
+register_activation_hook(__FILE__, 'five01c3po_initialize_feature_toggles');
 
 // Initialize plugin
-add_action('init', 'mm_init_shortcodes');
+add_action('init', 'five01c3po_init_shortcodes');
 
 // Include core functionality
 require_once plugin_dir_path(__FILE__) . 'includes/core/database.php';
@@ -57,7 +57,7 @@ foreach ($feature_files as $file) {
 
 
 // Initialize feature toggles
-function mm_initialize_feature_toggles() {
+function five01c3po_initialize_feature_toggles() {
     $default_features = array(
         'email_management' => true,
         'event_management' => true,
@@ -70,13 +70,13 @@ function mm_initialize_feature_toggles() {
         'bank_transactions' => true
     );
     
-    if (!get_option('mm_enabled_features')) {
-        update_option('mm_enabled_features', $default_features);
+    if (!get_option('five01c3po_enabled_features')) {
+        update_option('five01c3po_enabled_features', $default_features);
     }
     
     // Initialize organization settings
-    if (!get_option('mm_organization_settings')) {
-        update_option('mm_organization_settings', array(
+    if (!get_option('five01c3po_organization_settings')) {
+        update_option('five01c3po_organization_settings', array(
             'organization_name' => 'Your Organization',
             'dashboard_password' => wp_generate_password(12, false),
             'fiscal_year_start' => 7, // July
@@ -85,20 +85,20 @@ function mm_initialize_feature_toggles() {
         ));
     } else {
         // Add board_portal_slug to existing settings if not present
-        $org_settings = get_option('mm_organization_settings');
+        $org_settings = get_option('five01c3po_organization_settings');
         if (!isset($org_settings['board_portal_slug'])) {
             $org_settings['board_portal_slug'] = 'board-portal';
-            update_option('mm_organization_settings', $org_settings);
+            update_option('five01c3po_organization_settings', $org_settings);
         }
     }
 }
 
 // Admin menu
-add_action('admin_menu', 'mm_admin_menu');
+add_action('admin_menu', 'five01c3po_admin_menu');
 
-function mm_admin_menu() {
+function five01c3po_admin_menu() {
     // Get organization name from settings, default to 501c3PO
-    $org_settings = get_option('mm_organization_settings', array());
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $menu_label = !empty($org_settings['organization_name']) && $org_settings['organization_name'] !== 'Your Organization'
         ? $org_settings['organization_name']
         : '501c3PO';
@@ -108,7 +108,7 @@ function mm_admin_menu() {
         $menu_label,
         'manage_options',
         'membership-management',
-        'mm_admin_dashboard',
+        'five01c3po_admin_dashboard',
         'dashicons-groups',
         30
     );
@@ -119,7 +119,7 @@ function mm_admin_menu() {
         'Settings',
         'manage_options',
         '501c3PO-settings',
-        'mm_settings_page'
+        'five01c3po_settings_page'
     );
 
     // Add Board Portal link (external)
@@ -129,30 +129,30 @@ function mm_admin_menu() {
         '🔐 Board Portal',
         'read',  // All logged-in users can see the link
         'board-portal-redirect',
-        'mm_board_portal_redirect'
+        'five01c3po_board_portal_redirect'
     );
 
     // Export & Import and Bank Transactions menus are added by their respective feature modules
 }
 
 // Board Portal redirect function
-function mm_board_portal_redirect() {
-    $org_settings = get_option('mm_organization_settings', array());
+function five01c3po_board_portal_redirect() {
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $board_portal_slug = $org_settings['board_portal_slug'] ?? 'board-portal';
     wp_redirect(home_url('/' . $board_portal_slug));
     exit;
 }
 
 // Create missing financial pages if they don't exist
-add_action('admin_init', 'mm_create_missing_financial_pages');
+add_action('admin_init', 'five01c3po_create_missing_financial_pages');
 
-function mm_create_missing_financial_pages() {
+function five01c3po_create_missing_financial_pages() {
     // Only run once
-    if (get_option('mm_financial_pages_created')) {
+    if (get_option('five01c3po_financial_pages_created')) {
         return;
     }
 
-    $org_settings = get_option('mm_organization_settings', array());
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $org_name = $org_settings['organization_name'] ?? 'Your Organization';
     $board_portal_slug = $org_settings['board_portal_slug'] ?? 'board-portal';
 
@@ -226,7 +226,7 @@ function mm_create_missing_financial_pages() {
                     'post_content' => sprintf('<h2>🏦 %s Bank Transaction History</h2>
 <p>Complete history of all bank transactions, deposits, and withdrawals.</p>
 
-[mm_bank_transactions limit="100"]
+[five01c3po_bank_transactions limit="100"]
 
 <h3>Quick Links</h3>
 <p><a href="/%s/financial">← Back to Financial Reports</a> | <a href="/%s">Dashboard</a> | <a href="/%s/financial/fiscal-year-analysis">Fiscal Analysis</a></p>',
@@ -243,15 +243,15 @@ function mm_create_missing_financial_pages() {
         flush_rewrite_rules();
     }
 
-    update_option('mm_financial_pages_created', true);
+    update_option('five01c3po_financial_pages_created', true);
 }
 
 // Make board portal pages full width (remove sidebar)
-add_filter('body_class', 'mm_add_board_portal_body_class');
-add_action('wp_enqueue_scripts', 'mm_enqueue_board_portal_styles');
+add_filter('body_class', 'five01c3po_add_board_portal_body_class');
+add_action('wp_enqueue_scripts', 'five01c3po_enqueue_board_portal_styles');
 
-function mm_add_board_portal_body_class($classes) {
-    $org_settings = get_option('mm_organization_settings', array());
+function five01c3po_add_board_portal_body_class($classes) {
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $board_portal_slug = $org_settings['board_portal_slug'] ?? 'board-portal';
 
     // Check if we're on a board portal page (main page or any child page)
@@ -280,7 +280,7 @@ function mm_add_board_portal_body_class($classes) {
     return $classes;
 }
 
-function mm_enqueue_board_portal_styles() {
+function five01c3po_enqueue_board_portal_styles() {
     // Add inline CSS for full-width board portal pages
     $custom_css = "
         /* Make board portal pages full width - remove sidebar */
@@ -320,22 +320,22 @@ function mm_enqueue_board_portal_styles() {
 }
 
 // Settings page
-function mm_settings_page() {
+function five01c3po_settings_page() {
     // Handle manual fix triggers
     ?>
     <div class="wrap">
         <h1>Membership Management Settings</h1>
 
         <form method="post" action="options.php">
-            <?php settings_fields('mm_settings_group'); ?>
+            <?php settings_fields('five01c3po_settings_group'); ?>
 
             <h2>General Settings</h2>
             <table class="form-table">
                 <tr>
                     <th scope="row">Organization Name</th>
                     <td>
-                        <input type="text" name="mm_organization_settings[organization_name]"
-                               value="<?php echo esc_attr(get_option('mm_organization_settings')['organization_name'] ?? 'Your Organization'); ?>"
+                        <input type="text" name="five01c3po_organization_settings[organization_name]"
+                               value="<?php echo esc_attr(get_option('five01c3po_organization_settings')['organization_name'] ?? 'Your Organization'); ?>"
                                class="regular-text" />
                         <p class="description">Your organization's name (displayed throughout the site)</p>
                     </td>
@@ -343,8 +343,8 @@ function mm_settings_page() {
                 <tr>
                     <th scope="row">Board Portal URL Slug</th>
                     <td>
-                        <input type="text" name="mm_organization_settings[board_portal_slug]"
-                               value="<?php echo esc_attr(get_option('mm_organization_settings')['board_portal_slug'] ?? 'board-portal'); ?>"
+                        <input type="text" name="five01c3po_organization_settings[board_portal_slug]"
+                               value="<?php echo esc_attr(get_option('five01c3po_organization_settings')['board_portal_slug'] ?? 'board-portal'); ?>"
                                class="regular-text" />
                         <p class="description">URL slug for the member board portal (e.g., "board-portal" becomes yoursite.com/board-portal)</p>
                     </td>
@@ -356,8 +356,8 @@ function mm_settings_page() {
                 <tr>
                     <th scope="row">Dashboard Password</th>
                     <td>
-                        <input type="text" name="mm_organization_settings[dashboard_password]"
-                               value="<?php echo esc_attr(get_option('mm_organization_settings')['dashboard_password'] ?? ''); ?>"
+                        <input type="text" name="five01c3po_organization_settings[dashboard_password]"
+                               value="<?php echo esc_attr(get_option('five01c3po_organization_settings')['dashboard_password'] ?? ''); ?>"
                                class="regular-text" />
                         <p class="description">Password required to access the member board portal</p>
                     </td>
@@ -369,9 +369,9 @@ function mm_settings_page() {
                 <tr>
                     <th scope="row">Currency</th>
                     <td>
-                        <select name="mm_organization_settings[currency]" class="regular-text">
+                        <select name="five01c3po_organization_settings[currency]" class="regular-text">
                             <?php
-                            $current_currency = get_option('mm_organization_settings')['currency'] ?? 'USD';
+                            $current_currency = get_option('five01c3po_organization_settings')['currency'] ?? 'USD';
                             ?>
                             <option value="USD" <?php selected($current_currency, 'USD'); ?>>USD ($)</option>
                             <option value="EUR" <?php selected($current_currency, 'EUR'); ?>>EUR (€)</option>
@@ -384,8 +384,8 @@ function mm_settings_page() {
                 <tr>
                     <th scope="row">Stripe API Mode</th>
                     <td>
-                        <?php $current_mode = get_option('mm_organization_settings')['stripe_api_mode'] ?? 'live'; ?>
-                        <select name="mm_organization_settings[stripe_api_mode]" class="regular-text">
+                        <?php $current_mode = get_option('five01c3po_organization_settings')['stripe_api_mode'] ?? 'live'; ?>
+                        <select name="five01c3po_organization_settings[stripe_api_mode]" class="regular-text">
                             <option value="live" <?php selected($current_mode, 'live'); ?>>Live Mode</option>
                             <option value="test" <?php selected($current_mode, 'test'); ?>>Test Mode</option>
                         </select>
@@ -396,7 +396,7 @@ function mm_settings_page() {
                     <th scope="row">Stripe API Key Status</th>
                     <td>
                         <?php
-                        $org_settings = get_option('mm_organization_settings', array());
+                        $org_settings = get_option('five01c3po_organization_settings', array());
                         $has_encrypted_key = !empty($org_settings['stripe_api_key_encrypted']) && !empty($org_settings['stripe_passphrase_hash']);
                         ?>
                         <?php if ($has_encrypted_key): ?>
@@ -422,7 +422,7 @@ function mm_settings_page() {
                     <th scope="row">Fiscal Year Configuration</th>
                     <td>
                         <p class="description">
-                            <a href="<?php echo home_url('/' . (get_option('mm_organization_settings')['board_portal_slug'] ?? 'board-portal') . '/settings'); ?>" class="button button-secondary">
+                            <a href="<?php echo home_url('/' . (get_option('five01c3po_organization_settings')['board_portal_slug'] ?? 'board-portal') . '/settings'); ?>" class="button button-secondary">
                                 Configure Fiscal Years →
                             </a>
                             <br>Define membership years, dates, and historical periods in the board portal settings.
@@ -446,7 +446,7 @@ function mm_settings_page() {
                     'bank_transactions' => 'Bank Transactions'
                 );
                 
-                $enabled_features = get_option('mm_enabled_features', array());
+                $enabled_features = get_option('five01c3po_enabled_features', array());
                 
                 foreach ($features as $key => $label) {
                     ?>
@@ -454,7 +454,7 @@ function mm_settings_page() {
                         <th scope="row"><?php echo $label; ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="mm_enabled_features[<?php echo $key; ?>]" 
+                                <input type="checkbox" name="five01c3po_enabled_features[<?php echo $key; ?>]" 
                                        value="1" <?php checked(isset($enabled_features[$key]) && $enabled_features[$key]); ?> />
                                 Enable <?php echo $label; ?>
                             </label>
@@ -472,23 +472,23 @@ function mm_settings_page() {
 }
 
 // Register settings
-add_action('admin_init', 'mm_register_settings');
+add_action('admin_init', 'five01c3po_register_settings');
 
-function mm_register_settings() {
-    register_setting('mm_settings_group', 'mm_organization_settings');
-    register_setting('mm_settings_group', 'mm_enabled_features');
+function five01c3po_register_settings() {
+    register_setting('five01c3po_settings_group', 'five01c3po_organization_settings');
+    register_setting('five01c3po_settings_group', 'five01c3po_enabled_features');
 }
 
 
 // Basic admin dashboard
-function mm_admin_dashboard() {
+function five01c3po_admin_dashboard() {
     ?>
     <div class="wrap">
         <h1>Membership Management Dashboard</h1>
         <p>Welcome to the Membership Management System. Use the menu on the left to access different features.</p>
         
         <div class="dashboard-widgets">
-            <?php do_action('mm_admin_dashboard_widgets'); ?>
+            <?php do_action('five01c3po_admin_dashboard_widgets'); ?>
         </div>
     </div>
     <?php

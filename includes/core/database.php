@@ -9,7 +9,7 @@ defined('ABSPATH') or die('No script kiddies please!');
 /**
  * Create all plugin tables
  */
-function fiveohonec3po_create_tables() {
+function five01c3po_create_tables() {
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();
     
