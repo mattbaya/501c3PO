@@ -814,6 +814,9 @@ function fiveohonec3po_settings_dashboard_shortcode() {
             </table>
 
             <h3>Stripe API Integration</h3>
+            <div style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin-bottom: 20px;">
+                <p style="margin: 0;"><strong>🔐 Security:</strong> The Stripe API key is managed through the <a href="<?php echo admin_url('admin.php?page=501c3PO-stripe-sync'); ?>">Stripe Sync page</a> with AES-256 encryption.</p>
+            </div>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
                 <tr style="border-bottom: 1px solid #ddd;">
                     <td style="padding: 15px; width: 40%; font-weight: bold;">API Mode</td>
@@ -826,18 +829,25 @@ function fiveohonec3po_settings_dashboard_shortcode() {
                     </td>
                 </tr>
                 <tr>
-                    <td style="padding: 15px; font-weight: bold;">Stripe Secret Key</td>
+                    <td style="padding: 15px; font-weight: bold;">API Key Status</td>
                     <td style="padding: 15px;">
-                        <input type="password" name="stripe_api_key"
-                               value="<?php echo esc_attr($org_settings['stripe_api_key'] ?? ''); ?>"
-                               placeholder="<?php echo ($org_settings['stripe_api_mode'] ?? 'live') === 'live' ? 'sk_live_...' : 'sk_test_...'; ?>"
-                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
-                        <p style="color: #666; font-size: 12px; margin: 5px 0 0;">
-                            Your Stripe Secret Key (stored securely). Get it from your <a href="https://dashboard.stripe.com/apikeys" target="_blank">Stripe Dashboard</a>.
-                            <?php if (!empty($org_settings['stripe_api_key'])): ?>
-                                <br><span style="color: #00a32a;">✓ API key configured (<?php echo substr($org_settings['stripe_api_key'], 0, 12); ?>...)</span>
-                            <?php endif; ?>
-                        </p>
+                        <?php if (!empty($org_settings['stripe_api_key_encrypted']) && !empty($org_settings['stripe_passphrase_hash'])): ?>
+                            <p style="margin: 0; color: #00a32a;">
+                                <strong>✓ API Key Configured (Encrypted)</strong><br>
+                                <span style="color: #666; font-size: 12px;">API key is stored with AES-256 encryption. Officer passphrase required to use.</span>
+                            </p>
+                            <p style="margin: 10px 0 0 0;">
+                                <a href="<?php echo admin_url('admin.php?page=501c3PO-stripe-sync'); ?>" class="button">Manage API Key →</a>
+                            </p>
+                        <?php else: ?>
+                            <p style="margin: 0; color: #d63638;">
+                                <strong>⚠ No API Key Configured</strong><br>
+                                <span style="color: #666; font-size: 12px;">Set up your Stripe API key with encrypted storage.</span>
+                            </p>
+                            <p style="margin: 10px 0 0 0;">
+                                <a href="<?php echo admin_url('admin.php?page=501c3PO-stripe-sync'); ?>" class="button button-primary">Set Up Stripe API Key →</a>
+                            </p>
+                        <?php endif; ?>
                     </td>
                 </tr>
             </table>
