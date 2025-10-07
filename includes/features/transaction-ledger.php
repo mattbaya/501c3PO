@@ -113,37 +113,20 @@ function five01c3po_get_transaction_ledger($filters = array()) {
             b.status as bank_status,
             b.balance as bank_balance,
 
-            -- Stripe Transaction Data (if matched)
-            s.id as stripe_id,
-            s.stripe_charge_id,
-            s.stripe_created,
-            s.amount as stripe_amount,
-            s.stripe_fee,
-            s.amount_refunded,
-            (s.amount - s.stripe_fee - s.amount_refunded) as stripe_net_amount,
-            s.status as stripe_status,
-            s.description as stripe_description,
-            s.customer_name,
-            s.customer_email,
+            -- Aggregated match information
+            GROUP_CONCAT(DISTINCT m_stripe.stripe_transaction_id ORDER BY m_stripe.stripe_transaction_id) as matched_stripe_ids,
+            GROUP_CONCAT(DISTINCT m_stripe.match_type ORDER BY m_stripe.stripe_transaction_id) as match_types,
+            COUNT(DISTINCT m_stripe.stripe_transaction_id) as stripe_match_count,
 
-            -- Payout Information
-            s.payout_id,
-            s.payout_date,
-            s.payout_arrival_date,
-            s.payout_status,
-
-            -- Gravity Forms Data (if matched)
-            gf.id as gf_id,
-            gf.date_created as gf_date,
-            gf.amount as gf_amount,
-
-            -- Match Information
-            m_stripe.match_type,
-            m_stripe.match_confidence,
+            -- Use MAX to get one Stripe record (for basic info) - will get details later
+            MAX(s.stripe_fee) as total_stripe_fee,
+            MAX(s.customer_name) as customer_name,
+            MAX(s.customer_email) as customer_email,
+            SUM(s.amount_refunded) as total_refunded,
 
             -- Transaction Type Indicator
             CASE
-                WHEN s.id IS NOT NULL THEN 'stripe_matched'
+                WHEN COUNT(DISTINCT m_stripe.stripe_transaction_id) > 0 THEN 'stripe_matched'
                 WHEN b.credit > 0 THEN 'bank_deposit'
                 WHEN b.debit > 0 THEN 'bank_expense'
                 ELSE 'unknown'
@@ -152,20 +135,14 @@ function five01c3po_get_transaction_ledger($filters = array()) {
         FROM $bank_table b
 
         -- Left join to Stripe matches
-        LEFT JOIN (
-            SELECT DISTINCT stripe_transaction_id, bank_transaction_id, match_type, match_confidence
-            FROM $matches_table
-            WHERE match_type IN ('bank_stripe_payout', 'bank_stripe_payout_part')
-            GROUP BY stripe_transaction_id, bank_transaction_id
-        ) m_stripe ON m_stripe.bank_transaction_id = b.id
+        LEFT JOIN $matches_table m_stripe
+            ON m_stripe.bank_transaction_id = b.id
+            AND m_stripe.match_type IN ('bank_stripe_payout', 'bank_stripe_payout_part')
         LEFT JOIN $stripe_table s ON s.id = m_stripe.stripe_transaction_id
-
-        -- Left join Gravity Forms (for amount verification)
-        LEFT JOIN $matches_table m_gf ON m_gf.stripe_transaction_id = s.id AND m_gf.match_type = 'gravity_stripe'
-        LEFT JOIN $gf_table gf ON gf.id = m_gf.gravity_form_transaction_id
 
         WHERE $where_sql
 
+        GROUP BY b.id
         ORDER BY b.post_date DESC, b.id DESC
     ";
 
@@ -228,8 +205,8 @@ function five01c3po_transaction_ledger_page() {
     foreach ($transactions as $txn) {
         $total_credits += floatval($txn->bank_credit);
         $total_debits += floatval($txn->bank_debit);
-        $total_stripe_fees += floatval($txn->stripe_fee);
-        if ($txn->stripe_id) {
+        $total_stripe_fees += floatval($txn->total_stripe_fee);
+        if (intval($txn->stripe_match_count) > 0) {
             $stripe_matched_count++;
         } else {
             $unmatched_count++;
@@ -438,8 +415,9 @@ function five01c3po_transaction_ledger_page() {
                         $is_credit = floatval($txn->bank_credit) > 0;
                         $is_debit = floatval($txn->bank_debit) > 0;
                         $amount = $is_credit ? $txn->bank_credit : $txn->bank_debit;
-                        $has_stripe = !empty($txn->stripe_id);
-                        $is_refunded = floatval($txn->amount_refunded) > 0;
+                        $has_stripe = intval($txn->stripe_match_count) > 0;
+                        $is_refunded = floatval($txn->total_refunded) > 0;
+                        $stripe_ids = $has_stripe ? explode(',', $txn->matched_stripe_ids) : array();
 
                         // Row styling based on transaction type
                         if ($has_stripe && $is_refunded) {
@@ -481,8 +459,8 @@ function five01c3po_transaction_ledger_page() {
                                 <strong style="color: <?php echo $is_credit ? '#28a745' : '#dc3545'; ?>;">
                                     <?php echo $is_credit ? '+' : '-'; ?>$<?php echo number_format($amount, 2); ?>
                                 </strong>
-                                <?php if ($has_stripe && $txn->stripe_fee > 0): ?>
-                                    <br><small style="color: #999;">Fee: -$<?php echo number_format($txn->stripe_fee, 2); ?></small>
+                                <?php if ($has_stripe && $txn->total_stripe_fee > 0): ?>
+                                    <br><small style="color: #999;">Fee: -$<?php echo number_format($txn->total_stripe_fee, 2); ?></small>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -520,12 +498,44 @@ function five01c3po_transaction_ledger_page() {
                             </td>
                             <td style="text-align: center;" title="<?php echo $status_text; ?>">
                                 <span style="font-size: 20px;"><?php echo $status_icon; ?></span>
-                                <?php if ($has_stripe): ?>
-                                    <br><a href="<?php echo admin_url('admin.php?page=501c3PO-view-stripe-transaction&id=' . $txn->stripe_id); ?>"
-                                          style="font-size: 11px;">Details</a>
-                                <?php endif; ?>
                             </td>
                         </tr>
+
+                        <!-- Match Details Row -->
+                        <?php if ($has_stripe): ?>
+                            <tr style="background: #f8f9fa; border-top: none;">
+                                <td colspan="10" style="padding: 8px 15px; font-size: 12px;">
+                                    <strong>🔗 Matched to <?php echo count($stripe_ids); ?> Stripe transaction<?php echo count($stripe_ids) > 1 ? 's' : ''; ?>:</strong>
+                                    <?php
+                                    global $wpdb;
+                                    foreach ($stripe_ids as $stripe_id):
+                                        $stripe_details = $wpdb->get_row($wpdb->prepare(
+                                            "SELECT stripe_charge_id, amount, stripe_fee, customer_name, customer_email
+                                             FROM swca_stripe_transactions WHERE id = %d",
+                                            $stripe_id
+                                        ));
+                                        if ($stripe_details):
+                                    ?>
+                                        <span style="margin-left: 10px;">
+                                            <a href="<?php echo admin_url('admin.php?page=501c3PO-view-stripe-transaction&id=' . $stripe_id); ?>"
+                                               style="color: #0073aa; text-decoration: none;">
+                                                💳 <?php echo esc_html($stripe_details->customer_name ?: $stripe_details->customer_email); ?>
+                                                ($<?php echo number_format($stripe_details->amount, 2); ?>, fee: $<?php echo number_format($stripe_details->stripe_fee, 2); ?>)
+                                            </a>
+                                        </span>
+                                    <?php
+                                        endif;
+                                    endforeach;
+                                    ?>
+                                    <span style="margin-left: 15px;">
+                                        <a href="<?php echo admin_url('admin.php?page=501c3PO-view-bank-transaction&id=' . $txn->bank_id); ?>"
+                                           style="color: #0073aa; text-decoration: none;">
+                                            🏦 View Bank Transaction
+                                        </a>
+                                    </span>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </tbody>
