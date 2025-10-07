@@ -9,7 +9,7 @@ defined('ABSPATH') or die('No script kiddies please!');
 /**
  * Create all plugin tables
  */
-function fiveohonec3po_create_tables() {
+function five01c3po_create_tables() {
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();
     
@@ -83,7 +83,7 @@ function fiveohonec3po_create_tables() {
     dbDelta($sql);
 
     // Bank transactions table
-    $table_name = $wpdb->prefix . 'bank_transactions';
+    $table_name = $wpdb->prefix . 'swca_bank_transactions';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         account_number varchar(50),
@@ -320,6 +320,89 @@ function fiveohonec3po_create_tables() {
         updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         UNIQUE KEY unique_setting (setting_name)
+    ) $charset_collate;";
+    dbDelta($sql);
+
+    // Stripe transactions table (for complete historical Stripe data)
+    $table_name = $wpdb->prefix . 'stripe_transactions';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        stripe_charge_id varchar(255) NOT NULL,
+        transaction_type varchar(20) NOT NULL,
+        member_id mediumint(9),
+        customer_email varchar(255),
+        amount decimal(10,2) NOT NULL,
+        amount_refunded decimal(10,2) DEFAULT 0.00,
+        net_amount decimal(10,2) NOT NULL,
+        stripe_fee decimal(10,2) DEFAULT 0.00,
+        currency varchar(10) DEFAULT 'usd',
+        status varchar(50) NOT NULL,
+        description text,
+        customer_name varchar(255),
+        payment_method varchar(50),
+        receipt_url varchar(500),
+        stripe_created timestamp NOT NULL,
+        payout_id varchar(255),
+        payout_date date,
+        payout_arrival_date date,
+        payout_status varchar(50),
+        balance_transaction_id varchar(255),
+        synced_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_charge (stripe_charge_id),
+        KEY idx_member (member_id),
+        KEY idx_email (customer_email),
+        KEY idx_date (stripe_created),
+        KEY idx_type (transaction_type),
+        KEY idx_payout (payout_id),
+        KEY idx_payout_date (payout_date)
+    ) $charset_collate;";
+    dbDelta($sql);
+
+    // Stripe balance transactions table (for ALL Stripe transactions including debits)
+    $table_name = $wpdb->prefix . 'stripe_balance_transactions';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        balance_txn_id varchar(255) NOT NULL,
+        txn_type varchar(50) NOT NULL,
+        source_id varchar(255),
+        source_type varchar(50),
+        amount decimal(10,2) NOT NULL,
+        fee decimal(10,2) DEFAULT 0.00,
+        net decimal(10,2) NOT NULL,
+        currency varchar(10) DEFAULT 'usd',
+        status varchar(50),
+        description text,
+        available_on date,
+        created_at timestamp NOT NULL,
+        payout_id varchar(255),
+        synced_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_balance_txn (balance_txn_id),
+        KEY idx_type (txn_type),
+        KEY idx_source (source_id),
+        KEY idx_payout (payout_id),
+        KEY idx_available_on (available_on)
+    ) $charset_collate;";
+    dbDelta($sql);
+
+    // Transaction matches table (for linking Stripe, Gravity Forms, and Bank transactions)
+    $table_name = $wpdb->prefix . 'transaction_matches';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        stripe_transaction_id mediumint(9),
+        gravity_form_transaction_id mediumint(9),
+        bank_transaction_id mediumint(9),
+        match_type varchar(50) NOT NULL,
+        match_confidence varchar(20) NOT NULL,
+        notes text,
+        matched_by int,
+        matched_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_stripe (stripe_transaction_id),
+        KEY idx_gravity (gravity_form_transaction_id),
+        KEY idx_bank (bank_transaction_id),
+        KEY idx_confidence (match_confidence)
     ) $charset_collate;";
     dbDelta($sql);
 }
