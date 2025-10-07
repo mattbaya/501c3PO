@@ -509,25 +509,24 @@ function five01c3po_transaction_ledger_page() {
                                     <?php
                                     global $wpdb;
 
-                                    // Get payout ID from balance transactions (more reliable than stripe_transactions)
-                                    $first_stripe = $wpdb->get_row($wpdb->prepare(
-                                        "SELECT payout_arrival_date FROM swca_stripe_transactions WHERE id = %d",
-                                        $stripe_ids[0]
-                                    ));
+                                    // NEW: Look up correct payout by matching bank date ±2 days AND exact amount
+                                    // This ignores incorrect transaction matches and finds the RIGHT payout
+                                    $date_start = date('Y-m-d', strtotime($txn->transaction_date . ' -2 days'));
+                                    $date_end = date('Y-m-d', strtotime($txn->transaction_date . ' +2 days'));
 
-                                    $payout_arrival_date = $first_stripe->payout_arrival_date ?? null;
-
-                                    // Query balance_transactions for payout_id (this is populated by the sync function)
-                                    $bal_txn = $wpdb->get_row($wpdb->prepare(
-                                        "SELECT payout_id FROM swca_stripe_balance_transactions
-                                         WHERE source_type = 'charge'
-                                         AND available_on = %s
-                                         AND payout_id IS NOT NULL
+                                    $correct_payout = $wpdb->get_row($wpdb->prepare(
+                                        "SELECT source_id as payout_id, available_on as payout_date
+                                         FROM swca_stripe_balance_transactions
+                                         WHERE txn_type = 'payout'
+                                         AND available_on BETWEEN %s AND %s
+                                         AND ABS(ABS(amount) - %f) < 0.01
+                                         ORDER BY ABS(ABS(amount) - %f) ASC
                                          LIMIT 1",
-                                        $payout_arrival_date
+                                        $date_start, $date_end, $txn->bank_credit, $txn->bank_credit
                                     ));
 
-                                    $payout_id = $bal_txn->payout_id ?? null;
+                                    $payout_id = $correct_payout->payout_id ?? null;
+                                    $payout_arrival_date = $correct_payout->payout_date ?? null;
 
                                     // Try to get balance transactions - either by payout_id or by available_on date
                                     if ($payout_id || $payout_arrival_date):
