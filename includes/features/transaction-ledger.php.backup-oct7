@@ -1,0 +1,447 @@
+<?php
+/**
+ * Transaction Ledger Feature
+ * Complete money trail: Customer → Stripe → Bank
+ * Shows every penny accounted for with fees, payouts, and bank deposits
+ */
+
+// Prevent direct access
+defined('ABSPATH') or die('No script kiddies please!');
+
+/**
+ * Add Transaction Ledger menu
+ */
+add_action('admin_menu', 'five01c3po_add_ledger_menu', 25);
+
+function five01c3po_add_ledger_menu() {
+    add_submenu_page(
+        'membership-management',
+        'Transaction Ledger',
+        '📒 Transaction Ledger',
+        'manage_options',
+        '501c3PO-transaction-ledger',
+        'five01c3po_transaction_ledger_page'
+    );
+}
+
+/**
+ * Get complete ledger data
+ */
+function five01c3po_get_transaction_ledger($filters = array()) {
+    global $wpdb;
+
+    $stripe_table = 'swca_stripe_transactions';
+    $gf_table = 'swca_gf_addon_payment_transaction';
+    $bank_table = 'wp_swca_bank_transactions';
+    $matches_table = 'swca_transaction_matches';
+
+    // Build WHERE clause from filters (now based on bank transactions)
+    $where_clauses = array("1=1");
+
+    if (!empty($filters['date_from'])) {
+        $where_clauses[] = $wpdb->prepare("b.post_date >= %s", $filters['date_from']);
+    }
+    if (!empty($filters['date_to'])) {
+        $where_clauses[] = $wpdb->prepare("b.post_date <= %s", $filters['date_to']);
+    }
+    if (!empty($filters['min_amount'])) {
+        $where_clauses[] = $wpdb->prepare("(b.credit >= %f OR b.debit >= %f)", $filters['min_amount'], $filters['min_amount']);
+    }
+    if (!empty($filters['search'])) {
+        $search = '%' . $wpdb->esc_like($filters['search']) . '%';
+        $where_clauses[] = $wpdb->prepare(
+            "(b.description LIKE %s OR b.notes LIKE %s OR s.customer_email LIKE %s OR s.customer_name LIKE %s)",
+            $search, $search, $search, $search
+        );
+    }
+    if (!empty($filters['category'])) {
+        $where_clauses[] = $wpdb->prepare("b.category = %s", $filters['category']);
+    }
+
+    $where_sql = implode(" AND ", $where_clauses);
+
+    $query = "
+        SELECT
+            -- Bank Transaction Data (PRIMARY SOURCE)
+            b.id as bank_id,
+            b.post_date as transaction_date,
+            b.description as bank_description,
+            b.notes as bank_notes,
+            b.category as bank_category,
+            b.tags as bank_tags,
+            b.check_number,
+            b.debit as bank_debit,
+            b.credit as bank_credit,
+            b.status as bank_status,
+
+            -- Stripe Transaction Data (if matched)
+            s.id as stripe_id,
+            s.stripe_charge_id,
+            s.stripe_created,
+            s.amount as stripe_amount,
+            s.stripe_fee,
+            s.amount_refunded,
+            (s.amount - s.stripe_fee - s.amount_refunded) as stripe_net_amount,
+            s.status as stripe_status,
+            s.description as stripe_description,
+            s.customer_name,
+            s.customer_email,
+
+            -- Payout Information
+            s.payout_id,
+            s.payout_date,
+            s.payout_arrival_date,
+            s.payout_status,
+
+            -- Gravity Forms Data (if matched)
+            gf.id as gf_id,
+            gf.date_created as gf_date,
+            gf.amount as gf_amount,
+
+            -- Match Information
+            m_stripe.match_type,
+            m_stripe.match_confidence,
+
+            -- Transaction Type Indicator
+            CASE
+                WHEN s.id IS NOT NULL THEN 'stripe_matched'
+                WHEN b.credit > 0 THEN 'bank_deposit'
+                WHEN b.debit > 0 THEN 'bank_expense'
+                ELSE 'unknown'
+            END as transaction_type
+
+        FROM $bank_table b
+
+        -- Left join to Stripe matches
+        LEFT JOIN (
+            SELECT DISTINCT stripe_transaction_id, bank_transaction_id, match_type, match_confidence
+            FROM $matches_table
+            WHERE match_type IN ('bank_stripe_payout', 'bank_stripe_payout_part')
+            GROUP BY stripe_transaction_id, bank_transaction_id
+        ) m_stripe ON m_stripe.bank_transaction_id = b.id
+        LEFT JOIN $stripe_table s ON s.id = m_stripe.stripe_transaction_id
+
+        -- Left join Gravity Forms (for amount verification)
+        LEFT JOIN $matches_table m_gf ON m_gf.stripe_transaction_id = s.id AND m_gf.match_type = 'gravity_stripe'
+        LEFT JOIN $gf_table gf ON gf.id = m_gf.gravity_form_transaction_id
+
+        WHERE $where_sql
+
+        ORDER BY b.post_date DESC, b.id DESC
+    ";
+
+    return $wpdb->get_results($query);
+}
+
+/**
+ * Transaction Ledger page
+ */
+function five01c3po_transaction_ledger_page() {
+    // Handle filters
+    $filters = array(
+        'date_from' => $_GET['date_from'] ?? '',
+        'date_to' => $_GET['date_to'] ?? '',
+        'min_amount' => $_GET['min_amount'] ?? '',
+        'search' => $_GET['search'] ?? '',
+        'category' => $_GET['category'] ?? ''
+    );
+
+    // Handle AJAX updates for notes, category, tags
+    if (isset($_POST['action']) && $_POST['action'] === 'update_bank_transaction') {
+        check_admin_referer('update_bank_transaction');
+        global $wpdb;
+        $bank_id = intval($_POST['bank_id']);
+        $field = sanitize_text_field($_POST['field']);
+        $value = sanitize_textarea_field($_POST['value']);
+
+        $allowed_fields = array('notes', 'category', 'tags');
+        if (in_array($field, $allowed_fields)) {
+            $wpdb->update(
+                'wp_swca_bank_transactions',
+                array($field => $value),
+                array('id' => $bank_id),
+                array('%s'),
+                array('%d')
+            );
+            wp_send_json_success(array('message' => 'Updated successfully'));
+        }
+        wp_send_json_error(array('message' => 'Invalid field'));
+    }
+
+    // Get ledger data
+    $transactions = five01c3po_get_transaction_ledger($filters);
+
+    // Calculate totals
+    $total_credits = 0;
+    $total_debits = 0;
+    $total_stripe_fees = 0;
+    $stripe_matched_count = 0;
+    $unmatched_count = 0;
+
+    foreach ($transactions as $txn) {
+        $total_credits += floatval($txn->bank_credit);
+        $total_debits += floatval($txn->bank_debit);
+        $total_stripe_fees += floatval($txn->stripe_fee);
+        if ($txn->stripe_id) {
+            $stripe_matched_count++;
+        } else {
+            $unmatched_count++;
+        }
+    }
+
+    $net_balance = $total_credits - $total_debits;
+
+    ?>
+    <div class="wrap">
+        <h1>📒 Complete Transaction Ledger</h1>
+        <p class="description">All bank transactions including Stripe payments, cash deposits, checks, and expenses</p>
+
+        <!-- Accounting Standards Notice -->
+        <div class="notice notice-info" style="margin: 15px 0; padding: 10px;">
+            <p><strong>📊 Bank Statement View:</strong> This ledger shows ALL bank transactions (credits and debits).
+            Stripe-matched transactions include fee calculations. You can add notes, categories, and tags to any transaction for better organization.
+            <br>Click any field in the Notes, Category, or Tags columns to edit.</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="card" style="margin-bottom: 20px;">
+            <h2>Filters</h2>
+            <form method="get" action="">
+                <input type="hidden" name="page" value="501c3PO-transaction-ledger">
+                <table class="form-table">
+                    <tr>
+                        <th>Date Range</th>
+                        <td>
+                            <input type="date" name="date_from" value="<?php echo esc_attr($filters['date_from']); ?>" placeholder="From">
+                            to
+                            <input type="date" name="date_to" value="<?php echo esc_attr($filters['date_to']); ?>" placeholder="To">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Min Amount</th>
+                        <td>
+                            $<input type="number" name="min_amount" value="<?php echo esc_attr($filters['min_amount']); ?>"
+                                   step="0.01" style="width: 100px;" placeholder="0.00">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Search</th>
+                        <td>
+                            <input type="text" name="search" value="<?php echo esc_attr($filters['search']); ?>"
+                                   class="regular-text" placeholder="Customer name or email">
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button('Apply Filters', 'secondary', 'submit', false); ?>
+                <a href="?page=501c3PO-transaction-ledger" class="button">Clear Filters</a>
+            </form>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="card" style="margin-bottom: 20px;">
+            <h2>Summary</h2>
+            <table class="widefat" style="max-width: 600px;">
+                <tr>
+                    <th>Total Transactions</th>
+                    <td><?php echo number_format(count($transactions)); ?></td>
+                </tr>
+                <tr>
+                    <th>Stripe-Matched</th>
+                    <td><?php echo number_format($stripe_matched_count); ?> (<?php echo count($transactions) > 0 ? round(($stripe_matched_count / count($transactions)) * 100, 1) : 0; ?>%)</td>
+                </tr>
+                <tr>
+                    <th>Cash/Check/Other</th>
+                    <td><?php echo number_format($unmatched_count); ?> (<?php echo count($transactions) > 0 ? round(($unmatched_count / count($transactions)) * 100, 1) : 0; ?>%)</td>
+                </tr>
+                <tr style="border-top: 1px solid #ddd;">
+                    <th>Total Credits (Income)</th>
+                    <td><strong style="color: #28a745;">+$<?php echo number_format($total_credits, 2); ?></strong></td>
+                </tr>
+                <tr>
+                    <th>Total Debits (Expenses)</th>
+                    <td style="color: #dc3545;">-$<?php echo number_format($total_debits, 2); ?></td>
+                </tr>
+                <tr>
+                    <th>Total Stripe Fees</th>
+                    <td style="color: #dc3545;">-$<?php echo number_format($total_stripe_fees, 2); ?></td>
+                </tr>
+                <tr style="border-top: 2px solid #000;">
+                    <th>Net Balance</th>
+                    <td><strong style="color: <?php echo $net_balance >= 0 ? '#28a745' : '#dc3545'; ?>;">
+                        $<?php echo number_format($net_balance, 2); ?>
+                    </strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Transaction Ledger -->
+        <table class="wp-list-table widefat fixed striped" style="background: white;">
+            <thead>
+                <tr>
+                    <th style="width: 140px;">Date/Time</th>
+                    <th style="width: 100px; text-align: right;">Amount</th>
+                    <th style="width: 80px; text-align: right;">Stripe Fee</th>
+                    <th style="width: 80px; text-align: right;">Refunded</th>
+                    <th style="width: 100px; text-align: right;">Net</th>
+                    <th style="width: 120px;">Payout Date</th>
+                    <th style="width: 120px;">Bank Deposit</th>
+                    <th style="width: 60px; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($transactions)): ?>
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            No transactions found. Try adjusting your filters.
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($transactions as $txn): ?>
+                        <?php
+                        $is_refunded = floatval($txn->amount_refunded) > 0;
+                        $has_bank_match = !empty($txn->bank_id);
+                        $net_amount = floatval($txn->net_amount);
+                        $is_negative = $net_amount < 0;
+
+                        // Status indicator
+                        if ($is_refunded && $net_amount <= 0) {
+                            $status_icon = '🔄';
+                            $status_text = 'Refunded';
+                            $row_style = 'background: #fff3cd;';
+                        } elseif ($has_bank_match) {
+                            $status_icon = '✓';
+                            $status_text = 'In Bank';
+                            $row_style = 'background: #d4edda;';
+                        } elseif (!empty($txn->payout_arrival_date)) {
+                            $status_icon = '⏳';
+                            $status_text = 'Paid Out';
+                            $row_style = '';
+                        } else {
+                            $status_icon = '⏸';
+                            $status_text = 'Pending';
+                            $row_style = '';
+                        }
+
+                        $customer_display = $txn->customer_name ?? $txn->customer_email ?? 'Unknown';
+                        ?>
+                        <!-- Row 1: Transaction Data -->
+                        <tr style="<?php echo $row_style; ?> border-bottom: none;">
+                            <td style="border-bottom: none;">
+                                <strong><?php echo date('M j, Y', strtotime($txn->stripe_created)); ?></strong><br>
+                                <small style="color: #666;"><?php echo date('g:i a', strtotime($txn->stripe_created)); ?></small>
+                            </td>
+                            <td style="text-align: right; border-bottom: none;">
+                                <strong>$<?php echo number_format($txn->stripe_amount, 2); ?></strong>
+                            </td>
+                            <td style="text-align: right; color: #dc3545; border-bottom: none;">
+                                -$<?php echo number_format($txn->stripe_fee, 2); ?>
+                            </td>
+                            <td style="text-align: right; color: <?php echo $is_refunded ? '#dc3545' : '#999'; ?>; border-bottom: none;">
+                                <?php if ($is_refunded): ?>
+                                    <a href="https://dashboard.stripe.com/charges/<?php echo esc_attr($txn->stripe_charge_id); ?>"
+                                       target="_blank"
+                                       title="View refund details in Stripe Dashboard"
+                                       style="color: #dc3545; text-decoration: none;">
+                                        -$<?php echo number_format($txn->amount_refunded, 2); ?>
+                                    </a>
+                                <?php else: ?>
+                                    <span style="color: #ccc;">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align: right; font-weight: bold; color: <?php echo $is_negative ? '#dc3545' : '#28a745'; ?>; border-bottom: none;">
+                                $<?php echo number_format($net_amount, 2); ?>
+                            </td>
+                            <td style="border-bottom: none;">
+                                <?php if ($txn->payout_arrival_date): ?>
+                                    <strong><?php echo date('M j, Y', strtotime($txn->payout_arrival_date)); ?></strong><br>
+                                    <?php if ($txn->days_to_payout): ?>
+                                        <small style="color: #666;">+<?php echo $txn->days_to_payout; ?> days</small>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span style="color: #ccc;">Pending</span>
+                                <?php endif; ?>
+                            </td>
+                            <td style="border-bottom: none;">
+                                <?php if ($has_bank_match): ?>
+                                    <strong><?php echo date('M j, Y', strtotime($txn->bank_deposit_date)); ?></strong><br>
+                                    <?php if ($txn->days_payout_to_bank): ?>
+                                        <small style="color: #666;">+<?php echo abs($txn->days_payout_to_bank); ?> days</small>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span style="color: #ccc;">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align: center; border-bottom: none;" title="<?php echo $status_text; ?>">
+                                <span style="font-size: 20px;"><?php echo $status_icon; ?></span>
+                            </td>
+                        </tr>
+                        <!-- Row 2: Customer & References (Full Width) -->
+                        <tr style="<?php echo $row_style; ?>">
+                            <td colspan="8" style="padding: 8px 12px; background: rgba(0,0,0,0.02);">
+                                <strong><?php echo esc_html($customer_display); ?></strong>
+                                <?php if ($txn->customer_email): ?>
+                                    <span style="color: #666;"> &lt;<?php echo esc_html($txn->customer_email); ?>&gt;</span>
+                                <?php endif; ?>
+                                <span style="color: #999; font-family: monospace; margin-left: 15px;">
+                                    <a href="<?php echo admin_url('admin.php?page=501c3PO-view-stripe-transaction&id=' . $txn->stripe_id); ?>" title="View Full Stripe Transaction Details">
+                                        📄 Stripe #<?php echo esc_html($txn->stripe_id); ?> (<?php echo esc_html(substr($txn->stripe_charge_id, 0, 20)); ?>...)
+                                    </a>
+                                    <?php if ($txn->payout_id): ?>
+                                        | <a href="https://dashboard.stripe.com/payouts/<?php echo esc_attr($txn->payout_id); ?>" target="_blank" title="View Payout in Stripe Dashboard">
+                                            Payout: <?php echo esc_html(substr($txn->payout_id, 0, 15)); ?>...
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if ($has_bank_match): ?>
+                                        | <a href="<?php echo admin_url('admin.php?page=501c3PO-view-bank-transaction&id=' . $txn->bank_id); ?>" title="View Full Bank Transaction Details">
+                                            🏦 Bank #<?php echo esc_html($txn->bank_id); ?> (<?php echo esc_html(substr($txn->bank_description, 0, 35)); ?>)
+                                        </a>
+                                    <?php endif; ?>
+                                </span>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <!-- Legend -->
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 4px solid #007bff;">
+            <h3 style="margin-top: 0;">Legend</h3>
+            <table style="width: 100%; max-width: 600px;">
+                <tr>
+                    <td style="padding: 5px;"><span style="font-size: 20px;">✓</span> <strong>In Bank</strong></td>
+                    <td>Transaction matched to bank deposit - money is in your account</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px;"><span style="font-size: 20px;">⏳</span> <strong>Paid Out</strong></td>
+                    <td>Stripe has processed payout - should arrive in bank soon</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px;"><span style="font-size: 20px;">⏸</span> <strong>Pending</strong></td>
+                    <td>Awaiting Stripe payout (typically 2 business days)</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px;"><span style="font-size: 20px;">🔄</span> <strong>Refunded</strong></td>
+                    <td>Transaction was refunded - shows fee loss only. Click the refund amount to view refund date, time, and transaction IDs in Stripe Dashboard.</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Export Options -->
+        <div style="margin-top: 20px;">
+            <p>
+                <a href="#" class="button" onclick="window.print(); return false;">🖨 Print Ledger</a>
+                <a href="#" class="button" onclick="alert('CSV export coming soon'); return false;">📊 Export to CSV</a>
+            </p>
+        </div>
+    </div>
+
+    <style>
+        @media print {
+            .wrap > h1 { page-break-after: avoid; }
+            .card, .button { display: none; }
+            table { page-break-inside: avoid; }
+        }
+    </style>
+    <?php
+}

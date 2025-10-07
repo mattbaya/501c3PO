@@ -51,6 +51,7 @@ $feature_files = array(
     'includes/features/transaction-matching.php',
     'includes/features/grouped-transactions.php',
     'includes/features/transaction-ledger.php',
+    'includes/features/calculate-balances.php',
     'includes/features/view-stripe-transaction.php',
     'includes/features/view-bank-transaction.php'
 );

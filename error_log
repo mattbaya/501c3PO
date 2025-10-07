@@ -1,0 +1,124 @@
+[05-Oct-2025 14:29:13 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:30:16 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:30:16 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:30:16 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:30:23 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:30:23 UTC] PHP Warning:  require(./wp-load.php): Failed to open stream: No such file or directory in Command line code on line 3
+[05-Oct-2025 14:30:23 UTC] PHP Fatal error:  Uncaught Error: Failed opening required './wp-load.php' (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in Command line code:3
+Stack trace:
+#0 {main}
+  thrown in Command line code on line 3
+[05-Oct-2025 14:32:19 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 14:32:19 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:32:19 UTC] PHP Warning:  require(./wp-load.php): Failed to open stream: No such file or directory in Command line code on line 3
+[05-Oct-2025 14:32:19 UTC] PHP Fatal error:  Uncaught Error: Failed opening required './wp-load.php' (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in Command line code:3
+Stack trace:
+#0 {main}
+  thrown in Command line code on line 3
+[05-Oct-2025 14:32:19 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:32:19 UTC] PHP Warning:  require(./wp-load.php): Failed to open stream: No such file or directory in Command line code on line 3
+[05-Oct-2025 14:32:19 UTC] PHP Fatal error:  Uncaught Error: Failed opening required './wp-load.php' (include_path='.:/opt/cpanel/ea-php83/root/usr/share/pear') in Command line code:3
+Stack trace:
+#0 {main}
+  thrown in Command line code on line 3
+[05-Oct-2025 14:33:23 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:42:12 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:43:11 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 14:43:31 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:43:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 14:43:52 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 14:44:33 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:44:45 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:47:18 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 14:48:20 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:50:35 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:50:35 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'swca'@'localhost' (using password: NO) in Command line code:3
+Stack trace:
+#0 Command line code(3): mysqli->__construct('localhost', 'swca', Object(SensitiveParameterValue), 'wordpress')
+#1 {main}
+  thrown in Command line code on line 3
+[05-Oct-2025 14:51:34 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 14:58:45 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 15:04:55 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 15:18:00 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 15:28:11 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 15:44:38 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 15:44:38 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 15:44:46 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[05-Oct-2025 15:44:46 UTC] PHP Parse error:  syntax error, unexpected token "\" in Command line code on line 13
+[05-Oct-2025 16:06:12 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 07:06:55 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 07:14:37 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 07:14:53 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 07:16:48 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 07:16:49 UTC] PHP Parse error:  syntax error, unexpected token "\" in Command line code on line 19

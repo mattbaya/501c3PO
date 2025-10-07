@@ -27,6 +27,11 @@ class FiveOhOnecThreePO_Update_Checker {
         $this->get_plugin_data();
         $this->get_github_release();
 
+        // Check if we have a valid GitHub response with required fields
+        if (empty($this->github_response) || !isset($this->github_response['tag_name'])) {
+            return $transient;
+        }
+
         $update = version_compare($this->github_response['tag_name'], $this->plugin_data['Version']);
 
         if ($update === 1) {
@@ -35,7 +40,7 @@ class FiveOhOnecThreePO_Update_Checker {
                 'plugin' => $this->plugin_file,
                 'new_version' => $this->github_response['tag_name'],
                 'url' => $this->plugin_data['PluginURI'],
-                'package' => $this->github_response['zipball_url'],
+                'package' => $this->github_response['zipball_url'] ?? '',
                 'icons' => array(
                     '1x' => 'https://raw.githubusercontent.com/' . $this->username . '/' . $this->repo . '/main/assets/icon-128x128.png',
                     '2x' => 'https://raw.githubusercontent.com/' . $this->username . '/' . $this->repo . '/main/assets/icon-256x256.png'
@@ -63,20 +68,25 @@ class FiveOhOnecThreePO_Update_Checker {
         $this->get_plugin_data();
         $this->get_github_release();
 
+        // Check if we have a valid GitHub response
+        if (empty($this->github_response) || !isset($this->github_response['tag_name'])) {
+            return false;
+        }
+
         $plugin = array(
             'name' => $this->plugin_data['Name'],
             'slug' => $this->slug,
             'version' => $this->github_response['tag_name'],
             'author' => $this->plugin_data['Author'],
-            'author_profile' => $this->plugin_data['AuthorURI'],
-            'last_updated' => $this->github_response['published_at'],
+            'author_profile' => $this->plugin_data['AuthorURI'] ?? '',
+            'last_updated' => $this->github_response['published_at'] ?? '',
             'homepage' => $this->plugin_data['PluginURI'],
             'short_description' => $this->plugin_data['Description'],
             'sections' => array(
                 'description' => $this->plugin_data['Description'],
-                'updates' => $this->github_response['body'],
+                'updates' => $this->github_response['body'] ?? '',
             ),
-            'download_link' => $this->github_response['zipball_url']
+            'download_link' => $this->github_response['zipball_url'] ?? ''
         );
 
         return (object) $plugin;

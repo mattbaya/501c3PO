@@ -1,0 +1,54 @@
+[05-Oct-2025 23:58:03 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 23:58:07 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[05-Oct-2025 23:59:49 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[06-Oct-2025 00:00:05 UTC] PHP Warning:  mysqli::__construct(): (28000/1045): Access denied for user 'wp_user'@'localhost' (using password: YES) in /home/swca/check_db_direct.php on line 3
+[06-Oct-2025 00:00:18 UTC] PHP Fatal error:  Uncaught Error: Call to a member function fetch_assoc() on bool in /home/swca/check_db_direct.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/swca/check_db_direct.php on line 16
+[07-Oct-2025 04:24:01 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 04:24:01 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'wordpress'@'localhost' (using password: YES) in /home/swca/public_html/check_net_amount_accuracy.php:13
+Stack trace:
+#0 /home/swca/public_html/check_net_amount_accuracy.php(13): mysqli->__construct('localhost', 'wordpress', Object(SensitiveParameterValue), 'wordpress')
+#1 {main}
+  thrown in /home/swca/public_html/check_net_amount_accuracy.php on line 13
+[07-Oct-2025 04:24:06 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 04:24:06 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'wordpress'@'localhost' (using password: YES) in /home/swca/public_html/check_net_amount_accuracy.php:13
+Stack trace:
+#0 /home/swca/public_html/check_net_amount_accuracy.php(13): mysqli->__construct('localhost', 'wordpress', Object(SensitiveParameterValue), 'wordpress')
+#1 {main}
+  thrown in /home/swca/public_html/check_net_amount_accuracy.php on line 13
+[07-Oct-2025 04:26:09 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 04:26:09 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'wordpress'@'localhost' (using password: YES) in /home/swca/public_html/verify_ledger_math.php:12
+Stack trace:
+#0 /home/swca/public_html/verify_ledger_math.php(12): mysqli->__construct('localhost', 'wordpress', Object(SensitiveParameterValue), 'wordpress')
+#1 {main}
+  thrown in /home/swca/public_html/verify_ledger_math.php on line 12
+[07-Oct-2025 05:17:17 UTC] PHP Warning:  mysqli::__construct(): (28000/1045): Access denied for user 'wordpress'@'localhost' (using password: YES) in /home/swca/scripts/501c3PO/diagnostic-scripts-oct6/check-duplicate-ledger-entries.php on line 12
+[07-Oct-2025 05:21:13 UTC] PHP Notice:  Trying to get property 'num_rows' of non-object in /home/swca/scripts/501c3PO/diagnostic-scripts-oct6/investigate-duplicate-creation.php on line 52
+[07-Oct-2025 05:21:13 UTC] PHP Notice:  Trying to get property 'num_rows' of non-object in /home/swca/scripts/501c3PO/diagnostic-scripts-oct6/investigate-duplicate-creation.php on line 95
+[07-Oct-2025 05:27:24 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 05:27:31 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 05:29:08 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 05:33:19 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 05:33:19 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'swca_swca2019'@'localhost' (using password: YES) in Command line code:2
+Stack trace:
+#0 Command line code(2): mysqli->__construct('localhost', 'swca_swca2019', Object(SensitiveParameterValue), 'swca_swca2019')
+#1 {main}
+  thrown in Command line code on line 2
+[07-Oct-2025 05:48:08 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0
+[07-Oct-2025 06:21:06 UTC] PHP Warning:  Module "imagick" is already loaded in Unknown on line 0

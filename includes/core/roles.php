@@ -9,7 +9,7 @@ defined('ABSPATH') or die('No script kiddies please!');
 /**
  * Create custom roles for the organization
  */
-function fiveohonec3po_create_custom_roles() {
+function five01c3po_create_custom_roles() {
     // Remove existing roles if they exist (for clean reinstall)
     remove_role('nonprofit_member');
     remove_role('nonprofit_officer');
@@ -115,13 +115,13 @@ function fiveohonec3po_create_custom_roles() {
 /**
  * Check if user has permission to view dashboard
  */
-function fiveohonec3po_can_view_dashboard() {
+function five01c3po_can_view_dashboard() {
     if (is_user_logged_in()) {
         return current_user_can('view_dashboard');
     }
     
     // Check if password cookie is set
-    $org_settings = get_option('mm_organization_settings', array());
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $dashboard_password = $org_settings['dashboard_password'] ?? '';
     
     if (empty($dashboard_password)) {
@@ -135,7 +135,7 @@ function fiveohonec3po_can_view_dashboard() {
 /**
  * Handle dashboard password protection
  */
-function fiveohonec3po_dashboard_password_protection() {
+function five01c3po_dashboard_password_protection() {
     if (!is_page()) {
         return;
     }
@@ -165,13 +165,13 @@ function fiveohonec3po_dashboard_password_protection() {
     }
     
     // Check if user has access
-    if (fiveohonec3po_can_view_dashboard()) {
+    if (five01c3po_can_view_dashboard()) {
         return;
     }
     
     // Handle password submission
     if (isset($_POST['dashboard_password'])) {
-        $org_settings = get_option('mm_organization_settings', array());
+        $org_settings = get_option('five01c3po_organization_settings', array());
         $correct_password = $org_settings['dashboard_password'] ?? '';
         
         if ($_POST['dashboard_password'] === $correct_password) {
@@ -186,15 +186,15 @@ function fiveohonec3po_dashboard_password_protection() {
     }
     
     // Show password form
-    fiveohonec3po_show_password_form();
+    five01c3po_show_password_form();
     exit;
 }
 
 /**
  * Display password protection form
  */
-function fiveohonec3po_show_password_form() {
-    $org_settings = get_option('mm_organization_settings', array());
+function five01c3po_show_password_form() {
+    $org_settings = get_option('five01c3po_organization_settings', array());
     $org_name = $org_settings['organization_name'] ?? '501c3PO';
     
     ?>

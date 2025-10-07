@@ -319,9 +319,14 @@ function five01c3po_transaction_ledger_page() {
             </div>
         <?php else: ?>
             <div class="notice notice-warning" style="margin: 15px 0; padding: 15px;">
-                <p><strong>⚠️ No Bank Statement Data</strong><br>
-                To enable balance tracking and reconciliation, you need to calculate running balances.<br>
-                See <code>/home/swca/public_html/CALCULATE_BALANCES_INSTRUCTIONS.md</code> for instructions.</p>
+                <p><strong>⚠️ No Bank Statement Data</strong></p>
+                <p>To enable balance tracking and reconciliation, you need to calculate running balances for your <?php echo count($transactions); ?> bank transactions.</p>
+                <p>
+                    <a href="admin.php?page=501c3PO-calculate-balances" class="button button-primary">
+                        💰 Calculate Balances Now
+                    </a>
+                </p>
+                <p class="description">This will populate the balance column and create monthly bank statement records automatically.</p>
             </div>
         <?php endif; ?>
 
