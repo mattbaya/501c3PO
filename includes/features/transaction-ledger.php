@@ -176,6 +176,8 @@ function five01c3po_get_transaction_ledger($filters = array()) {
  * Transaction Ledger page
  */
 function five01c3po_transaction_ledger_page() {
+    global $wpdb;
+
     // Handle filters
     $filters = array(
         'date_from' => $_GET['date_from'] ?? '',
@@ -188,7 +190,6 @@ function five01c3po_transaction_ledger_page() {
     // Handle AJAX updates for notes, category, tags
     if (isset($_POST['action']) && $_POST['action'] === 'update_bank_transaction') {
         check_admin_referer('update_bank_transaction');
-        global $wpdb;
         $bank_id = intval($_POST['bank_id']);
         $field = sanitize_text_field($_POST['field']);
         $value = sanitize_textarea_field($_POST['value']);
