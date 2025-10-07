@@ -505,16 +505,111 @@ function five01c3po_transaction_ledger_page() {
                         <?php if ($has_stripe): ?>
                             <tr style="background: #f8f9fa; border-top: none;">
                                 <td colspan="10" style="padding: 8px 15px; font-size: 12px;">
-                                    <strong>🔗 Matched to <?php echo count($stripe_ids); ?> Stripe transaction<?php echo count($stripe_ids) > 1 ? 's' : ''; ?>:</strong>
+                                    <strong>🔗 Complete Payout Breakdown:</strong>
                                     <?php
                                     global $wpdb;
-                                    foreach ($stripe_ids as $stripe_id):
-                                        $stripe_details = $wpdb->get_row($wpdb->prepare(
-                                            "SELECT stripe_charge_id, amount, stripe_fee, customer_name, customer_email
-                                             FROM swca_stripe_transactions WHERE id = %d",
-                                            $stripe_id
-                                        ));
-                                        if ($stripe_details):
+
+                                    // Get payout ID from first Stripe transaction
+                                    $first_stripe = $wpdb->get_row($wpdb->prepare(
+                                        "SELECT payout_id, payout_arrival_date FROM swca_stripe_transactions WHERE id = %d",
+                                        $stripe_ids[0]
+                                    ));
+
+                                    $payout_id = $first_stripe->payout_id ?? null;
+                                    $payout_arrival_date = $first_stripe->payout_arrival_date ?? null;
+
+                                    // Try to get balance transactions - either by payout_id or by available_on date
+                                    if ($payout_id || $payout_arrival_date):
+                                        echo '<div style="margin-top: 8px; font-family: monospace; font-size: 11px;">';
+
+                                        // Get all balance transactions - try payout_id first, then fall back to available_on date
+                                        if ($payout_id) {
+                                            $balance_txns = $wpdb->get_results($wpdb->prepare(
+                                                "SELECT * FROM swca_stripe_balance_transactions
+                                                 WHERE payout_id = %s OR (source_id = %s AND txn_type = 'payout')
+                                                 ORDER BY
+                                                    CASE txn_type
+                                                        WHEN 'payment' THEN 1
+                                                        WHEN 'charge' THEN 1
+                                                        WHEN 'stripe_fee' THEN 2
+                                                        WHEN 'adjustment' THEN 3
+                                                        WHEN 'payout' THEN 4
+                                                        ELSE 5
+                                                    END,
+                                                    created_at",
+                                                $payout_id, $payout_id
+                                            ));
+                                        } else {
+                                            // Fall back to grouping by available_on date
+                                            $balance_txns = $wpdb->get_results($wpdb->prepare(
+                                                "SELECT * FROM swca_stripe_balance_transactions
+                                                 WHERE available_on = %s
+                                                 ORDER BY
+                                                    CASE txn_type
+                                                        WHEN 'payment' THEN 1
+                                                        WHEN 'charge' THEN 1
+                                                        WHEN 'stripe_fee' THEN 2
+                                                        WHEN 'adjustment' THEN 3
+                                                        WHEN 'payout' THEN 4
+                                                        ELSE 5
+                                                    END,
+                                                    created_at",
+                                                $payout_arrival_date
+                                            ));
+                                        }
+
+                                            $running_total = 0;
+                                            foreach ($balance_txns as $bal_txn):
+                                                if ($bal_txn->txn_type == 'payout') continue; // Skip the payout itself
+
+                                                $running_total += $bal_txn->net;
+                                                $color = $bal_txn->net >= 0 ? '#28a745' : '#dc3545';
+                                            ?>
+                                                <div style="padding: 3px 0; border-bottom: 1px solid #e0e0e0;">
+                                                    <?php if ($bal_txn->txn_type == 'payment' || $bal_txn->txn_type == 'charge'): ?>
+                                                        💳 <strong>Charge:</strong>
+                                                        $<?php echo number_format($bal_txn->amount, 2); ?>
+                                                        (fee: $<?php echo number_format($bal_txn->fee, 2); ?>)
+                                                        = <span style="color: <?php echo $color; ?>;">$<?php echo number_format($bal_txn->net, 2); ?></span>
+                                                        <br>&nbsp;&nbsp;&nbsp;&nbsp;<?php echo esc_html($bal_txn->description); ?>
+                                                    <?php elseif ($bal_txn->txn_type == 'stripe_fee'): ?>
+                                                        ⚠️ <strong>Stripe Fee:</strong>
+                                                        <span style="color: <?php echo $color; ?>;">$<?php echo number_format($bal_txn->net, 2); ?></span>
+                                                        - <?php echo esc_html($bal_txn->description); ?>
+                                                    <?php else: ?>
+                                                        📊 <strong><?php echo ucfirst(str_replace('_', ' ', $bal_txn->txn_type)); ?>:</strong>
+                                                        <span style="color: <?php echo $color; ?>;">$<?php echo number_format($bal_txn->net, 2); ?></span>
+                                                        <?php if ($bal_txn->description): ?>
+                                                            - <?php echo esc_html($bal_txn->description); ?>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php
+                                            endforeach;
+
+                                            // Show total
+                                            $total_color = $running_total >= 0 ? '#28a745' : '#dc3545';
+                                            ?>
+                                            <div style="padding: 5px 0; margin-top: 5px; border-top: 2px solid #333; font-weight: bold;">
+                                                <strong>Total Payout:</strong>
+                                                <span style="color: <?php echo $total_color; ?>;">$<?php echo number_format($running_total, 2); ?></span>
+                                                <?php if (abs($running_total - $txn->bank_credit) > 0.01): ?>
+                                                    <span style="color: #dc3545;"> ⚠️ ($<?php echo number_format(abs($running_total - $txn->bank_credit), 2); ?> difference from bank)</span>
+                                                <?php else: ?>
+                                                    <span style="color: #28a745;"> ✓ Matches bank deposit</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            </div>
+                                        <?php
+                                    else:
+                                        // No payout_id, show basic match info
+                                        foreach ($stripe_ids as $stripe_id):
+                                            $stripe_details = $wpdb->get_row($wpdb->prepare(
+                                                "SELECT stripe_charge_id, amount, stripe_fee, customer_name, customer_email
+                                                 FROM swca_stripe_transactions WHERE id = %d",
+                                                $stripe_id
+                                            ));
+                                            if ($stripe_details):
                                     ?>
                                         <span style="margin-left: 10px;">
                                             <a href="<?php echo admin_url('admin.php?page=501c3PO-view-stripe-transaction&id=' . $stripe_id); ?>"
@@ -524,8 +619,9 @@ function five01c3po_transaction_ledger_page() {
                                             </a>
                                         </span>
                                     <?php
-                                        endif;
-                                    endforeach;
+                                            endif;
+                                        endforeach;
+                                    endif;
                                     ?>
                                     <span style="margin-left: 15px;">
                                         <a href="<?php echo admin_url('admin.php?page=501c3PO-view-bank-transaction&id=' . $txn->bank_id); ?>"
