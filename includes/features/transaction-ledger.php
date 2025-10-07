@@ -509,14 +509,25 @@ function five01c3po_transaction_ledger_page() {
                                     <?php
                                     global $wpdb;
 
-                                    // Get payout ID from first Stripe transaction
+                                    // Get payout ID from balance transactions (more reliable than stripe_transactions)
                                     $first_stripe = $wpdb->get_row($wpdb->prepare(
-                                        "SELECT payout_id, payout_arrival_date FROM swca_stripe_transactions WHERE id = %d",
+                                        "SELECT payout_arrival_date FROM swca_stripe_transactions WHERE id = %d",
                                         $stripe_ids[0]
                                     ));
 
-                                    $payout_id = $first_stripe->payout_id ?? null;
                                     $payout_arrival_date = $first_stripe->payout_arrival_date ?? null;
+
+                                    // Query balance_transactions for payout_id (this is populated by the sync function)
+                                    $bal_txn = $wpdb->get_row($wpdb->prepare(
+                                        "SELECT payout_id FROM swca_stripe_balance_transactions
+                                         WHERE source_type = 'charge'
+                                         AND available_on = %s
+                                         AND payout_id IS NOT NULL
+                                         LIMIT 1",
+                                        $payout_arrival_date
+                                    ));
+
+                                    $payout_id = $bal_txn->payout_id ?? null;
 
                                     // Try to get balance transactions - either by payout_id or by available_on date
                                     if ($payout_id || $payout_arrival_date):

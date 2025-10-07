@@ -685,6 +685,43 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
         }
     }
 
+    // Step 4: Populate payout_id by querying each payout's included transactions
+    // This links balance transactions to their payouts even if they have different available_on dates
+    $results['payouts_processed'] = 0;
+    $results['payout_ids_populated'] = 0;
+
+    $payouts = $wpdb->get_results("
+        SELECT DISTINCT source_id
+        FROM $balance_table
+        WHERE txn_type = 'payout'
+          AND source_id IS NOT NULL
+    ");
+
+    foreach ($payouts as $payout_row) {
+        $payout_id = $payout_row->source_id;
+
+        // Query Stripe API for all balance transactions in this payout
+        $payout_txns = five01c3po_stripe_api_call("balance_transactions?payout=$payout_id&limit=100", $api_key);
+
+        if ($payout_txns && isset($payout_txns['data'])) {
+            foreach ($payout_txns['data'] as $txn) {
+                // Update payout_id for this balance transaction
+                $updated = $wpdb->update(
+                    $balance_table,
+                    array('payout_id' => $payout_id),
+                    array('balance_txn_id' => $txn['id']),
+                    array('%s'),
+                    array('%s')
+                );
+
+                if ($updated) {
+                    $results['payout_ids_populated']++;
+                }
+            }
+            $results['payouts_processed']++;
+        }
+    }
+
     return $results;
 }
 
