@@ -19,13 +19,16 @@ This container is configured for enterprise WordPress plugin development using C
 - **Chromium**: v139 for testing and validation
 
 ### Production Environment
-- **Site URL**: https://southwilliamstown.org
+- **Site URL**: https://southwilliamstown.org (also stored in `.env` as `PRODUCTION_URL`)
+- **Domain**: southwilliamstown.org (also stored in `.env` as `PRODUCTION_DOMAIN`)
 - **WordPress Admin**: https://southwilliamstown.org/wp-admin
 - **Plugin Location**: `/home/swca/public_html/wp-content/plugins/501c3PO/`
 - **Server**: Shared hosting (lightning.svaha.com)
 - **Database**: swca_swca2019 (user: swca_swca2019, password: 5Corners!)
 
 **IMPORTANT**: This is a LIVE PRODUCTION site - always test carefully!
+
+**NOTE**: Site URL and domain information is stored in `/home/swca/scripts/501c3PO/.env` file for reference.
 
 ### Git/GitHub Configuration
 - **GitHub Username**: mattbaya
