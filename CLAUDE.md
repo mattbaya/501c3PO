@@ -11,12 +11,70 @@ This container is configured for enterprise WordPress plugin development using C
 - **Dependencies**: better-sqlite3, selenium installed
 
 ### WordPress Development Stack
-- **PHP**: 8.0.30 with development server capability  
+- **PHP**: 8.0.30 with development server capability
 - **MariaDB**: Full installation (replaced MySQL conflicts)
 - **Database**: `wordpress` (user: `wp_user`, pass: `wp_password`)
 - **WordPress**: Latest version, auto-configured
 - **WP-CLI**: Installed for automation
 - **Chromium**: v139 for testing and validation
+
+### Production Environment
+- **Site URL**: https://southwilliamstown.org (also stored in `.env` as `PRODUCTION_URL`)
+- **Domain**: southwilliamstown.org (also stored in `.env` as `PRODUCTION_DOMAIN`)
+- **WordPress Admin**: https://southwilliamstown.org/wp-admin
+- **Plugin Location**: `/home/swca/public_html/wp-content/plugins/501c3PO/`
+- **Server**: Shared hosting (lightning.svaha.com)
+- **Database**: swca_swca2019 (user: swca_swca2019, password: 5Corners!)
+
+**IMPORTANT**: This is a LIVE PRODUCTION site - always test carefully!
+
+**NOTE**: Site URL and domain information is stored in `/home/swca/scripts/501c3PO/.env` file for reference.
+
+### Stripe API Key Storage (CRITICAL - Oct 13, 2025)
+**WordPress Multisite Configuration:** This is a WordPress multisite installation. The 501c3PO plugin settings are stored in the **`swca_options`** table, NOT `wp_options`.
+
+**Database Location:**
+- **Table**: `swca_options` (not `wp_options`!)
+- **Option Name**: `five01c3po_organization_settings`
+- **Encrypted Key Field**: `stripe_api_key_encrypted` (112 characters, AES-256-CBC encrypted)
+- **Passphrase Hash Field**: `stripe_passphrase_hash` (bcrypt hash)
+- **Encryption Method**: AES-256-CBC with IV stored in encrypted string (format: `base64(IV::encrypted_data)`)
+
+**To Access Encrypted Key:**
+```php
+// Use swca_options table, not wp_options!
+$result = $mysqli->query("SELECT option_value FROM swca_options WHERE option_name = 'five01c3po_organization_settings'");
+$settings = unserialize($row['option_value']);
+$encrypted_key = $settings['stripe_api_key_encrypted'];
+$passphrase_hash = $settings['stripe_passphrase_hash'];
+```
+
+**Decryption Process:**
+1. Verify passphrase against stored hash: `password_verify($passphrase, $passphrase_hash)`
+2. Decode encrypted key: `base64_decode($encrypted_key)`
+3. Split IV and encrypted data: `explode('::', $decoded, 2)`
+4. Decrypt using AES-256-CBC: `openssl_decrypt($encrypted, 'AES-256-CBC', $passphrase, 0, $iv)`
+
+**SECURITY WARNING:** Found 4 temp scripts with hardcoded passphrase (should be removed):
+- `/home/swca/public_html/wp-content/plugins/501c3PO/temp/investigate_all_three.php`
+- `/home/swca/public_html/wp-content/plugins/501c3PO/temp/query_payout_details.php`
+- `/home/swca/public_html/wp-content/plugins/501c3PO/temp/query_stripe_payout.php`
+- `/home/swca/public_html/wp-content/plugins/501c3PO/temp/run_sync.php`
+
+### Git/GitHub Configuration
+- **GitHub Username**: mattbaya
+- **SSH Key**: Configured and working on this system
+- **Repository**: 501c3PO plugin (WordPress non-profit management system)
+- **Location**: `/home/swca/public_html/wp-content/plugins/501c3PO/`
+- **Remote**: Uses SSH for push/pull operations
+- **Branch**: main (default)
+
+**IMPORTANT**: Always use git push/pull - SSH key is configured and works!
+
+### Temporary Files
+- **Temp Directory**: `/home/swca/public_html/wp-content/plugins/501c3PO/temp/`
+- **DO NOT use /tmp** - files may be cleaned up or not accessible by WordPress
+- Use plugin temp directory for all temporary files and scripts
 
 ## API Configuration
 
@@ -134,10 +192,232 @@ Each feature can be enabled/disabled via the Settings dashboard:
 - `wp_swca_committee_reports`: Committee reports for board meetings
 - `wp_swca_documents`: Document management with Google Drive integration
 - `wp_swca_calendar_settings`: API keys and configuration storage
-- `wp_stripe_transactions`: Complete historical Stripe transaction data with deduplication
-- `swca_gf_addon_payment_transaction`: Gravity Forms payment records (external plugin)
-- `wp_swca_bank_transactions`: Imported bank CSV transaction data
-- `wp_swca_transaction_matches`: Links matching transactions across all sources
+- `wp_swca_bank_statements`: Monthly bank statement metadata for reconciliation (Oct 7, 2025)
+- `wp_swca_bank_transactions`: Bank CSV transaction data with running balances (Oct 7, 2025)
+
+### Transaction Matching Tables (Production Database: `swca_swca2019`)
+**CRITICAL:** Table prefixes are INCONSISTENT! Bank uses `wp_`, Stripe/matches use `swca_`
+
+Production tables:
+- `swca_stripe_transactions`: 221 rows (NO wp_!) - Stripe API data with payout dates
+- `swca_gf_addon_payment_transaction`: 210 rows - Gravity Forms payment records
+- `wp_swca_bank_transactions`: 89 rows (WITH wp_!) - Bank CSV imports
+- `swca_transaction_matches`: 305 rows (NO wp_!) - Match records
+- `swca_stripe_balance_transactions`: 404 rows - Stripe balance data
+
+**Bank Deposit Filtering Rule:**
+- **ONLY match deposits with "STRIPE" in description** - these are ACH transfers from Stripe
+- Deposits without "STRIPE" = cash/checks, ignore for Stripe matching
+- Examples to ignore: "Deposit", "Interest Credit", "ACH Credit BILL PMT"
+
+**Transaction Matching Status (Oct 6, 2025):**
+✓ **Gravity Forms → Stripe: 100% match rate**
+  - Logic: Exact amount + timestamp within 30 seconds
+  - GF records payment 3-6 seconds AFTER Stripe webhook
+
+❌ **Bank → Stripe Payouts: Major Issues**
+  - 89 total bank deposits, 32 already matched
+  - 57 unmatched deposits:
+    - ~51 are non-Stripe (cash/checks/interest) - IGNORE
+    - **6 are Stripe ACH transfers with NO matching payout data:**
+      - 2025-09-18: $34.28 (ST-B8K2D9X6K2N3)
+      - 2025-09-12: $99.99 (ST-R5F8G7P6O9Z9)
+      - 2025-09-02: $48.55 (ST-R8X7T9E9J0L6)
+      - 2025-08-20: $34.75 (ST-S4Y7R5T9P7A0)
+      - 2025-07-30: $50.00 (ST-X6J2N4W0N6N7)
+      - 2025-07-29: $49.60 (ST-E5G3K3D1E7L7)
+
+**Root Cause: Payout Date Mismatch**
+- Similar amounts exist in Stripe table ($35, $50, $100)
+- BUT payout_arrival_date doesn't match bank deposit dates
+- Example: Bank shows 2025-09-18, Stripe shows same charge with payout 2025-06-11
+- **Issue:** Either payout dates are incorrect OR these are different transactions
+
+**Known Data Quality Issues:**
+1. `net_amount` field was empty ($0.00) for refunded transactions - FIXED Oct 6, 2025
+   - Now calculates: net_amount = amount - stripe_fee - amount_refunded
+   - Refund-only payouts show negative net_amount (correct)
+2. Some payout_arrival_date values don't match actual bank deposit dates
+3. Possible incomplete Stripe data sync (missing recent transactions)
+
+**Diagnostic Scripts Created (Oct 6, 2025):**
+- `debug-bank-matching-standalone.php` - Main diagnostic showing unmatched bank deposits
+- `check-db-tables.php` - Shows table row counts (discovered prefix inconsistency)
+- `check-stripe-fields.php` - Analyzes Stripe table structure and data
+- `fix-net-amount.php` - Fixed net_amount calculation for 8 refunded transactions
+- `stripe-only-matching.php` - Filters to ONLY Stripe-labeled bank deposits (6 found)
+- `find-orphan-stripe-txns.php` - Searches for missing Stripe data by amount
+
+**RESOLUTION (Oct 6, 2025):**
+✅ Payout data IS correct - all 221 transactions have accurate `payout_arrival_date` from Stripe API
+✅ The 6 "unmatched" deposits are **REFUNDED TRANSACTIONS** (negative net_amount)
+- Bank CSV shows initial deposit
+- Stripe data shows final net (negative after refund + fees lost)
+- Current filtering `WHERE net_amount > 0` correctly excludes these from revenue matching
+- These deposits were later withdrawn via refunds in different payouts
+
+**Bank Matching is Working Correctly For Revenue!**
+- Filters out refunds (net ≤ 0) - correct for revenue tracking
+- Matches only actual revenue transactions
+- 32 of 89 bank deposits matched (36%)
+- Remaining 57 = 51 non-Stripe (cash/checks/interest) + 6 refunds
+
+**For Complete Bank Reconciliation (optional future feature):**
+- Would need to match refunds separately using gross amounts
+- Track both deposits AND withdrawals
+- More complex but would show complete cash flow
+
+### Transaction Ledger (NEW - Oct 6, 2025)
+**Complete Money Trail:** Customer → Stripe → Bank Deposit
+
+**Access:** Membership Management > 📒 Transaction Ledger
+
+**Deployment & Cleanup (Oct 6, 2025):**
+
+Deployed to production:
+- ✅ `transaction-ledger.php` copied to `/wp-content/plugins/501c3PO/includes/features/`
+- ✅ Updated `501c3po.php` to load Transaction Ledger
+
+Removed from production (debug features):
+- ❌ 12 debug feature files (check-*, test-*, show-*, stripe-fee-analysis, etc.)
+- ❌ 15 debug scripts moved to `/diagnostic-scripts-oct6/` folder
+
+**Menu Cleanup (Oct 6, 2025):** Removed 3 redundant menu items:
+- ❌ "All Transactions" (replaced by Ledger)
+- ❌ "Transaction Viewer" (replaced by Ledger)
+- ❌ "Grouped Transactions" (payout grouping now in Ledger)
+
+**CRITICAL FIX (Oct 6, 2025 - Accounting Accuracy):**
+- ❗ **Math Error Fixed**: Net amounts were displaying incorrectly ($5.00 - $0.45 = $5.00 ❌)
+- ✅ **Solution**: Changed line 77 from `s.net_amount` to `(s.amount - s.stripe_fee - s.amount_refunded) as net_amount`
+- ✅ **Result**: All net amounts now calculated in real-time with correct formula
+- ✅ **Audit Trail**: Added direct links to Stripe Dashboard, Payout IDs, and Bank Transaction IDs
+- ✅ **Documentation**: Added accounting standards notice showing calculation formula
+- 📄 **Full Details**: See `/public_html/LEDGER_FIXES_OCT6.md`
+
+**Formula:** `Net = Amount - Stripe Fee - Refunded`
+- Example: $5.00 - $0.45 - $0.00 = **$4.55** ✅ (was showing $5.00 ❌)
+- Refund: $36.35 - $1.35 - $36.35 = **-$1.35** ✅ (fee loss on refunded transaction)
+
+**DUPLICATE ENTRY FIX (Oct 6, 2025):**
+- ❌ **Problem**: Stripe #1 appeared twice in ledger (exact duplicate rows)
+- 🔍 **Root Cause**: Database had duplicate match records (Match IDs 215 & 236 both pointing Stripe #1 → Bank #1)
+- ✅ **Fix 1 - Query**: Changed bank JOIN to use subquery with GROUP BY to eliminate duplicates
+- ✅ **Fix 2 - Database**: Removed 2 duplicate match records (kept IDs 215 & 214, deleted 236 & 235)
+- 📊 **Affected**: Only 2 transactions had duplicates (now fixed)
+- **Query Change**: Lines 108-119 in `transaction-ledger.php` - uses `GROUP BY s.id` and subquery deduplication
+
+**UI IMPROVEMENTS (Oct 6, 2025 - Two-Row Layout + Detail Pages):**
+- ✅ **Two-Row Layout**: Each transaction now uses 2 rows for better readability
+  - Row 1: Date, Amount, Fee, Refunded, Net, Payout, Bank, Status
+  - Row 2: Full-width customer info and reference links
+- ✅ **Transaction Detail Pages**: Click any reference to see complete details
+  - `📄 Stripe #123` → Full Stripe transaction viewer with payout info and matches
+  - `🏦 Bank #45` → Full bank transaction viewer showing all included Stripe payouts
+  - Bank detail page includes reconciliation: Stripe Net Total vs Bank Deposit Amount
+- ✅ **Internal Database Links**: All Stripe/Bank IDs now link to database detail pages
+- ✅ **Payout Links**: External Stripe Dashboard links for official records
+- **New Files**:
+  - `includes/features/view-stripe-transaction.php` - Stripe transaction detail viewer
+  - `includes/features/view-bank-transaction.php` - Bank transaction detail viewer with match reconciliation
+
+**Remaining Transaction Menu Items:**
+1. 📒 **Transaction Ledger** - Main view (complete money trail with accurate calculations)
+2. 💳 **Stripe Sync** - Import Stripe data
+3. 🏦 **Bank Transactions** - Import bank CSV
+4. 🔗 **Match Transactions** - Run matching algorithm
+
+**Features:**
+- Shows every transaction with complete financial flow
+- Customer name/email from Stripe data
+- Stripe fee breakdown
+- Refund tracking
+- Payout date with days-to-payout calculation
+- Bank deposit matching with arrival date
+- Visual status indicators:
+  - ✓ **In Bank** - Money is in account
+  - ⏳ **Paid Out** - Stripe processed, arriving soon
+  - ⏸ **Pending** - Awaiting Stripe payout (2 days)
+  - 🔄 **Refunded** - Transaction refunded (shows fee loss)
+
+**Filters:**
+- Date range selection
+- Minimum amount
+- Customer name/email search
+
+**Summary Statistics:**
+- Total transactions count
+- Bank match percentage
+- Total gross revenue
+- Total Stripe fees
+- Total refunds
+- Net revenue (color-coded green/red)
+
+**Example Transaction Flow:**
+```
+Sep 21, 2025 5:10am - Customer pays $5.00
+  - Stripe fee: -$0.45
+  - Net: $5.00
+  ↓ +3 days
+Sep 24, 2025 - Stripe processes payout
+  ↓ +1 day
+Sep 25, 2025 - Bank receives $4.51
+  ✓ In Bank
+```
+
+**Technical Implementation:**
+- Single SQL query joins: Stripe ↔ Gravity Forms ↔ Bank ↔ Matches
+- No table prefix issues (uses correct `swca_` and `wp_` prefixes)
+- Handles refunds with negative net_amount
+- Calculates days between each step
+- File: `includes/features/transaction-ledger.php`
+
+### Bank Reconciliation System (NEW - Oct 7, 2025)
+**Complete bank statement tracking with running balances and automated monthly statements**
+
+**Access:** Membership Management > 💰 Calculate Balances
+
+**Current Status (as of Oct 7, 2025):**
+- ✅ `wp_swca_bank_statements` table created (empty - ready for data)
+- ✅ `wp_swca_bank_transactions` has 89 transactions (Jan-Sep 2025)
+- ⚠️ Balance column exists but not yet calculated (all zeros)
+- ⚠️ Monthly statement records not yet created
+
+**How to Populate Balances:**
+1. Navigate to **Membership Management → 💰 Calculate Balances**
+2. Enter starting balance from your bank statement (e.g., balance on Jan 1, 2025)
+3. Click "Calculate Running Balances"
+4. System will:
+   - Calculate running balance for all 89 transactions
+   - Create 9 monthly statement records (Jan-Sep 2025)
+   - Enable full reconciliation in Transaction Ledger
+
+**Features:**
+- **Running Balance Calculation**: Starting balance + credits - debits for each transaction
+- **Monthly Statement Generation**: Automatically creates statement records by month
+- **Reconciliation Warnings**: Yellow indicator if statement >30 days old
+- **User-Friendly Interface**: No command-line access required
+- **Re-runnable**: Can recalculate if starting balance was incorrect
+
+**Database Tables:**
+- `wp_swca_bank_statements`: Monthly statement metadata
+  - Columns: statement_period_start, statement_period_end, starting_balance, ending_balance, total_credits, total_debits
+- `wp_swca_bank_transactions`: Individual transactions with balance column
+  - New columns added Oct 7: notes, category, tags, recipient, balance
+
+**Transaction Ledger Integration:**
+- Shows bank statement reconciliation box when statements exist
+- Displays current balance (statement ending + transactions since)
+- Warning indicator when no statement data or statement >30 days old
+- Direct link to Calculate Balances page when data missing
+
+**Files:**
+- `includes/features/calculate-balances.php` - Admin interface for balance calculation
+- `includes/features/transaction-ledger.php` - Shows reconciliation status
+
+**Documentation:**
+- `/home/swca/public_html/BANK_RECONCILIATION_SYSTEM_OCT7.md` - Complete system documentation
+- `/home/swca/public_html/CALCULATE_BALANCES_INSTRUCTIONS.md` - Step-by-step instructions
 
 ### Integration APIs (All Optional)
 - **Stripe API**: Payment tracking and fee calculation
