@@ -98,7 +98,30 @@ function five01c3po_get_transaction_ledger($filters = array()) {
 
     $where_sql = implode(" AND ", $where_clauses);
 
+    // Build WHERE clause for unmatched Stripe transactions
+    $stripe_where_clauses = array("1=1");
+
+    if (!empty($filters['date_from'])) {
+        $stripe_where_clauses[] = $wpdb->prepare("s.created >= %s", $filters['date_from']);
+    }
+    if (!empty($filters['date_to'])) {
+        $stripe_where_clauses[] = $wpdb->prepare("s.created <= %s", $filters['date_to']);
+    }
+    if (!empty($filters['min_amount'])) {
+        $stripe_where_clauses[] = $wpdb->prepare("s.amount >= %f", $filters['min_amount']);
+    }
+    if (!empty($filters['search'])) {
+        $search = '%' . $wpdb->esc_like($filters['search']) . '%';
+        $stripe_where_clauses[] = $wpdb->prepare(
+            "(s.customer_email LIKE %s OR s.customer_name LIKE %s)",
+            $search, $search
+        );
+    }
+
+    $stripe_where_sql = implode(" AND ", $stripe_where_clauses);
+
     $query = "
+        -- PART 1: Bank transactions (may have Stripe matches or not)
         SELECT
             -- Bank Transaction Data (PRIMARY SOURCE)
             b.id as bank_id,
@@ -123,6 +146,7 @@ function five01c3po_get_transaction_ledger($filters = array()) {
             MAX(s.stripe_fee) as total_stripe_fee,
             MAX(s.customer_name) as customer_name,
             MAX(s.customer_email) as customer_email,
+            MAX(s.amount) as stripe_amount,
             SUM(s.amount_refunded) as total_refunded,
 
             -- Gravity Forms member information
@@ -142,7 +166,10 @@ function five01c3po_get_transaction_ledger($filters = array()) {
                 WHEN b.credit > 0 THEN 'bank_deposit'
                 WHEN b.debit > 0 THEN 'bank_expense'
                 ELSE 'unknown'
-            END as transaction_type
+            END as transaction_type,
+
+            -- Source indicator
+            'bank' as data_source
 
         FROM $bank_table b
 
@@ -168,7 +195,80 @@ function five01c3po_get_transaction_ledger($filters = array()) {
         WHERE $where_sql
 
         GROUP BY b.id
-        ORDER BY b.post_date DESC, b.id DESC
+
+        UNION ALL
+
+        -- PART 2: Unmatched Stripe transactions (awaiting bank deposit)
+        SELECT
+            -- Bank Transaction Data (NULL for unmatched)
+            NULL as bank_id,
+            s.created as transaction_date,
+            CONCAT('⏳ Awaiting Bank Deposit - ', s.description) as bank_description,
+            NULL as bank_notes,
+            NULL as bank_category,
+            NULL as bank_tags,
+            NULL as check_number,
+            NULL as recipient,
+            0 as bank_debit,
+            0 as bank_credit,
+            'unmatched_stripe' as bank_status,
+            NULL as bank_balance,
+
+            -- Match information (single Stripe ID, unmatched)
+            s.id as matched_stripe_ids,
+            'unmatched' as match_types,
+            1 as stripe_match_count,
+
+            -- Stripe data
+            s.stripe_fee as total_stripe_fee,
+            s.customer_name,
+            s.customer_email,
+            s.amount as stripe_amount,
+            s.amount_refunded as total_refunded,
+
+            -- Gravity Forms member information
+            gf_fname.meta_value as gf_first_name,
+            gf_lname.meta_value as gf_last_name,
+            gf_email.meta_value as gf_email,
+            gf_entry.id as gf_entry_id,
+
+            -- Member directory link
+            mem.id as member_id,
+            mem.first_name as member_first_name,
+            mem.last_name as member_last_name,
+
+            -- Transaction type
+            'stripe_unmatched' as transaction_type,
+
+            -- Source indicator
+            'stripe' as data_source
+
+        FROM $stripe_table s
+
+        -- Left join to check if this Stripe transaction has a bank match
+        LEFT JOIN $matches_table m_check
+            ON m_check.stripe_transaction_id = s.id
+            AND m_check.match_type IN ('bank_stripe_payout', 'bank_stripe_payout_part')
+
+        -- Join to Gravity Forms data for member names
+        LEFT JOIN $gf_table gf_txn ON s.stripe_charge_id = gf_txn.transaction_id
+        LEFT JOIN swca_gf_entry gf_entry ON gf_txn.lead_id = gf_entry.id
+        LEFT JOIN swca_gf_entry_meta gf_fname ON gf_entry.id = gf_fname.entry_id AND gf_fname.meta_key = '4.3'
+        LEFT JOIN swca_gf_entry_meta gf_lname ON gf_entry.id = gf_lname.entry_id AND gf_lname.meta_key = '4.6'
+        LEFT JOIN swca_gf_entry_meta gf_email ON gf_entry.id = gf_email.entry_id AND gf_email.meta_key = '6'
+
+        -- Join to member directory via email
+        LEFT JOIN swca_members mem ON (
+            LOWER(TRIM(mem.email_1)) = LOWER(TRIM(gf_email.meta_value))
+            OR LOWER(TRIM(mem.email_1)) = LOWER(TRIM(s.customer_email))
+        )
+
+        -- ONLY show Stripe transactions that have NO bank match
+        WHERE m_check.id IS NULL
+        AND $stripe_where_sql
+
+        -- Final ORDER BY for entire result set
+        ORDER BY transaction_date DESC
     ";
 
     return $wpdb->get_results($query);
@@ -240,16 +340,23 @@ function five01c3po_transaction_ledger_page() {
     $total_debits = 0;
     $total_stripe_fees = 0;
     $stripe_matched_count = 0;
-    $unmatched_count = 0;
+    $stripe_unmatched_count = 0;
+    $cash_check_count = 0;
 
     foreach ($transactions as $txn) {
         $total_credits += floatval($txn->bank_credit);
         $total_debits += floatval($txn->bank_debit);
         $total_stripe_fees += floatval($txn->total_stripe_fee);
-        if (intval($txn->stripe_match_count) > 0) {
+
+        // Categorize transaction type
+        if ($txn->transaction_type == 'stripe_unmatched') {
+            $stripe_unmatched_count++;
+            // Add unmatched Stripe amount to credits for accurate totals
+            $total_credits += floatval($txn->stripe_amount);
+        } elseif ($txn->transaction_type == 'stripe_matched') {
             $stripe_matched_count++;
         } else {
-            $unmatched_count++;
+            $cash_check_count++;
         }
     }
 
@@ -398,12 +505,16 @@ function five01c3po_transaction_ledger_page() {
                     <td><?php echo number_format(count($transactions)); ?></td>
                 </tr>
                 <tr>
-                    <th>Stripe-Matched</th>
+                    <th>💳 Stripe (In Bank)</th>
                     <td><?php echo number_format($stripe_matched_count); ?> (<?php echo count($transactions) > 0 ? round(($stripe_matched_count / count($transactions)) * 100, 1) : 0; ?>%)</td>
                 </tr>
                 <tr>
-                    <th>Cash/Check/Other</th>
-                    <td><?php echo number_format($unmatched_count); ?> (<?php echo count($transactions) > 0 ? round(($unmatched_count / count($transactions)) * 100, 1) : 0; ?>%)</td>
+                    <th>⏳ Stripe (Awaiting Deposit)</th>
+                    <td style="color: #ff9800;"><strong><?php echo number_format($stripe_unmatched_count); ?></strong> (<?php echo count($transactions) > 0 ? round(($stripe_unmatched_count / count($transactions)) * 100, 1) : 0; ?>%)</td>
+                </tr>
+                <tr>
+                    <th>💵 Cash/Check/Other</th>
+                    <td><?php echo number_format($cash_check_count); ?> (<?php echo count($transactions) > 0 ? round(($cash_check_count / count($transactions)) * 100, 1) : 0; ?>%)</td>
                 </tr>
                 <tr style="border-top: 1px solid #ddd;">
                     <th>Total Credits (Income)</th>
@@ -455,13 +566,21 @@ function five01c3po_transaction_ledger_page() {
                         <?php
                         $is_credit = floatval($txn->bank_credit) > 0;
                         $is_debit = floatval($txn->bank_debit) > 0;
-                        $amount = $is_credit ? $txn->bank_credit : $txn->bank_debit;
+                        $is_unmatched_stripe = ($txn->transaction_type == 'stripe_unmatched');
+
+                        // For unmatched Stripe, amount comes from stripe_amount
+                        $amount = $is_unmatched_stripe ? floatval($txn->stripe_amount) : ($is_credit ? $txn->bank_credit : $txn->bank_debit);
+
                         $has_stripe = intval($txn->stripe_match_count) > 0;
                         $is_refunded = floatval($txn->total_refunded) > 0;
                         $stripe_ids = $has_stripe ? explode(',', $txn->matched_stripe_ids) : array();
 
                         // Row styling based on transaction type
-                        if ($has_stripe && $is_refunded) {
+                        if ($is_unmatched_stripe) {
+                            $row_style = 'background: #fff9e6; border-left: 4px solid #ff9800;';
+                            $status_icon = '⏳';
+                            $status_text = 'Awaiting Bank Deposit';
+                        } elseif ($has_stripe && $is_refunded) {
                             $row_style = 'background: #fff3cd;';
                             $status_icon = '🔄';
                             $status_text = 'Refunded';
@@ -515,18 +634,21 @@ function five01c3po_transaction_ledger_page() {
                                 <small style="color: #666;"><?php echo date('l', strtotime($txn->transaction_date)); ?></small>
                             </td>
                             <td style="text-align: center;">
-                                <?php if ($is_credit): ?>
-                                    <span style="color: #28a745; font-weight: bold;">CR</span>
+                                <?php if ($is_unmatched_stripe || $is_credit): ?>
+                                    <span style="color: <?php echo $is_unmatched_stripe ? '#ff9800' : '#28a745'; ?>; font-weight: bold;">CR</span>
                                 <?php else: ?>
                                     <span style="color: #dc3545; font-weight: bold;">DR</span>
                                 <?php endif; ?>
                             </td>
                             <td style="text-align: right;">
-                                <strong style="color: <?php echo $is_credit ? '#28a745' : '#dc3545'; ?>;">
-                                    <?php echo $is_credit ? '+' : '-'; ?>$<?php echo number_format($amount, 2); ?>
+                                <strong style="color: <?php echo ($is_unmatched_stripe || $is_credit) ? '#28a745' : '#dc3545'; ?>;">
+                                    <?php echo ($is_unmatched_stripe || $is_credit) ? '+' : '-'; ?>$<?php echo number_format($amount, 2); ?>
                                 </strong>
                                 <?php if ($has_stripe && $txn->total_stripe_fee > 0): ?>
                                     <br><small style="color: #999;">Fee: -$<?php echo number_format($txn->total_stripe_fee, 2); ?></small>
+                                <?php endif; ?>
+                                <?php if ($is_unmatched_stripe): ?>
+                                    <br><small style="color: #ff9800;">⏳ Not in bank yet</small>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -558,17 +680,29 @@ function five01c3po_transaction_ledger_page() {
                                     <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->recipient); ?>">
                                 <?php endif; ?>
                             </td>
-                            <td class="editable-cell" data-bank-id="<?php echo $txn->bank_id; ?>" data-field="notes">
-                                <span class="cell-display"><?php echo esc_html($txn->bank_notes ?: '(click to add)'); ?></span>
-                                <textarea class="cell-editor" style="display: none; width: 100%;" rows="2"><?php echo esc_textarea($txn->bank_notes); ?></textarea>
+                            <td <?php if (!$is_unmatched_stripe): ?>class="editable-cell" data-bank-id="<?php echo $txn->bank_id; ?>" data-field="notes"<?php endif; ?>>
+                                <?php if ($is_unmatched_stripe): ?>
+                                    <span style="color: #999;">—</span>
+                                <?php else: ?>
+                                    <span class="cell-display"><?php echo esc_html($txn->bank_notes ?: '(click to add)'); ?></span>
+                                    <textarea class="cell-editor" style="display: none; width: 100%;" rows="2"><?php echo esc_textarea($txn->bank_notes); ?></textarea>
+                                <?php endif; ?>
                             </td>
-                            <td class="editable-cell" data-bank-id="<?php echo $txn->bank_id; ?>" data-field="category">
-                                <span class="cell-display"><?php echo esc_html($txn->bank_category ?: '(click to add)'); ?></span>
-                                <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->bank_category); ?>">
+                            <td <?php if (!$is_unmatched_stripe): ?>class="editable-cell" data-bank-id="<?php echo $txn->bank_id; ?>" data-field="category"<?php endif; ?>>
+                                <?php if ($is_unmatched_stripe): ?>
+                                    <span style="color: #999;">—</span>
+                                <?php else: ?>
+                                    <span class="cell-display"><?php echo esc_html($txn->bank_category ?: '(click to add)'); ?></span>
+                                    <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->bank_category); ?>">
+                                <?php endif; ?>
                             </td>
-                            <td class="editable-cell" data-bank-id="<?php echo $txn->bank_id; ?>" data-field="tags">
-                                <span class="cell-display"><?php echo esc_html($txn->bank_tags ?: '(click to add)'); ?></span>
-                                <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->bank_tags); ?>">
+                            <td <?php if (!$is_unmatched_stripe): ?>class="editable-cell" data-bank-id="<?php echo $txn->bank_id; ?>" data-field="tags"<?php endif; ?>>
+                                <?php if ($is_unmatched_stripe): ?>
+                                    <span style="color: #999;">—</span>
+                                <?php else: ?>
+                                    <span class="cell-display"><?php echo esc_html($txn->bank_tags ?: '(click to add)'); ?></span>
+                                    <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->bank_tags); ?>">
+                                <?php endif; ?>
                             </td>
                             <td style="text-align: right;">
                                 <?php if (floatval($txn->bank_balance) != 0): ?>
@@ -776,6 +910,10 @@ function five01c3po_transaction_ledger_page() {
                 <tr>
                     <td style="padding: 5px;"><span style="font-size: 20px;">💳</span> <strong>Stripe</strong></td>
                     <td>Payment processed through Stripe (matched to bank deposit)</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px;"><span style="font-size: 20px;">⏳</span> <strong>Awaiting Bank Deposit</strong></td>
+                    <td>Stripe transaction not yet deposited in bank (payout pending or in transit)</td>
                 </tr>
                 <tr>
                     <td style="padding: 5px;"><span style="font-size: 20px;">💵</span> <strong>Cash/Check</strong></td>
