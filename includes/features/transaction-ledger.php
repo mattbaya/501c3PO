@@ -246,9 +246,9 @@ function five01c3po_get_transaction_ledger($filters = array()) {
         FROM $stripe_table s
 
         -- Left join to check if this Stripe transaction has a bank match
-        LEFT JOIN $matches_table m_check
-            ON m_check.stripe_transaction_id = s.id
-            AND m_check.match_type IN ('bank_stripe_payout', 'bank_stripe_payout_part')
+        LEFT JOIN $matches_table m_bank_check
+            ON m_bank_check.stripe_transaction_id = s.id
+            AND m_bank_check.match_type IN ('bank_stripe_payout', 'bank_stripe_payout_part')
 
         -- Join to Gravity Forms data for member names
         LEFT JOIN $gf_table gf_txn ON s.stripe_charge_id = gf_txn.transaction_id
@@ -263,8 +263,8 @@ function five01c3po_get_transaction_ledger($filters = array()) {
             OR LOWER(TRIM(mem.email_1)) = LOWER(TRIM(s.customer_email))
         )
 
-        -- ONLY show Stripe transactions that have NO bank match
-        WHERE m_check.id IS NULL
+        -- ONLY show Stripe transactions that have NO bank match (regardless of GF match)
+        WHERE m_bank_check.id IS NULL
         AND $stripe_where_sql
 
         -- Final ORDER BY for entire result set

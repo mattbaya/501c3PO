@@ -208,3 +208,19 @@ Stack trace:
 #3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
 #4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
 #5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[13-Oct-2025 12:10:34 UTC] PHP Fatal error:  Uncaught Error: Call to a member function fetch_assoc() on bool in /home/swca/scripts/501c3PO/check-unmatched-by-year.php:40
+Stack trace:
+#0 {main}
+  thrown in /home/swca/scripts/501c3PO/check-unmatched-by-year.php on line 40
+[13-Oct-2025 12:10:42 UTC] PHP Fatal error:  Uncaught Error: Call to a member function fetch_assoc() on bool in /home/swca/scripts/501c3PO/check-unmatched-by-year.php:40
+Stack trace:
+#0 {main}
+  thrown in /home/swca/scripts/501c3PO/check-unmatched-by-year.php on line 40
+[13-Oct-2025 12:11:25 UTC] PHP Fatal error:  Uncaught Error: Call to a member function fetch_assoc() on bool in /home/swca/scripts/501c3PO/check-unmatched-by-year.php:40
+Stack trace:
+#0 {main}
+  thrown in /home/swca/scripts/501c3PO/check-unmatched-by-year.php on line 40
+[13-Oct-2025 12:11:33 UTC] PHP Fatal error:  Uncaught Error: Call to a member function fetch_assoc() on bool in /home/swca/scripts/501c3PO/check-unmatched-by-year.php:40
+Stack trace:
+#0 {main}
+  thrown in /home/swca/scripts/501c3PO/check-unmatched-by-year.php on line 40
