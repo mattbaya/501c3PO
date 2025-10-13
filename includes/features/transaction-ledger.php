@@ -36,7 +36,7 @@ function five01c3po_update_bank_transaction_field() {
     }
 
     $result = $wpdb->update(
-        'wp_swca_bank_transactions',
+        $wpdb->prefix . 'c3_bank_transactions',
         array($field => $value),
         array('id' => $bank_id),
         array('%s'),
@@ -67,10 +67,11 @@ function five01c3po_add_ledger_menu() {
 function five01c3po_get_transaction_ledger($filters = array()) {
     global $wpdb;
 
-    $stripe_table = 'swca_stripe_transactions';
-    $gf_table = 'swca_gf_addon_payment_transaction';
-    $bank_table = 'wp_swca_bank_transactions';
-    $matches_table = 'swca_transaction_matches';
+    // Use new c3_ table naming convention with proper prefix
+    $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
+    $gf_table = $wpdb->prefix . 'c3_gf_payment_transaction';
+    $bank_table = $wpdb->prefix . 'c3_bank_transactions';
+    $matches_table = $wpdb->prefix . 'c3_transaction_matches';
 
     // Build WHERE clause from filters (now based on bank transactions)
     $where_clauses = array("1=1");
@@ -198,7 +199,7 @@ function five01c3po_transaction_ledger_page() {
         $allowed_fields = array('notes', 'category', 'tags');
         if (in_array($field, $allowed_fields)) {
             $wpdb->update(
-                'wp_swca_bank_transactions',
+                $wpdb->prefix . 'c3_bank_transactions',
                 array($field => $value),
                 array('id' => $bank_id),
                 array('%s'),
@@ -209,9 +210,11 @@ function five01c3po_transaction_ledger_page() {
         wp_send_json_error(array('message' => 'Invalid field'));
     }
 
+    $bank_statements_table = $wpdb->prefix . 'c3_bank_statements';
+
     // Get latest bank statement
     $latest_statement = $wpdb->get_row("
-        SELECT * FROM wp_swca_bank_statements
+        SELECT * FROM {$bank_statements_table}
         ORDER BY statement_period_end DESC
         LIMIT 1
     ");
@@ -219,7 +222,7 @@ function five01c3po_transaction_ledger_page() {
     // Get ALL bank statements for matching transaction dates
     $bank_statements = $wpdb->get_results("
         SELECT statement_period_end, ending_balance
-        FROM wp_swca_bank_statements
+        FROM {$bank_statements_table}
         ORDER BY statement_period_end ASC
     ");
 
@@ -258,9 +261,10 @@ function five01c3po_transaction_ledger_page() {
         $current_balance = floatval($latest_statement->ending_balance);
 
         // Add all transactions since statement end date
+        $bank_transactions_table = $wpdb->prefix . 'c3_bank_transactions';
         $transactions_since_statement = $wpdb->get_results($wpdb->prepare("
             SELECT SUM(credit) as total_credits, SUM(debit) as total_debits
-            FROM wp_swca_bank_transactions
+            FROM {$bank_transactions_table}
             WHERE post_date > %s
         ", $latest_statement->statement_period_end));
 
@@ -302,7 +306,7 @@ function five01c3po_transaction_ledger_page() {
                             <?php
                             $since_stmt = $wpdb->get_row($wpdb->prepare("
                                 SELECT COUNT(*) as count, SUM(credit) as credits, SUM(debit) as debits
-                                FROM wp_swca_bank_transactions
+                                FROM {$bank_transactions_table}
                                 WHERE post_date > %s
                             ", $latest_statement->statement_period_end));
                             if ($since_stmt && $since_stmt->count > 0):
@@ -630,9 +634,11 @@ function five01c3po_transaction_ledger_page() {
                                     $date_start = date('Y-m-d', strtotime($txn->transaction_date . ' -2 days'));
                                     $date_end = date('Y-m-d', strtotime($txn->transaction_date . ' +2 days'));
 
+                                    $balance_txns_table = $wpdb->prefix . 'c3_stripe_balance_transactions';
+
                                     $correct_payout = $wpdb->get_row($wpdb->prepare(
                                         "SELECT source_id as payout_id, available_on as payout_date
-                                         FROM swca_stripe_balance_transactions
+                                         FROM {$balance_txns_table}
                                          WHERE txn_type = 'payout'
                                          AND available_on BETWEEN %s AND %s
                                          AND ABS(ABS(amount) - %f) < 0.01
@@ -651,7 +657,7 @@ function five01c3po_transaction_ledger_page() {
                                         // Get all balance transactions - try payout_id first, then fall back to available_on date
                                         if ($payout_id) {
                                             $balance_txns = $wpdb->get_results($wpdb->prepare(
-                                                "SELECT * FROM swca_stripe_balance_transactions
+                                                "SELECT * FROM {$balance_txns_table}
                                                  WHERE payout_id = %s OR (source_id = %s AND txn_type = 'payout')
                                                  ORDER BY
                                                     CASE txn_type
@@ -668,7 +674,7 @@ function five01c3po_transaction_ledger_page() {
                                         } else {
                                             // Fall back to grouping by available_on date
                                             $balance_txns = $wpdb->get_results($wpdb->prepare(
-                                                "SELECT * FROM swca_stripe_balance_transactions
+                                                "SELECT * FROM {$balance_txns_table}
                                                  WHERE available_on = %s
                                                  ORDER BY
                                                     CASE txn_type
