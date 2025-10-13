@@ -124,6 +124,17 @@ function five01c3po_get_transaction_ledger($filters = array()) {
             MAX(s.customer_email) as customer_email,
             SUM(s.amount_refunded) as total_refunded,
 
+            -- Gravity Forms member information
+            MAX(gf_fname.meta_value) as gf_first_name,
+            MAX(gf_lname.meta_value) as gf_last_name,
+            MAX(gf_email.meta_value) as gf_email,
+            MAX(gf_entry.id) as gf_entry_id,
+
+            -- Member directory link
+            MAX(mem.id) as member_id,
+            MAX(mem.first_name) as member_first_name,
+            MAX(mem.last_name) as member_last_name,
+
             -- Transaction Type Indicator
             CASE
                 WHEN COUNT(DISTINCT m_stripe.stripe_transaction_id) > 0 THEN 'stripe_matched'
@@ -139,6 +150,19 @@ function five01c3po_get_transaction_ledger($filters = array()) {
             ON m_stripe.bank_transaction_id = b.id
             AND m_stripe.match_type IN ('bank_stripe_payout', 'bank_stripe_payout_part')
         LEFT JOIN $stripe_table s ON s.id = m_stripe.stripe_transaction_id
+
+        -- Join to Gravity Forms data for member names
+        LEFT JOIN $gf_table gf_txn ON s.stripe_charge_id = gf_txn.transaction_id
+        LEFT JOIN swca_gf_entry gf_entry ON gf_txn.lead_id = gf_entry.id
+        LEFT JOIN swca_gf_entry_meta gf_fname ON gf_entry.id = gf_fname.entry_id AND gf_fname.meta_key = '4.3'
+        LEFT JOIN swca_gf_entry_meta gf_lname ON gf_entry.id = gf_lname.entry_id AND gf_lname.meta_key = '4.6'
+        LEFT JOIN swca_gf_entry_meta gf_email ON gf_entry.id = gf_email.entry_id AND gf_email.meta_key = '6'
+
+        -- Join to member directory via email
+        LEFT JOIN wp_swca_members mem ON (
+            LOWER(TRIM(mem.email_1)) = LOWER(TRIM(gf_email.meta_value))
+            OR LOWER(TRIM(mem.email_1)) = LOWER(TRIM(s.customer_email))
+        )
 
         WHERE $where_sql
 
@@ -451,9 +475,34 @@ function five01c3po_transaction_ledger_page() {
                             $status_text = 'Expense';
                         }
 
+                        // Build member name display with link
                         $display_name = '';
+                        $member_link = '';
+
                         if ($has_stripe) {
-                            $display_name = $txn->customer_name ?? $txn->customer_email ?? '';
+                            // Priority 1: Gravity Forms name (most accurate)
+                            if (!empty($txn->gf_first_name) && !empty($txn->gf_last_name)) {
+                                $display_name = trim($txn->gf_first_name . ' ' . $txn->gf_last_name);
+                            }
+                            // Priority 2: Member directory name
+                            elseif (!empty($txn->member_first_name) && !empty($txn->member_last_name)) {
+                                $display_name = trim($txn->member_first_name . ' ' . $txn->member_last_name);
+                            }
+                            // Priority 3: Stripe customer name
+                            elseif (!empty($txn->customer_name)) {
+                                $display_name = $txn->customer_name;
+                            }
+                            // Priority 4: Email addresses
+                            else {
+                                $display_name = $txn->gf_email ?? $txn->customer_email ?? '';
+                            }
+
+                            // Create member directory link if we have a member_id
+                            if (!empty($txn->member_id) && !empty($display_name)) {
+                                // TODO: Update this URL to match your member directory page structure
+                                $board_portal_slug = get_option('five01c3po_organization_settings')['board_portal_slug'] ?? 'board-portal';
+                                $member_link = home_url("/{$board_portal_slug}/member/?id=" . $txn->member_id);
+                            }
                         }
                         ?>
                         <tr style="<?php echo $row_style; ?>">
@@ -483,8 +532,23 @@ function five01c3po_transaction_ledger_page() {
                                 <?php endif; ?>
                             </td>
                             <td class="editable-cell" data-bank-id="<?php echo $txn->bank_id; ?>" data-field="recipient">
-                                <?php if ($has_stripe): ?>
-                                    <small style="color: #666;"><?php echo esc_html($display_name); ?></small>
+                                <?php if ($has_stripe && !empty($display_name)): ?>
+                                    <?php if (!empty($member_link)): ?>
+                                        <a href="<?php echo esc_url($member_link); ?>"
+                                           style="color: #0073aa; text-decoration: none; font-weight: 500;"
+                                           title="View member profile">
+                                            <?php echo esc_html($display_name); ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span style="color: #666; font-weight: 500;"><?php echo esc_html($display_name); ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($txn->gf_email) || !empty($txn->customer_email)): ?>
+                                        <br><small style="color: #999; font-size: 11px;">
+                                            <?php echo esc_html($txn->gf_email ?? $txn->customer_email); ?>
+                                        </small>
+                                    <?php endif; ?>
+                                <?php elseif ($has_stripe): ?>
+                                    <small style="color: #999;">No member data</small>
                                 <?php else: ?>
                                     <span class="cell-display"><?php echo esc_html($txn->recipient ?: '(click to add)'); ?></span>
                                     <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->recipient); ?>">

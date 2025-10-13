@@ -298,7 +298,9 @@ function five01c3po_bank_transactions_shortcode($atts) {
         'type' => '', // credit, debit, or empty for all
     ), $atts);
 
-    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
+    // Use hardcoded table name due to prefix inconsistency
+    // Bank tables use wp_ prefix, not swca_ prefix
+    $bank_table = 'wp_swca_bank_transactions';
 
     // Build query
     $where = '';

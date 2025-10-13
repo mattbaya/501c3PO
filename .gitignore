@@ -100,4 +100,5 @@ FIX_*.php
 VERIFY_*.php
 PRODUCTION_*.php
 *_export_*.php
-*_import_*.php
+*_import_*.php*.sql.gz
+database-backup-*.sql.gz
