@@ -102,10 +102,10 @@ function five01c3po_get_transaction_ledger($filters = array()) {
     $stripe_where_clauses = array("1=1");
 
     if (!empty($filters['date_from'])) {
-        $stripe_where_clauses[] = $wpdb->prepare("s.created >= %s", $filters['date_from']);
+        $stripe_where_clauses[] = $wpdb->prepare("s.stripe_created >= %s", $filters['date_from']);
     }
     if (!empty($filters['date_to'])) {
-        $stripe_where_clauses[] = $wpdb->prepare("s.created <= %s", $filters['date_to']);
+        $stripe_where_clauses[] = $wpdb->prepare("s.stripe_created <= %s", $filters['date_to']);
     }
     if (!empty($filters['min_amount'])) {
         $stripe_where_clauses[] = $wpdb->prepare("s.amount >= %f", $filters['min_amount']);
@@ -116,6 +116,10 @@ function five01c3po_get_transaction_ledger($filters = array()) {
             "(s.customer_email LIKE %s OR s.customer_name LIKE %s)",
             $search, $search
         );
+    }
+    // Filter out historical pre-2024 unmatched Stripe transactions if requested
+    if (!empty($filters['hide_historical_unmatched'])) {
+        $stripe_where_clauses[] = "s.stripe_created >= '2024-01-01'";
     }
 
     $stripe_where_sql = implode(" AND ", $stripe_where_clauses);
@@ -202,7 +206,7 @@ function five01c3po_get_transaction_ledger($filters = array()) {
         SELECT
             -- Bank Transaction Data (NULL for unmatched)
             NULL as bank_id,
-            s.created as transaction_date,
+            s.stripe_created as transaction_date,
             CONCAT('⏳ Awaiting Bank Deposit - ', s.description) as bank_description,
             NULL as bank_notes,
             NULL as bank_category,
@@ -286,7 +290,8 @@ function five01c3po_transaction_ledger_page() {
         'date_to' => $_GET['date_to'] ?? '',
         'min_amount' => $_GET['min_amount'] ?? '',
         'search' => $_GET['search'] ?? '',
-        'category' => $_GET['category'] ?? ''
+        'category' => $_GET['category'] ?? '',
+        'hide_historical_unmatched' => isset($_GET['hide_historical_unmatched']) && $_GET['hide_historical_unmatched'] == '1'
     );
 
     // Handle AJAX updates for notes, category, tags
@@ -488,6 +493,17 @@ function five01c3po_transaction_ledger_page() {
                         <td>
                             <input type="text" name="search" value="<?php echo esc_attr($filters['search']); ?>"
                                    class="regular-text" placeholder="Customer name or email">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Historical Data</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="hide_historical_unmatched" value="1"
+                                       <?php checked($filters['hide_historical_unmatched'], true); ?>>
+                                Hide pre-2024 unmatched Stripe transactions (focus on current data only)
+                            </label>
+                            <p class="description">When checked, hides 130 historical Stripe transactions from before January 2024 that have no bank records.</p>
                         </td>
                     </tr>
                 </table>
