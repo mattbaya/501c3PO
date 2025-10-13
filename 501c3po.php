@@ -54,7 +54,10 @@ $feature_files = array(
     'includes/features/calculate-balances.php',
     'includes/features/bank-statements.php',
     'includes/features/view-stripe-transaction.php',
-    'includes/features/view-bank-transaction.php'
+    'includes/features/view-bank-transaction.php',
+    'includes/features/income-expense-graph.php',
+    'includes/features/year-over-year-comparison.php',
+    'includes/features/expense-breakdown.php'
 );
 
 foreach ($feature_files as $file) {

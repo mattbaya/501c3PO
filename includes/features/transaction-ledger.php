@@ -192,6 +192,19 @@ function five01c3po_transaction_ledger_page() {
         LIMIT 1
     ");
 
+    // Get ALL bank statements for matching transaction dates
+    $bank_statements = $wpdb->get_results("
+        SELECT statement_period_end, ending_balance
+        FROM wp_swca_bank_statements
+        ORDER BY statement_period_end ASC
+    ");
+
+    // Create lookup array of statement dates => balances
+    $statement_balances = array();
+    foreach ($bank_statements as $stmt) {
+        $statement_balances[$stmt->statement_period_end] = $stmt->ending_balance;
+    }
+
     // Get ledger data
     $transactions = five01c3po_get_transaction_ledger($filters);
 
@@ -491,7 +504,21 @@ function five01c3po_transaction_ledger_page() {
                             </td>
                             <td style="text-align: right;">
                                 <?php if (floatval($txn->bank_balance) != 0): ?>
-                                    <strong>$<?php echo number_format($txn->bank_balance, 2); ?></strong>
+                                    <strong style="font-size: 13px;">$<?php echo number_format($txn->bank_balance, 2); ?></strong>
+                                    <?php
+                                    // Check if this date matches a bank statement ending date
+                                    if (isset($statement_balances[$txn->transaction_date])):
+                                        $stmt_balance = $statement_balances[$txn->transaction_date];
+                                        $balance_matches = abs($txn->bank_balance - $stmt_balance) < 0.01;
+                                        ?>
+                                        <br><span style="font-size: 10px; color: <?php echo $balance_matches ? '#28a745' : '#dc3545'; ?>; font-weight: bold;">
+                                            <?php if ($balance_matches): ?>
+                                                ✓ Bank Statement
+                                            <?php else: ?>
+                                                ⚠️ Statement Mismatch
+                                            <?php endif; ?>
+                                        </span>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span style="color: #999;">—</span>
                                 <?php endif; ?>
@@ -500,6 +527,31 @@ function five01c3po_transaction_ledger_page() {
                                 <span style="font-size: 20px;"><?php echo $status_icon; ?></span>
                             </td>
                         </tr>
+
+                        <!-- Bank Statement Verification Row -->
+                        <?php
+                        // Check if this transaction date matches a bank statement ending date
+                        if (isset($statement_balances[$txn->transaction_date]) && floatval($txn->bank_balance) != 0):
+                            $stmt_balance = $statement_balances[$txn->transaction_date];
+                            $balance_matches = abs($txn->bank_balance - $stmt_balance) < 0.01;
+                            ?>
+                            <tr style="background: <?php echo $balance_matches ? '#d4edda' : '#f8d7da'; ?>; border-top: none;">
+                                <td colspan="10" style="padding: 10px 15px; font-size: 12px;">
+                                    <?php if ($balance_matches): ?>
+                                        <strong style="color: #155724;">✓ BANK STATEMENT VERIFIED:</strong>
+                                        This balance of <strong>$<?php echo number_format($txn->bank_balance, 2); ?></strong>
+                                        matches the official bank statement ending balance from
+                                        <strong><?php echo date('F j, Y', strtotime($txn->transaction_date)); ?></strong>.
+                                    <?php else: ?>
+                                        <strong style="color: #721c24;">⚠️ BALANCE MISMATCH:</strong>
+                                        Our calculated balance of <strong>$<?php echo number_format($txn->bank_balance, 2); ?></strong>
+                                        does not match the bank statement ending balance of <strong>$<?php echo number_format($stmt_balance, 2); ?></strong>
+                                        from <?php echo date('F j, Y', strtotime($txn->transaction_date)); ?>.
+                                        Difference: <strong>$<?php echo number_format(abs($txn->bank_balance - $stmt_balance), 2); ?></strong>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
 
                         <!-- Match Details Row -->
                         <?php if ($has_stripe): ?>
@@ -667,8 +719,13 @@ function five01c3po_transaction_ledger_page() {
                     <td style="padding: 5px;"><span style="font-size: 20px;">🔄</span> <strong>Refunded</strong></td>
                     <td>Stripe transaction that was refunded</td>
                 </tr>
+                <tr style="border-top: 1px solid #ddd;">
+                    <td style="padding: 5px;"><strong style="color: #28a745;">✓ Bank Statement</strong></td>
+                    <td>This balance has been verified against an official bank statement</td>
+                </tr>
             </table>
             <p style="margin-top: 15px;"><strong>CR</strong> = Credit (money in) | <strong>DR</strong> = Debit (money out)</p>
+            <p><strong>Balance Column:</strong> Shows running balance after each transaction. Green "✓ Bank Statement" indicates the balance matches your official bank statement for that date.</p>
             <p><em>Click on Notes, Category, or Tags to edit. Press Enter to save, Esc to cancel.</em></p>
         </div>
 
@@ -695,11 +752,90 @@ function five01c3po_transaction_ledger_page() {
             width: 100%;
         }
         @media print {
-            .wrap > h1 { page-break-after: avoid; }
-            .card, .button { display: none; }
-            table { page-break-inside: avoid; }
-            .editable-cell { cursor: default !important; }
-            .editable-cell:hover { background: transparent !important; }
+            /* Hide WordPress admin elements */
+            #wpadminbar, #adminmenuback, #adminmenuwrap,
+            #wpfooter, .update-nag, .notice, .card {
+                display: none !important;
+            }
+
+            /* Hide filters and buttons */
+            .button, form, .description { display: none !important; }
+
+            /* Full width for content */
+            #wpcontent, #wpbody-content, .wrap {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Clean page layout */
+            body, html {
+                background: white !important;
+                color: black !important;
+                font-size: 10pt !important;
+            }
+
+            /* Header styling */
+            .wrap > h1 {
+                page-break-after: avoid;
+                font-size: 18pt !important;
+                margin-bottom: 10pt !important;
+            }
+
+            /* Table formatting */
+            table {
+                page-break-inside: auto !important;
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 9pt !important;
+            }
+
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+            }
+
+            thead {
+                display: table-header-group !important;
+                font-weight: bold !important;
+            }
+
+            th, td {
+                border: 1px solid #000 !important;
+                padding: 4pt !important;
+            }
+
+            /* Remove hover effects */
+            .editable-cell {
+                cursor: default !important;
+                background: transparent !important;
+            }
+            .editable-cell:hover {
+                background: transparent !important;
+            }
+
+            /* Preserve row colors for context */
+            tr[style*="background: #d4edda"] { background: #d4edda !important; } /* Stripe */
+            tr[style*="background: #e7f3ff"] { background: #e7f3ff !important; } /* Cash */
+            tr[style*="background: #ffe7e7"] { background: #ffe7e7 !important; } /* Expense */
+            tr[style*="background: #fff3cd"] { background: #fff3cd !important; } /* Refunded */
+            tr[style*="background: #f8f9fa"] { background: #f8f9fa !important; } /* Details */
+
+            /* Legend styling */
+            div[style*="border-left: 4px solid #007bff"] {
+                page-break-before: always;
+                border: 1px solid #000 !important;
+                padding: 10pt !important;
+            }
+
+            /* Print timestamp */
+            .wrap::before {
+                content: "Printed: <?php echo date('F j, Y g:i A'); ?>";
+                display: block;
+                text-align: right;
+                font-size: 8pt;
+                color: #666;
+                margin-bottom: 5pt;
+            }
         }
     </style>
 
