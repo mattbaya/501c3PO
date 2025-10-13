@@ -80,6 +80,33 @@ The plugin creates four custom roles:
 - **Treasurer** - Full financial management access
 - **Committee Chair** - Committee-specific management
 
+### Stripe API Key Storage (For Developers)
+**IMPORTANT:** For WordPress Multisite installations, plugin settings are stored in site-specific options tables.
+
+**Database Location:**
+- **Table**: `{site_prefix}_options` (e.g., `swca_options` for multisite, `wp_options` for single site)
+- **Option Name**: `five01c3po_organization_settings`
+- **Encryption**: AES-256-CBC with passphrase protection
+- **Fields**:
+  - `stripe_api_key_encrypted` - Encrypted Stripe API key
+  - `stripe_passphrase_hash` - Bcrypt hash of officer passphrase
+
+**To Access Settings Programmatically:**
+```php
+// WordPress way (recommended)
+$settings = get_option('five01c3po_organization_settings', array());
+
+// Direct MySQL (for standalone scripts)
+// NOTE: Use correct table prefix for your installation!
+$result = $mysqli->query("SELECT option_value FROM swca_options WHERE option_name = 'five01c3po_organization_settings'");
+```
+
+**Decryption Process:**
+1. Verify passphrase: `password_verify($passphrase, $settings['stripe_passphrase_hash'])`
+2. Decode: `base64_decode($settings['stripe_api_key_encrypted'])`
+3. Split IV and data: `explode('::', $decoded, 2)`
+4. Decrypt: `openssl_decrypt($encrypted, 'AES-256-CBC', $passphrase, 0, $iv)`
+
 ## Usage
 
 ### Member Dashboard
