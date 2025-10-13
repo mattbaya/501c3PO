@@ -152,10 +152,16 @@ function five01c3po_create_dashboard_setup() {
         <p>View all bank transaction history and account activity.</p>
         <p><a href="/%s/financial/bank-transactions" class="button button-primary">View Transactions →</a></p>
     </div>
+
+    <div style="border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+        <h3>📒 Transaction Ledger</h3>
+        <p>Complete transaction ledger with Stripe matching, bank reconciliation, and detailed breakdowns.</p>
+        <p><a href="/%s/financial/transaction-ledger" class="button button-primary">View Ledger →</a></p>
+    </div>
 </div>
 
 <h3>Quick Links</h3>
-<p><a href="/%s">← Back to Dashboard</a> | <a href="/%s/stats">View Statistics</a> | <a href="/%s/current-membership">Current Members</a></p>', esc_html($org_name), $board_portal_slug, $board_portal_slug, $board_portal_slug, $board_portal_slug, $board_portal_slug),
+<p><a href="/%s">← Back to Dashboard</a> | <a href="/%s/stats">View Statistics</a> | <a href="/%s/current-membership">Current Members</a></p>', esc_html($org_name), $board_portal_slug, $board_portal_slug, $board_portal_slug, $board_portal_slug, $board_portal_slug, $board_portal_slug),
         'post_status' => 'publish',
         'post_type' => 'page',
         'post_parent' => $dashboard_id,
@@ -190,6 +196,24 @@ function five01c3po_create_dashboard_setup() {
 
 <h3>Quick Links</h3>
 <p><a href="/%s/financial">← Back to Financial Reports</a> | <a href="/%s">Dashboard</a> | <a href="/%s/financial/fiscal-year-analysis">Fiscal Analysis</a></p>', esc_html($org_name), $board_portal_slug, $board_portal_slug, $board_portal_slug),
+        'post_status' => 'publish',
+        'post_type' => 'page',
+        'post_parent' => $financial_landing_id,
+        'comment_status' => 'closed',
+        'ping_status' => 'closed'
+    ));
+
+    // Transaction Ledger (child of Financial)
+    $transaction_ledger_page_id = wp_insert_post(array(
+        'post_title' => 'Transaction Ledger',
+        'post_name' => 'transaction-ledger',
+        'post_content' => sprintf('<h2>📒 Complete Transaction Ledger</h2>
+<p>View all bank transactions with Stripe matching, complete payout breakdowns, and bank statement reconciliation.</p>
+
+[five01c3po_transaction_ledger]
+
+<h3>Quick Links</h3>
+<p><a href="/%s/financial">← Back to Financial Reports</a> | <a href="/%s">Dashboard</a> | <a href="/%s/financial/bank-transactions">Bank Transactions</a></p>', $board_portal_slug, $board_portal_slug, $board_portal_slug),
         'post_status' => 'publish',
         'post_type' => 'page',
         'post_parent' => $financial_landing_id,

@@ -158,8 +158,8 @@ function five01c3po_get_transaction_ledger($filters = array()) {
         LEFT JOIN swca_gf_entry_meta gf_lname ON gf_entry.id = gf_lname.entry_id AND gf_lname.meta_key = '4.6'
         LEFT JOIN swca_gf_entry_meta gf_email ON gf_entry.id = gf_email.entry_id AND gf_email.meta_key = '6'
 
-        -- Join to member directory via email
-        LEFT JOIN wp_swca_members mem ON (
+        -- Join to member directory via email (note: uses swca_members, not wp_swca_members)
+        LEFT JOIN swca_members mem ON (
             LOWER(TRIM(mem.email_1)) = LOWER(TRIM(gf_email.meta_value))
             OR LOWER(TRIM(mem.email_1)) = LOWER(TRIM(s.customer_email))
         )
@@ -979,4 +979,53 @@ function five01c3po_transaction_ledger_page() {
     });
     </script>
     <?php
+}
+
+/**
+ * Transaction Ledger Shortcode
+ * For use in board portal and public pages
+ */
+add_shortcode('five01c3po_transaction_ledger', 'five01c3po_transaction_ledger_shortcode');
+
+function five01c3po_transaction_ledger_shortcode($atts) {
+    // Parse attributes
+    $atts = shortcode_atts(array(
+        'limit' => 0, // 0 = show all
+        'date_from' => '',
+        'date_to' => '',
+    ), $atts);
+
+    // Build filters from shortcode attributes
+    $filters = array();
+    if (!empty($atts['date_from'])) {
+        $filters['date_from'] = $atts['date_from'];
+    }
+    if (!empty($atts['date_to'])) {
+        $filters['date_to'] = $atts['date_to'];
+    }
+
+    // Also respect GET parameters if present
+    if (!empty($_GET['date_from'])) {
+        $filters['date_from'] = sanitize_text_field($_GET['date_from']);
+    }
+    if (!empty($_GET['date_to'])) {
+        $filters['date_to'] = sanitize_text_field($_GET['date_to']);
+    }
+    if (!empty($_GET['min_amount'])) {
+        $filters['min_amount'] = floatval($_GET['min_amount']);
+    }
+    if (!empty($_GET['search'])) {
+        $filters['search'] = sanitize_text_field($_GET['search']);
+    }
+    if (!empty($_GET['category'])) {
+        $filters['category'] = sanitize_text_field($_GET['category']);
+    }
+
+    // Capture the output
+    ob_start();
+
+    // Call the main page function
+    five01c3po_transaction_ledger_page();
+
+    return ob_get_clean();
 }
