@@ -57,7 +57,8 @@ $feature_files = array(
     'includes/features/view-bank-transaction.php',
     'includes/features/income-expense-graph.php',
     'includes/features/year-over-year-comparison.php',
-    'includes/features/expense-breakdown.php'
+    'includes/features/expense-breakdown.php',
+    'includes/features/future-improvements.php'
 );
 
 foreach ($feature_files as $file) {

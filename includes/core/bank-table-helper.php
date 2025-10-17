@@ -21,7 +21,7 @@ function five01c3po_get_bank_table() {
     // Check possible table names in order of preference
     $possible_tables = array(
         'wp_swca_bank_transactions',  // The actual table with data
-        $wpdb->prefix . 'bank_transactions',  // Standard WordPress prefix
+        $wpdb->prefix . 'c3_bank_transactions',  // Standard WordPress prefix
         'wp_bank_transactions'  // Fallback
     );
 
@@ -46,6 +46,6 @@ function five01c3po_get_bank_table() {
     }
 
     // Default fallback
-    $bank_table = $wpdb->prefix . 'bank_transactions';
+    $bank_table = $wpdb->prefix . 'c3_bank_transactions';
     return $bank_table;
 }

@@ -151,6 +151,9 @@ function five01c3po_stripe_integration_page() {
                     <li><strong>Payout IDs Captured:</strong> <?php echo $sync_results['payout_ids_captured']; ?> / <?php echo $sync_results['charges_count']; ?></li>
                     <li><strong>Members Matched:</strong> <?php echo $sync_results['members_matched']; ?></li>
                     <li><strong>Total Revenue:</strong> $<?php echo number_format($sync_results['total_revenue'], 2); ?></li>
+                    <?php if (isset($sync_results['auto_matches_created'])): ?>
+                    <li style="color: #0073aa;"><strong>✓ Auto-Matches Created:</strong> <?php echo $sync_results['auto_matches_created']; ?> (Stripe ↔ Bank, Stripe ↔ Gravity Forms)</li>
+                    <?php endif; ?>
                 </ul>
                 <?php if (!empty($sync_results['details'])): ?>
                     <details>
@@ -416,7 +419,7 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
 
     // Process charges and match to members
     $member_table = $wpdb->prefix . 'swca_members';
-    $stripe_table = $wpdb->prefix . 'stripe_transactions';
+    $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
     $matched_emails = array();
 
     foreach ($all_charges as $charge) {
@@ -578,7 +581,7 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
     $results['details'] = $details;
 
     // Process and store all balance transactions
-    $balance_table = $wpdb->prefix . 'stripe_balance_transactions';
+    $balance_table = $wpdb->prefix . 'c3_stripe_balance_transactions';
 
     // Create table if it doesn't exist
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$balance_table'") === $balance_table;
@@ -720,6 +723,15 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
             }
             $results['payouts_processed']++;
         }
+    }
+
+    // Run automatic matching after sync completes
+    if (function_exists('five01c3po_auto_match_transactions')) {
+        $match_results = five01c3po_auto_match_transactions(false);
+        $results['auto_matches_created'] = $match_results['gravity_stripe_matches']
+            + $match_results['bank_stripe_matches_high']
+            + $match_results['bank_stripe_matches_medium']
+            + $match_results['bank_stripe_matches_low'];
     }
 
     return $results;

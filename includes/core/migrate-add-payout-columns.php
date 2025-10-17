@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) exit;
 function five01c3po_migrate_add_payout_columns() {
     global $wpdb;
 
-    $table_name = $wpdb->prefix . 'stripe_transactions';
+    $table_name = $wpdb->prefix . 'c3_stripe_transactions';
 
     // Check if columns already exist
     $columns = $wpdb->get_results("SHOW COLUMNS FROM $table_name");

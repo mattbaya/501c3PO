@@ -38,8 +38,8 @@ function five01c3po_auto_match_transactions($dry_run = false) {
         'debug' => array()
     );
 
-    $matches_table = $wpdb->prefix . 'transaction_matches';
-    $stripe_table = $wpdb->prefix . 'stripe_transactions';
+    $matches_table = $wpdb->prefix . 'c3_transaction_matches';
+    $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
     $bank_table = 'wp_swca_bank_transactions'; // Using actual table with data
     $gf_table = 'swca_gf_addon_payment_transaction';
 
@@ -198,7 +198,7 @@ function five01c3po_auto_match_transactions($dry_run = false) {
         $results['debug'][] = "Run Stripe sync again to populate payout dates.";
     }
 
-    $balance_table = $wpdb->prefix . 'stripe_balance_transactions';
+    $balance_table = $wpdb->prefix . 'c3_stripe_balance_transactions';
     $balance_table_exists = $wpdb->get_var("SHOW TABLES LIKE '$balance_table'") === $balance_table;
 
     $results['debug'][] = "\n=== STARTING PAYOUT-BASED BANK MATCHING ===";
@@ -439,15 +439,37 @@ function five01c3po_auto_match_transactions($dry_run = false) {
             $txn_count = 0;
 
             if ($using_payout_txns) {
-                // Look up charges by payout arrival date
-                $payout_date = $best_match->payout_arrival_date;
-                $charges = $wpdb->get_results($wpdb->prepare(
-                    "SELECT id FROM $stripe_table
-                     WHERE DATE(payout_arrival_date) = %s
-                     AND net_amount > 0
-                     ORDER BY id",
-                    $payout_date
+                // Look up charges by actual payout ID (not just date!)
+                // First, get the actual payout_id from balance transactions
+                $payout_lookup = $wpdb->get_row($wpdb->prepare(
+                    "SELECT source_id as actual_payout_id
+                     FROM $balance_table
+                     WHERE balance_txn_id = %s
+                     AND txn_type = 'payout'
+                     LIMIT 1",
+                    $best_match->balance_txn_id
                 ));
+
+                if ($payout_lookup && $payout_lookup->actual_payout_id) {
+                    // Match by exact payout ID
+                    $charges = $wpdb->get_results($wpdb->prepare(
+                        "SELECT id FROM $stripe_table
+                         WHERE payout_id = %s
+                         AND net_amount > 0
+                         ORDER BY id",
+                        $payout_lookup->actual_payout_id
+                    ));
+                } else {
+                    // Fallback: use payout arrival date (less accurate)
+                    $payout_date = $best_match->payout_arrival_date;
+                    $charges = $wpdb->get_results($wpdb->prepare(
+                        "SELECT id FROM $stripe_table
+                         WHERE DATE(payout_arrival_date) = %s
+                         AND net_amount > 0
+                         ORDER BY id",
+                        $payout_date
+                    ));
+                }
                 $stripe_ids = array_map(function($c) { return $c->id; }, $charges);
                 $txn_count = count($stripe_ids);
             } else {
@@ -592,12 +614,7 @@ function five01c3po_transaction_matching_page() {
         $match_results = five01c3po_auto_match_transactions(false);
     }
 
-    // Handle smart match
-    $smart_match_results = null;
-    if (isset($_POST['run_smart_match'])) {
-        check_admin_referer('five01c3po_smart_match');
-        $smart_match_results = five01c3po_smart_match_transactions();
-    }
+    // Smart match removed - payout-based matching is the recommended approach
 
     // Handle manual match
     if (isset($_POST['save_manual_match'])) {
@@ -609,7 +626,7 @@ function five01c3po_transaction_matching_page() {
         $notes = sanitize_textarea_field($_POST['match_notes'] ?? '');
 
         if ($stripe_id || $gravity_id || $bank_id) {
-            $matches_table = $wpdb->prefix . 'transaction_matches';
+            $matches_table = $wpdb->prefix . 'c3_transaction_matches';
             $wpdb->insert($matches_table, array(
                 'stripe_transaction_id' => $stripe_id ?: null,
                 'gravity_form_transaction_id' => $gravity_id ?: null,
@@ -625,8 +642,8 @@ function five01c3po_transaction_matching_page() {
     }
 
     // Get match statistics
-    $matches_table = $wpdb->prefix . 'transaction_matches';
-    $stripe_table = $wpdb->prefix . 'stripe_transactions';
+    $matches_table = $wpdb->prefix . 'c3_transaction_matches';
+    $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
     $bank_table = 'wp_swca_bank_transactions'; // Using actual table with data
     $gf_table = 'swca_gf_addon_payment_transaction';
 
@@ -684,29 +701,6 @@ function five01c3po_transaction_matching_page() {
             </div>
         <?php endif; ?>
 
-        <?php if ($smart_match_results): ?>
-            <div class="notice notice-success">
-                <h3>Smart Matching Complete!</h3>
-                <ul>
-                    <li><strong>Gravity Forms → Stripe:</strong> <?php echo $smart_match_results['gf_stripe_matches']; ?> matches</li>
-                    <li><strong>Bank → Stripe Payouts:</strong> <?php echo $smart_match_results['bank_payout_matches']; ?> matches</li>
-                    <li><strong>Non-Stripe Bank Deposits:</strong> <?php echo $smart_match_results['bank_non_stripe']; ?> identified</li>
-                    <li><strong>Refunded Stripe Transactions:</strong> <?php echo $smart_match_results['refunded_stripe_identified']; ?> identified</li>
-                </ul>
-                <?php if (!empty($smart_match_results['debug'])): ?>
-                    <details open>
-                        <summary><strong>🐛 Debug Information</strong></summary>
-                        <pre style="max-height: 300px; overflow-y: auto; background: #f5f5f5; padding: 10px; border-left: 4px solid #2271b1;"><?php echo esc_html(implode("\n", $smart_match_results['debug'])); ?></pre>
-                    </details>
-                <?php endif; ?>
-                <?php if (!empty($smart_match_results['details'])): ?>
-                    <details>
-                        <summary>View Match Details (<?php echo count($smart_match_results['details']); ?> items)</summary>
-                        <pre style="max-height: 400px; overflow-y: auto;"><?php echo esc_html(implode("\n", $smart_match_results['details'])); ?></pre>
-                    </details>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
 
         <div class="card">
             <h2>📊 Matching Statistics</h2>
@@ -748,41 +742,25 @@ function five01c3po_transaction_matching_page() {
 
         <div class="card">
             <h2>🤖 Auto-Match Transactions</h2>
-            <p>Choose a matching algorithm:</p>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
-                <div style="border: 2px solid #2271b1; padding: 15px; border-radius: 8px;">
-                    <h3 style="margin-top: 0;">Payout-Based Matching</h3>
-                    <ul style="margin-left: 20px; font-size: 13px;">
-                        <li><strong>GF → Stripe:</strong> Exact amount + timestamp (±60s)</li>
-                        <li><strong>Bank → Stripe:</strong> Uses payout arrival dates from Stripe API</li>
-                        <li><strong>Date Window:</strong> -7 days before / +2 days after bank date</li>
-                        <li><strong>Amount Tolerance:</strong> $10 OR 5% (whichever is larger) - accounts for bank fees</li>
-                    </ul>
-                    <form method="post" style="margin-top: 15px;">
-                        <?php wp_nonce_field('five01c3po_auto_match'); ?>
-                        <?php submit_button('Run Payout-Based Match', 'primary', 'run_auto_match', false); ?>
-                    </form>
-                </div>
-
-                <div style="border: 2px solid #00a32a; padding: 15px; border-radius: 8px;">
-                    <h3 style="margin-top: 0;">Smart Matching (STRIPE Description)</h3>
-                    <ul style="margin-left: 20px; font-size: 13px;">
-                        <li><strong>Bank Filter:</strong> Only matches deposits with "STRIPE" in description</li>
-                        <li><strong>Date Strategy:</strong> Uses charge dates (stripe_created), grouped between consecutive deposits</li>
-                        <li><strong>Amount Tolerance:</strong> $0.50</li>
-                        <li><strong>Best For:</strong> When bank descriptions explicitly mention Stripe</li>
-                    </ul>
-                    <form method="post" style="margin-top: 15px;">
-                        <?php wp_nonce_field('five01c3po_smart_match'); ?>
-                        <?php submit_button('Run Smart Match', 'primary', 'run_smart_match', false); ?>
-                    </form>
-                </div>
+            <div style="border: 2px solid #2271b1; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">How Matching Works</h3>
+                <ul style="margin-left: 20px; font-size: 14px; line-height: 1.6;">
+                    <li><strong>Gravity Forms → Stripe:</strong> Matches by exact amount + timestamp (within 30 seconds)</li>
+                    <li><strong>Bank → Stripe Payouts:</strong> Uses <u>exact payout amounts</u> from Stripe API balance transactions</li>
+                    <li><strong>Payout Identification:</strong> Matches each Stripe payout transaction to bank deposits by payout ID</li>
+                    <li><strong>Amount Tolerance:</strong> $0.50 (for minor rounding or bank wire fees)</li>
+                    <li><strong>Date Window:</strong> -7 days before / +2 days after bank deposit date</li>
+                    <li><strong>Bank Filter:</strong> Only matches deposits with "STRIPE" in description (ignores cash/check deposits)</li>
+                </ul>
+                <form method="post" style="margin-top: 15px;">
+                    <?php wp_nonce_field('five01c3po_auto_match'); ?>
+                    <?php submit_button('Run Auto-Match Algorithm', 'primary large', 'run_auto_match', false); ?>
+                </form>
             </div>
 
-            <p style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107;">
-                <strong>💡 Tip:</strong> Both algorithms are safe and can be run multiple times.
-                They only create matches for unmatched transactions. Try both and see which works better for your data!
+            <p style="background: #e7f5ff; padding: 15px; border-left: 4px solid #2271b1;">
+                <strong>✓ Safe to run multiple times:</strong> The algorithm only creates matches for unmatched transactions and prevents duplicates.
             </p>
         </div>
 

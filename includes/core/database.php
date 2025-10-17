@@ -83,7 +83,7 @@ function five01c3po_create_tables() {
     dbDelta($sql);
 
     // Bank transactions table
-    $table_name = $wpdb->prefix . 'swca_bank_transactions';
+    $table_name = $wpdb->prefix . 'c3_bank_transactions';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         account_number varchar(50),
@@ -324,7 +324,7 @@ function five01c3po_create_tables() {
     dbDelta($sql);
 
     // Stripe transactions table (for complete historical Stripe data)
-    $table_name = $wpdb->prefix . 'stripe_transactions';
+    $table_name = $wpdb->prefix . 'c3_stripe_transactions';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         stripe_charge_id varchar(255) NOT NULL,
@@ -360,7 +360,7 @@ function five01c3po_create_tables() {
     dbDelta($sql);
 
     // Stripe balance transactions table (for ALL Stripe transactions including debits)
-    $table_name = $wpdb->prefix . 'stripe_balance_transactions';
+    $table_name = $wpdb->prefix . 'c3_stripe_balance_transactions';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         balance_txn_id varchar(255) NOT NULL,
@@ -387,7 +387,7 @@ function five01c3po_create_tables() {
     dbDelta($sql);
 
     // Transaction matches table (for linking Stripe, Gravity Forms, and Bank transactions)
-    $table_name = $wpdb->prefix . 'transaction_matches';
+    $table_name = $wpdb->prefix . 'c3_transaction_matches';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         stripe_transaction_id mediumint(9),

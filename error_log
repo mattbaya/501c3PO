@@ -224,3 +224,13 @@ Stack trace:
 Stack trace:
 #0 {main}
   thrown in /home/swca/scripts/501c3PO/check-unmatched-by-year.php on line 40
+[13-Oct-2025 12:21:27 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WP_CLI\Bootstrap\json_encode() in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php:56
+Stack trace:
+#0 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php(29): WP_CLI\Bootstrap\RegisterDeferredCommands->add_deferred_commands()
+#1 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/bootstrap.php(84): WP_CLI\Bootstrap\RegisterDeferredCommands->process(Object(WP_CLI\Bootstrap\BootstrapState))
+#2 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/wp-cli.php(35): WP_CLI\bootstrap()
+#3 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/boot-fs.php(17): require_once('/usr/local/cpan...')
+#4 /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/wpt-wp-cli.php(31): require_once('/usr/local/cpan...')
+#5 /usr/local/bin/wp(4): require in /usr/local/cpanel/3rdparty/wp-toolkit/plib/vendor/wp-cli/vendor/wp-cli/wp-cli/php/WP_CLI/Bootstrap/RegisterDeferredCommands.php on line 56
+[13-Oct-2025 12:21:51 UTC] WordPress database error Unknown column 'created' in 'SELECT' for query SELECT created FROM swca_c3_stripe_transactions LIMIT 1
+[13-Oct-2025 12:22:28 UTC] WordPress database error Unknown column 'created' in 'SELECT' for query SELECT created FROM swca_c3_stripe_transactions LIMIT 1

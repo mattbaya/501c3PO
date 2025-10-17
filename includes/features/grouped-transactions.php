@@ -8,10 +8,10 @@ if (!defined('ABSPATH')) exit;
 function five01c3po_grouped_transactions_page() {
     global $wpdb;
 
-    $stripe_table = $wpdb->prefix . 'stripe_transactions';
+    $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
     $gf_table = 'swca_gf_addon_payment_transaction';
     $bank_table = 'wp_swca_bank_transactions';
-    $matches_table = $wpdb->prefix . 'transaction_matches';
+    $matches_table = $wpdb->prefix . 'c3_transaction_matches';
 
     ?>
     <div class="wrap">
