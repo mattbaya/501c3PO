@@ -32,7 +32,7 @@ function income_expense_graph_page() {
             SUM(COALESCE(credit, 0)) as total_income,
             SUM(COALESCE(debit, 0)) as total_expenses,
             COUNT(*) as transaction_count
-        FROM wp_swca_bank_transactions
+        FROM swca_c3_bank_transactions
         GROUP BY DATE_FORMAT(post_date, '%Y-%m')
         ORDER BY month
     ");
@@ -45,7 +45,7 @@ function income_expense_graph_page() {
             COUNT(*) as total_transactions,
             SUM(COALESCE(credit, 0)) as total_income,
             SUM(COALESCE(debit, 0)) as total_expenses
-        FROM wp_swca_bank_transactions
+        FROM swca_c3_bank_transactions
     ");
 
     // Prepare data for Chart.js

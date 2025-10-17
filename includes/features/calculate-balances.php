@@ -40,7 +40,7 @@ function five01c3po_calculate_balances_page() {
 
         $transactions = $wpdb->get_results($wpdb->prepare("
             SELECT id, post_date, description, debit, credit
-            FROM wp_swca_bank_transactions
+            FROM swca_c3_bank_transactions
             WHERE post_date >= %s
             ORDER BY post_date ASC, id ASC
         ", $starting_date));
@@ -51,7 +51,7 @@ function five01c3po_calculate_balances_page() {
 
             // Update transaction balance
             $wpdb->update(
-                'wp_swca_bank_transactions',
+                'swca_c3_bank_transactions',
                 array('balance' => $running_balance),
                 array('id' => $txn->id),
                 array('%f'),
@@ -85,7 +85,7 @@ function five01c3po_calculate_balances_page() {
             );
 
             $wpdb->query($wpdb->prepare("
-                INSERT INTO wp_swca_bank_statements
+                INSERT INTO swca_c3_bank_statements
                 (statement_period_start, statement_period_end, starting_balance, ending_balance, total_credits, total_debits, notes)
                 VALUES (%s, %s, %f, %f, %f, %f, %s)
                 ON DUPLICATE KEY UPDATE
@@ -110,12 +110,12 @@ function five01c3po_calculate_balances_page() {
     }
 
     // Get current status
-    $total_transactions = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_bank_transactions");
-    $transactions_with_balance = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_bank_transactions WHERE balance != 0");
-    $total_statements = $wpdb->get_var("SELECT COUNT(*) FROM wp_swca_bank_statements");
+    $total_transactions = $wpdb->get_var("SELECT COUNT(*) FROM swca_c3_bank_transactions");
+    $transactions_with_balance = $wpdb->get_var("SELECT COUNT(*) FROM swca_c3_bank_transactions WHERE balance != 0");
+    $total_statements = $wpdb->get_var("SELECT COUNT(*) FROM swca_c3_bank_statements");
 
-    $first_transaction = $wpdb->get_row("SELECT post_date, description FROM wp_swca_bank_transactions ORDER BY post_date ASC LIMIT 1");
-    $last_transaction = $wpdb->get_row("SELECT post_date, description FROM wp_swca_bank_transactions ORDER BY post_date DESC LIMIT 1");
+    $first_transaction = $wpdb->get_row("SELECT post_date, description FROM swca_c3_bank_transactions ORDER BY post_date ASC LIMIT 1");
+    $last_transaction = $wpdb->get_row("SELECT post_date, description FROM swca_c3_bank_transactions ORDER BY post_date DESC LIMIT 1");
 
     ?>
     <div class="wrap">
@@ -218,8 +218,8 @@ function five01c3po_calculate_balances_page() {
             <p><strong>✅ Balances Already Calculated</strong></p>
             <p>Running balances have been calculated for <?php echo $transactions_with_balance; ?> transactions.
             To recalculate, clear the current balances first:</p>
-            <pre style="background: #f5f5f5; padding: 10px; margin: 10px 0;">UPDATE wp_swca_bank_transactions SET balance = 0;
-DELETE FROM wp_swca_bank_statements WHERE notes LIKE 'Auto-generated%';</pre>
+            <pre style="background: #f5f5f5; padding: 10px; margin: 10px 0;">UPDATE swca_c3_bank_transactions SET balance = 0;
+DELETE FROM swca_c3_bank_statements WHERE notes LIKE 'Auto-generated%';</pre>
             <p>Then refresh this page to enter a new starting balance.</p>
         </div>
 

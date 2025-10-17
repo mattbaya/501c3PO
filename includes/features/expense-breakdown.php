@@ -44,7 +44,7 @@ function expense_breakdown_page() {
             COALESCE(NULLIF(category, ''), 'Uncategorized') as category,
             SUM(debit) as total_expenses,
             COUNT(*) as transaction_count
-        FROM wp_swca_bank_transactions
+        FROM swca_c3_bank_transactions
         WHERE debit > 0 AND $where
         GROUP BY category
         ORDER BY total_expenses DESC
@@ -56,7 +56,7 @@ function expense_breakdown_page() {
             COALESCE(NULLIF(category, ''), 'Uncategorized') as category,
             SUM(credit) as total_income,
             COUNT(*) as transaction_count
-        FROM wp_swca_bank_transactions
+        FROM swca_c3_bank_transactions
         WHERE credit > 0 AND $where
         GROUP BY category
         ORDER BY total_income DESC
@@ -78,7 +78,7 @@ function expense_breakdown_page() {
             category,
             debit,
             notes
-        FROM wp_swca_bank_transactions
+        FROM swca_c3_bank_transactions
         WHERE debit > 0 AND $where
         ORDER BY post_date DESC
         LIMIT 100

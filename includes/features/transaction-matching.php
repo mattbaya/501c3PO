@@ -40,7 +40,7 @@ function five01c3po_auto_match_transactions($dry_run = false) {
 
     $matches_table = $wpdb->prefix . 'c3_transaction_matches';
     $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
-    $bank_table = 'wp_swca_bank_transactions'; // Using actual table with data
+    $bank_table = 'swca_c3_bank_transactions'; // Using actual table with data
     $gf_table = 'swca_gf_addon_payment_transaction';
 
     // Debug: Check table counts
@@ -644,7 +644,7 @@ function five01c3po_transaction_matching_page() {
     // Get match statistics
     $matches_table = $wpdb->prefix . 'c3_transaction_matches';
     $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
-    $bank_table = 'wp_swca_bank_transactions'; // Using actual table with data
+    $bank_table = 'swca_c3_bank_transactions'; // Using actual table with data
     $gf_table = 'swca_gf_addon_payment_transaction';
 
     $total_stripe = $wpdb->get_var("SELECT COUNT(*) FROM $stripe_table");

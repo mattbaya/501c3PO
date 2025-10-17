@@ -10,7 +10,7 @@ function five01c3po_grouped_transactions_page() {
 
     $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
     $gf_table = 'swca_gf_addon_payment_transaction';
-    $bank_table = 'wp_swca_bank_transactions';
+    $bank_table = 'swca_c3_bank_transactions';
     $matches_table = $wpdb->prefix . 'c3_transaction_matches';
 
     ?>

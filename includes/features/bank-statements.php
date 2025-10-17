@@ -34,7 +34,7 @@ function five01c3po_bank_statements_page() {
 
         // Insert or update statement
         $wpdb->query($wpdb->prepare("
-            INSERT INTO wp_swca_bank_statements
+            INSERT INTO swca_c3_bank_statements
             (statement_period_start, statement_period_end, starting_balance, ending_balance,
              total_credits, total_debits, notes)
             VALUES (%s, %s, %f, %f, %f, %f, %s)
@@ -52,13 +52,13 @@ function five01c3po_bank_statements_page() {
     // Handle deletion
     if (isset($_POST['delete_statement']) && check_admin_referer('delete_bank_statement')) {
         $id = intval($_POST['statement_id']);
-        $wpdb->delete('wp_swca_bank_statements', array('id' => $id));
+        $wpdb->delete('swca_c3_bank_statements', array('id' => $id));
         echo '<div class="notice notice-success"><p>Bank statement deleted.</p></div>';
     }
 
     // Get all statements
     $statements = $wpdb->get_results("
-        SELECT * FROM wp_swca_bank_statements
+        SELECT * FROM swca_c3_bank_statements
         ORDER BY statement_period_start DESC
     ");
 

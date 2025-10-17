@@ -40,7 +40,7 @@ function five01c3po_view_stripe_transaction_page() {
     $stripe_table = 'swca_stripe_transactions';
     $matches_table = 'swca_transaction_matches';
     $gf_table = 'swca_gf_addon_payment_transaction';
-    $bank_table = 'wp_swca_bank_transactions';
+    $bank_table = 'swca_c3_bank_transactions';
 
     $txn = $wpdb->get_row($wpdb->prepare("
         SELECT

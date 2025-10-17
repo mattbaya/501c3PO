@@ -28,7 +28,7 @@ function year_over_year_comparison_page() {
     // Get available years
     $years = $wpdb->get_col("
         SELECT DISTINCT YEAR(post_date) as year
-        FROM wp_swca_bank_transactions
+        FROM swca_c3_bank_transactions
         ORDER BY year DESC
     ");
 
@@ -57,7 +57,7 @@ function year_over_year_comparison_page() {
                 SUM(COALESCE(credit, 0)) as income,
                 SUM(COALESCE(debit, 0)) as expenses,
                 COUNT(*) as transaction_count
-            FROM wp_swca_bank_transactions
+            FROM swca_c3_bank_transactions
             WHERE YEAR(post_date) = %d
             GROUP BY MONTH(post_date)
             ORDER BY MONTH(post_date)
@@ -84,7 +84,7 @@ function year_over_year_comparison_page() {
                 SUM(COALESCE(credit, 0)) as total_income,
                 SUM(COALESCE(debit, 0)) as total_expenses,
                 COUNT(*) as transaction_count
-            FROM wp_swca_bank_transactions
+            FROM swca_c3_bank_transactions
             WHERE YEAR(post_date) = %d
         ", $year));
 
