@@ -190,6 +190,24 @@ function five01c3po_import_bank_csv($file_path) {
             'balance' => !empty($row['Balance']) ? floatval($row['Balance']) : 0,
         ];
 
+        // DUPLICATE PREVENTION: Check if this transaction already exists
+        // Match on date + credit + debit (unique combination for a transaction)
+        $existing = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $bank_table
+             WHERE post_date = %s
+             AND credit = %f
+             AND debit = %f
+             LIMIT 1",
+            $insert_data['post_date'],
+            $insert_data['credit'],
+            $insert_data['debit']
+        ));
+
+        if ($existing) {
+            // Skip duplicate - already imported
+            continue;
+        }
+
         $result = $wpdb->insert($bank_table, $insert_data);
         if ($result) {
             $imported++;
