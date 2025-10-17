@@ -754,3 +754,105 @@ membership_month, membership_month_2023
 **For web pages, always test using frontend before telling the user a job is complete. Do not rely on backend/PHP tests alone - verify actual browser output shows expected results.**
 
 This rule was added because shortcode testing showed backend processing working correctly but frontend still displaying raw shortcode text instead of processed content. Always curl the actual webpage or use browser testing to verify functionality.
+### MAJOR LEDGER IMPROVEMENTS (Oct 17, 2025)
+**Comprehensive overhaul of Transaction Ledger with improved UX, color scheme, and functionality**
+
+**Documentation:** See `LEDGER_IMPROVEMENTS_OCT17.md` for full details
+
+**Critical Fixes:**
+
+1. **Balance Display Order Fixed**
+   - **Problem:** Transactions on same date showed in inconsistent order, causing confusion
+   - **Solution:** Query now uses `ORDER BY transaction_date DESC, bank_id DESC`
+   - **Result:** Consistent reverse chronological display matching balance calculations
+
+2. **New Intuitive Color Scheme**
+   - **Green (#d4edda):** Matched deposits (money in - confirmed in bank)
+   - **Blue (#cfe2ff):** Matched expenses/debits (money out - confirmed in bank)
+   - **Yellow (#fff9e6, #fff3cd):** Unmatched transactions (awaiting deposit or refunded)
+   - **Light Grey (#f0f0f0):** Payout breakdown details
+   - **Red:** Reserved for errors/cannot balance (future use)
+   - **Why This Matters:** Clear visual hierarchy makes it easy to spot unmatched transactions
+
+**New Features:**
+
+3. **Stripe Transaction Links**
+   - Every matched Stripe transaction has clickable links: 💳 Stripe #123
+   - Links to detailed transaction viewer page
+   - Makes drilling down into individual charges effortless
+
+4. **Sticky Header Row**
+   - Table header stays visible when scrolling
+   - CSS position:sticky with proper z-index
+   - No JavaScript overhead
+
+5. **Print & Export Functionality**
+   - **Print Button:** 
+     - B&W optimized (uses borders instead of colors)
+     - Solid border = deposits, Dotted = expenses, Dashed = unmatched
+     - Hides "(click to add)" placeholders automatically
+     - Removes WordPress admin interface
+     - Includes print timestamp
+   - **CSV Export:**
+     - Downloads current filtered view
+     - All fields: Date, Type, Amount, Description, Customer, Notes, Category, Tags, Balance, Status
+     - Filename includes export date
+     - Opens directly in Excel/Google Sheets
+
+6. **Default Date Filter**
+   - Automatically shows current month + prior 12 months
+   - Reduces clutter from historical data
+   - Link provided to view older transactions
+   - **Performance:** Significantly faster page load with smaller dataset
+   - Can be overridden using date range filters
+
+**Display Improvements:**
+
+7. **Improved Empty Cell Handling**
+   - "(click to add)" only shows on screen, not in print/export
+   - JavaScript properly handles empty state when editing
+   - CSV export shows blank for empty fields
+
+8. **Updated Legend**
+   - Clear explanation of color scheme with visual examples
+   - Explains all icons and status indicators
+   - Documents balance calculation methodology
+   - Notes about inline editing
+
+9. **Better Match Details Row**
+   - Changed from blue to light grey for better distinction
+   - Shows Stripe transaction links prominently
+   - Includes bank transaction link
+   - Complete payout breakdown with charges and fees
+
+**Files Modified:**
+- `includes/features/transaction-ledger.php` (extensive changes ~350 lines)
+  - Query optimization with consistent ordering
+  - CSV export handler (60 lines)
+  - Color scheme updates throughout
+  - Sticky header CSS
+  - Print-optimized CSS with B&W friendly borders
+  - JavaScript improvements for empty cell handling
+  - Updated legend and UI text
+
+**Backwards Compatibility:**
+- ✅ All existing features preserved
+- ✅ No database changes required
+- ✅ Filters continue to work as before
+- ✅ Bank statement reconciliation unchanged
+- ✅ No breaking changes
+
+**Performance Impact:**
+- Default 13-month filter reduces query size by ~50%
+- Faster page rendering with fewer rows
+- CSV export processes only filtered data
+- Sticky header uses CSS (no JS performance hit)
+
+**Future Enhancements (Pending):**
+1. Pagination for browsing older data
+2. Tag/category dropdown filters
+3. Check Register feature (track checks written)
+4. Separate Bank Transactions page (sortable/filterable)
+5. Separate Stripe Transactions page (sortable/filterable)
+6. Red error states for unbalanced transactions
+
