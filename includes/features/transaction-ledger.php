@@ -272,7 +272,9 @@ function five01c3po_get_transaction_ledger($filters = array()) {
         AND $stripe_where_sql
 
         -- Final ORDER BY for entire result set
-        ORDER BY transaction_date DESC
+        -- Using DESC for both date and ID ensures consistent ordering within each date
+        -- Balances were calculated in (date ASC, id ASC) order, so we reverse both
+        ORDER BY transaction_date DESC, bank_id DESC
     ";
 
     return $wpdb->get_results($query);
@@ -284,15 +286,80 @@ function five01c3po_get_transaction_ledger($filters = array()) {
 function five01c3po_transaction_ledger_page() {
     global $wpdb;
 
-    // Handle filters
+    // Handle filters with default date range (current month + 12 months prior)
+    $default_date_from = date('Y-m-01', strtotime('-12 months'));
+    $default_date_to = date('Y-m-t'); // Last day of current month
+
     $filters = array(
-        'date_from' => $_GET['date_from'] ?? '',
-        'date_to' => $_GET['date_to'] ?? '',
+        'date_from' => $_GET['date_from'] ?? $default_date_from,
+        'date_to' => $_GET['date_to'] ?? $default_date_to,
         'min_amount' => $_GET['min_amount'] ?? '',
         'search' => $_GET['search'] ?? '',
         'category' => $_GET['category'] ?? '',
         'hide_historical_unmatched' => isset($_GET['hide_historical_unmatched']) && $_GET['hide_historical_unmatched'] == '1'
     );
+
+    // Handle CSV export
+    if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+        $transactions = five01c3po_get_transaction_ledger($filters);
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="transaction-ledger-' . date('Y-m-d') . '.csv"');
+
+        $output = fopen('php://output', 'w');
+
+        // CSV Headers
+        fputcsv($output, array(
+            'Date',
+            'Type',
+            'Amount',
+            'Description',
+            'Customer/Recipient',
+            'Notes',
+            'Category',
+            'Tags',
+            'Balance',
+            'Status',
+            'Stripe IDs'
+        ));
+
+        // CSV Data
+        foreach ($transactions as $txn) {
+            $is_credit = floatval($txn->bank_credit) > 0;
+            $is_unmatched = ($txn->transaction_type == 'stripe_unmatched');
+            $amount = $is_unmatched ? floatval($txn->stripe_amount) : ($is_credit ? $txn->bank_credit : $txn->bank_debit);
+            $has_stripe = intval($txn->stripe_match_count) > 0;
+
+            // Build customer name
+            $customer = '';
+            if (!empty($txn->gf_first_name)) {
+                $customer = trim($txn->gf_first_name . ' ' . $txn->gf_last_name);
+            } elseif (!empty($txn->customer_name)) {
+                $customer = $txn->customer_name;
+            } elseif (!empty($txn->customer_email)) {
+                $customer = $txn->customer_email;
+            } elseif (!empty($txn->recipient)) {
+                $customer = $txn->recipient;
+            }
+
+            fputcsv($output, array(
+                date('Y-m-d', strtotime($txn->transaction_date)),
+                ($is_unmatched || $is_credit) ? 'CR' : 'DR',
+                number_format($amount, 2),
+                $txn->bank_description,
+                $customer,
+                $txn->bank_notes,
+                $txn->bank_category,
+                $txn->bank_tags,
+                number_format($txn->bank_balance, 2),
+                $is_unmatched ? 'Unmatched' : ($has_stripe ? 'Stripe' : ($is_credit ? 'Deposit' : 'Expense')),
+                $has_stripe ? $txn->matched_stripe_ids : ''
+            ));
+        }
+
+        fclose($output);
+        exit;
+    }
 
     // Handle AJAX updates for notes, category, tags
     if (isset($_POST['action']) && $_POST['action'] === 'update_bank_transaction') {
@@ -398,6 +465,14 @@ function five01c3po_transaction_ledger_page() {
     <div class="wrap">
         <h1>📒 Complete Transaction Ledger</h1>
         <p class="description">All bank transactions including Stripe payments, cash deposits, checks, and expenses</p>
+
+        <?php if (empty($_GET['date_from']) && empty($_GET['date_to'])): ?>
+            <div class="notice notice-info inline" style="margin: 15px 0; padding: 10px;">
+                <p><strong>📅 Default View:</strong> Showing transactions from <strong><?php echo date('F Y', strtotime($default_date_from)); ?></strong> to <strong><?php echo date('F Y', strtotime($default_date_to)); ?></strong> (current month + 12 months prior).
+                <br><a href="?page=501c3PO-transaction-ledger&date_from=2024-01-01&date_to=<?php echo $default_date_from; ?>">← View older transactions (before <?php echo date('F Y', strtotime($default_date_from)); ?>)</a>
+                </p>
+            </div>
+        <?php endif; ?>
 
         <!-- Bank Statement Reconciliation -->
         <?php if ($latest_statement): ?>
@@ -553,9 +628,22 @@ function five01c3po_transaction_ledger_page() {
             </table>
         </div>
 
+        <!-- Print & Export Buttons -->
+        <div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 4px;">
+            <a href="#" class="button button-primary" onclick="window.print(); return false;">
+                🖨 Print Ledger
+            </a>
+            <a href="?page=501c3PO-transaction-ledger&export=csv&<?php echo http_build_query($filters); ?>" class="button">
+                📊 Export to CSV
+            </a>
+            <p class="description" style="margin-top: 10px;">
+                <strong>Print:</strong> Optimized for B&W printing with clear borders distinguishing transaction types.
+                <br><strong>Export:</strong> Downloads current filtered view as CSV for Excel/Google Sheets.
+            </p>
+        </div>
 
         <!--Transaction Ledger -->
-        <table class="wp-list-table widefat fixed striped" style="background: white;">
+        <table class="wp-list-table widefat fixed striped" id="transaction-ledger-table" style="background: white;">
             <thead>
                 <tr>
                     <th style="width: 90px;">Date</th>
@@ -592,24 +680,30 @@ function five01c3po_transaction_ledger_page() {
                         $stripe_ids = $has_stripe ? explode(',', $txn->matched_stripe_ids) : array();
 
                         // Row styling based on transaction type
+                        // Color scheme: Green=matched deposits, Blue=matched debits, Yellow=unmatched, Red=errors
                         if ($is_unmatched_stripe) {
+                            // Unmatched Stripe = Yellow
                             $row_style = 'background: #fff9e6; border-left: 4px solid #ff9800;';
                             $status_icon = '⏳';
                             $status_text = 'Awaiting Bank Deposit';
                         } elseif ($has_stripe && $is_refunded) {
+                            // Refunded = Yellow (unmatched/problem)
                             $row_style = 'background: #fff3cd;';
                             $status_icon = '🔄';
                             $status_text = 'Refunded';
-                        } elseif ($has_stripe) {
+                        } elseif ($has_stripe && $is_credit) {
+                            // Matched Stripe deposit = Green
                             $row_style = 'background: #d4edda;';
                             $status_icon = '💳';
-                            $status_text = 'Stripe';
+                            $status_text = 'Stripe Deposit';
                         } elseif ($is_credit) {
-                            $row_style = 'background: #e7f3ff;';
+                            // Cash/Check deposit = Green
+                            $row_style = 'background: #d4edda;';
                             $status_icon = '💵';
-                            $status_text = 'Cash/Check';
+                            $status_text = 'Cash/Check Deposit';
                         } else {
-                            $row_style = 'background: #ffe7e7;';
+                            // Expenses/debits = Blue
+                            $row_style = 'background: #cfe2ff;';
                             $status_icon = '📤';
                             $status_text = 'Expense';
                         }
@@ -692,7 +786,10 @@ function five01c3po_transaction_ledger_page() {
                                 <?php elseif ($has_stripe): ?>
                                     <small style="color: #999;">No member data</small>
                                 <?php else: ?>
-                                    <span class="cell-display"><?php echo esc_html($txn->recipient ?: '(click to add)'); ?></span>
+                                    <span class="cell-display <?php echo empty($txn->recipient) ? 'empty-cell' : ''; ?>">
+                                        <?php echo esc_html($txn->recipient ?: ''); ?>
+                                        <?php if (empty($txn->recipient)): ?><span class="click-to-add">(click to add)</span><?php endif; ?>
+                                    </span>
                                     <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->recipient); ?>">
                                 <?php endif; ?>
                             </td>
@@ -700,7 +797,10 @@ function five01c3po_transaction_ledger_page() {
                                 <?php if ($is_unmatched_stripe): ?>
                                     <span style="color: #999;">—</span>
                                 <?php else: ?>
-                                    <span class="cell-display"><?php echo esc_html($txn->bank_notes ?: '(click to add)'); ?></span>
+                                    <span class="cell-display <?php echo empty($txn->bank_notes) ? 'empty-cell' : ''; ?>">
+                                        <?php echo esc_html($txn->bank_notes ?: ''); ?>
+                                        <?php if (empty($txn->bank_notes)): ?><span class="click-to-add">(click to add)</span><?php endif; ?>
+                                    </span>
                                     <textarea class="cell-editor" style="display: none; width: 100%;" rows="2"><?php echo esc_textarea($txn->bank_notes); ?></textarea>
                                 <?php endif; ?>
                             </td>
@@ -708,7 +808,10 @@ function five01c3po_transaction_ledger_page() {
                                 <?php if ($is_unmatched_stripe): ?>
                                     <span style="color: #999;">—</span>
                                 <?php else: ?>
-                                    <span class="cell-display"><?php echo esc_html($txn->bank_category ?: '(click to add)'); ?></span>
+                                    <span class="cell-display <?php echo empty($txn->bank_category) ? 'empty-cell' : ''; ?>">
+                                        <?php echo esc_html($txn->bank_category ?: ''); ?>
+                                        <?php if (empty($txn->bank_category)): ?><span class="click-to-add">(click to add)</span><?php endif; ?>
+                                    </span>
                                     <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->bank_category); ?>">
                                 <?php endif; ?>
                             </td>
@@ -716,7 +819,10 @@ function five01c3po_transaction_ledger_page() {
                                 <?php if ($is_unmatched_stripe): ?>
                                     <span style="color: #999;">—</span>
                                 <?php else: ?>
-                                    <span class="cell-display"><?php echo esc_html($txn->bank_tags ?: '(click to add)'); ?></span>
+                                    <span class="cell-display <?php echo empty($txn->bank_tags) ? 'empty-cell' : ''; ?>">
+                                        <?php echo esc_html($txn->bank_tags ?: ''); ?>
+                                        <?php if (empty($txn->bank_tags)): ?><span class="click-to-add">(click to add)</span><?php endif; ?>
+                                    </span>
                                     <input type="text" class="cell-editor" style="display: none; width: 100%;" value="<?php echo esc_attr($txn->bank_tags); ?>">
                                 <?php endif; ?>
                             </td>
@@ -773,9 +879,20 @@ function five01c3po_transaction_ledger_page() {
 
                         <!-- Match Details Row -->
                         <?php if ($has_stripe): ?>
-                            <tr style="background: #f8f9fa; border-top: none;">
-                                <td colspan="10" style="padding: 8px 15px; font-size: 12px;">
+                            <tr style="background: #f0f0f0; border-top: none;">
+                                <td colspan="10" style="padding: 8px 15px; font-size: 12px; color: #333;">
                                     <strong>🔗 Complete Payout Breakdown:</strong>
+                                    <?php if (!empty($stripe_ids)): ?>
+                                        <span style="margin-left: 15px;">
+                                            <?php foreach ($stripe_ids as $stripe_id): ?>
+                                                <a href="<?php echo admin_url('admin.php?page=501c3PO-view-stripe-transaction&id=' . intval($stripe_id)); ?>"
+                                                   style="color: #0073aa; text-decoration: none; margin-right: 10px;"
+                                                   title="View Stripe transaction details">
+                                                    💳 Stripe #<?php echo intval($stripe_id); ?>
+                                                </a>
+                                            <?php endforeach; ?>
+                                        </span>
+                                    <?php endif; ?>
                                     <?php
                                     global $wpdb;
 
@@ -921,48 +1038,47 @@ function five01c3po_transaction_ledger_page() {
 
         <!-- Legend -->
         <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 4px solid #007bff;">
-            <h3 style="margin-top: 0;">Legend</h3>
-            <table style="width: 100%; max-width: 800px;">
+            <h3 style="margin-top: 0;">Color Legend & Icons</h3>
+            <table style="width: 100%; max-width: 900px;">
                 <tr>
-                    <td style="padding: 5px;"><span style="font-size: 20px;">💳</span> <strong>Stripe</strong></td>
-                    <td>Payment processed through Stripe (matched to bank deposit)</td>
+                    <td style="padding: 8px; background: #d4edda; width: 40px; text-align: center;">💳 💵</td>
+                    <td style="padding: 8px;"><strong>Green</strong> = Matched deposits (money in - confirmed in bank)</td>
                 </tr>
                 <tr>
-                    <td style="padding: 5px;"><span style="font-size: 20px;">⏳</span> <strong>Awaiting Bank Deposit</strong></td>
-                    <td>Stripe transaction not yet deposited in bank (payout pending or in transit)</td>
+                    <td style="padding: 8px; background: #cfe2ff; width: 40px; text-align: center;">📤</td>
+                    <td style="padding: 8px;"><strong>Blue</strong> = Matched expenses/debits (money out - confirmed in bank)</td>
                 </tr>
                 <tr>
-                    <td style="padding: 5px;"><span style="font-size: 20px;">💵</span> <strong>Cash/Check</strong></td>
-                    <td>Direct deposit not from Stripe (cash, check, wire transfer, etc.)</td>
+                    <td style="padding: 8px; background: #fff9e6; width: 40px; text-align: center;">⏳ 🔄</td>
+                    <td style="padding: 8px;"><strong>Yellow</strong> = Unmatched transactions (awaiting bank deposit or refunded)</td>
                 </tr>
                 <tr>
-                    <td style="padding: 5px;"><span style="font-size: 20px;">📤</span> <strong>Expense</strong></td>
-                    <td>Money out (checks written, ACH debits, fees, etc.)</td>
-                </tr>
-                <tr>
-                    <td style="padding: 5px;"><span style="font-size: 20px;">🔄</span> <strong>Refunded</strong></td>
-                    <td>Stripe transaction that was refunded</td>
+                    <td style="padding: 8px; background: #f0f0f0; width: 40px; text-align: center;">🔗</td>
+                    <td style="padding: 8px;"><strong>Light Grey</strong> = Payout breakdown details for matched Stripe transactions</td>
                 </tr>
                 <tr style="border-top: 1px solid #ddd;">
-                    <td style="padding: 5px;"><strong style="color: #28a745;">✓ Bank Statement</strong></td>
-                    <td>This balance has been verified against an official bank statement</td>
+                    <td style="padding: 8px; text-align: center;">✓</td>
+                    <td style="padding: 8px;"><strong style="color: #28a745;">Green Checkmark</strong> = Balance verified against bank statement</td>
                 </tr>
             </table>
-            <p style="margin-top: 15px;"><strong>CR</strong> = Credit (money in) | <strong>DR</strong> = Debit (money out)</p>
-            <p><strong>Balance Column:</strong> Shows running balance after each transaction. Green "✓ Bank Statement" indicates the balance matches your official bank statement for that date.</p>
-            <p><em>Click on Notes, Category, or Tags to edit. Press Enter to save, Esc to cancel.</em></p>
-        </div>
-
-        <!-- Export Options -->
-        <div style="margin-top: 20px;">
-            <p>
-                <a href="#" class="button" onclick="window.print(); return false;">🖨 Print Ledger</a>
-                <a href="#" class="button" onclick="alert('CSV export coming soon'); return false;">📊 Export to CSV</a>
+            <p style="margin-top: 15px;">
+                <strong>CR</strong> = Credit (money in) | <strong>DR</strong> = Debit (money out)
+                <br><strong>Balance Column:</strong> Running balance after each transaction in chronological order.
+                <br><strong>Editing:</strong> Click Notes, Category, or Tags to edit. Press Enter to save, Esc to cancel.
             </p>
         </div>
     </div>
 
     <style>
+        /* Sticky header */
+        .wp-list-table thead {
+            position: sticky;
+            top: 32px; /* WordPress admin bar height */
+            z-index: 10;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
         .editable-cell {
             cursor: pointer;
             padding: 8px;
@@ -1037,12 +1153,34 @@ function five01c3po_transaction_ledger_page() {
                 background: transparent !important;
             }
 
-            /* Preserve row colors for context */
-            tr[style*="background: #d4edda"] { background: #d4edda !important; } /* Stripe */
-            tr[style*="background: #e7f3ff"] { background: #e7f3ff !important; } /* Cash */
-            tr[style*="background: #ffe7e7"] { background: #ffe7e7 !important; } /* Expense */
-            tr[style*="background: #fff3cd"] { background: #fff3cd !important; } /* Refunded */
-            tr[style*="background: #f8f9fa"] { background: #f8f9fa !important; } /* Details */
+            /* Hide "(click to add)" text and empty cell indicators in print */
+            .click-to-add {
+                display: none !important;
+            }
+            .empty-cell {
+                color: #000 !important;
+            }
+
+            /* B&W friendly - remove colors, use borders for distinction */
+            .wp-list-table tr {
+                background: white !important;
+            }
+
+            /* Add borders to distinguish row types */
+            tr[style*="background: #d4edda"] { /* Green deposits */
+                border-left: 3px solid #000 !important;
+            }
+            tr[style*="background: #cfe2ff"] { /* Blue expenses */
+                border-left: 3px dotted #000 !important;
+            }
+            tr[style*="background: #fff9e6"],
+            tr[style*="background: #fff3cd"] { /* Yellow unmatched */
+                border-left: 3px dashed #000 !important;
+            }
+            tr[style*="background: #f8f9fa"] { /* Light grey detail rows */
+                background: #f5f5f5 !important;
+                font-size: 8pt !important;
+            }
 
             /* Legend styling */
             div[style*="border-left: 4px solid #007bff"] {
@@ -1104,8 +1242,12 @@ function five01c3po_transaction_ledger_page() {
             var bankId = $cell.data('bank-id');
             var field = $cell.data('field');
 
-            // Update display
-            $display.text(newValue || '(click to add)');
+            // Update display with proper empty state handling
+            if (newValue) {
+                $display.removeClass('empty-cell').html(newValue);
+            } else {
+                $display.addClass('empty-cell').html('<span class="click-to-add">(click to add)</span>');
+            }
             $display.show();
             $editor.hide();
             $cell.removeClass('editing');
