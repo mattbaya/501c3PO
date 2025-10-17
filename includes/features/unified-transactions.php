@@ -31,8 +31,8 @@ function five01c3po_unified_transactions_page() {
 
     // Get counts from each source
     $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
-    $bank_table = $wpdb->prefix . 'swca_bank_transactions';
-    $gf_table = 'swca_gf_addon_payment_transaction';
+    $bank_table = $wpdb->prefix . 'c3_bank_transactions';
+    $gf_table = $wpdb->prefix . 'c3_gf_payment_transaction';
 
     $stripe_count = $wpdb->get_var("SELECT COUNT(*) FROM $stripe_table");
     $bank_count = $wpdb->get_var("SELECT COUNT(*) FROM $bank_table");
@@ -166,7 +166,7 @@ function five01c3po_unified_transactions_shortcode($atts) {
 
     // 2. Bank transactions
     if ($source === 'all' || $source === 'bank') {
-        $bank_table = $wpdb->prefix . 'swca_bank_transactions';
+        $bank_table = $wpdb->prefix . 'c3_bank_transactions';
         $matches_table = $wpdb->prefix . 'c3_transaction_matches';
         $where = "1=1";
 
@@ -204,7 +204,7 @@ function five01c3po_unified_transactions_shortcode($atts) {
 
     // 3. Gravity Forms Stripe transactions
     if ($source === 'all' || $source === 'gravity') {
-        $gf_table = 'swca_gf_addon_payment_transaction';
+        $gf_table = $wpdb->prefix . 'c3_gf_payment_transaction';
         $matches_table = $wpdb->prefix . 'c3_transaction_matches';
         $where = "transaction_type = 'payment'";
 

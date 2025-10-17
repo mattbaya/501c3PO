@@ -37,9 +37,9 @@ function five01c3po_view_bank_transaction_page() {
         return;
     }
 
-    $bank_table = 'swca_c3_bank_transactions';
-    $matches_table = 'swca_transaction_matches';
-    $stripe_table = 'swca_stripe_transactions';
+    $bank_table = $wpdb->prefix . 'c3_bank_transactions';
+    $matches_table = $wpdb->prefix . 'c3_transaction_matches';
+    $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
 
     $txn = $wpdb->get_row($wpdb->prepare("
         SELECT b.*

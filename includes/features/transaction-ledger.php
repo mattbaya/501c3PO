@@ -681,21 +681,23 @@ function five01c3po_transaction_ledger_page() {
 
                         // Row styling based on transaction type
                         // Color scheme: Green=matched deposits, Blue=matched debits, Yellow=unmatched, Red=errors
+                        // IMPORTANT: Check if matched BEFORE checking refund status
                         if ($is_unmatched_stripe) {
                             // Unmatched Stripe = Yellow
                             $row_style = 'background: #fff9e6; border-left: 4px solid #ff9800;';
                             $status_icon = '⏳';
                             $status_text = 'Awaiting Bank Deposit';
-                        } elseif ($has_stripe && $is_refunded) {
-                            // Refunded = Yellow (unmatched/problem)
-                            $row_style = 'background: #fff3cd;';
-                            $status_icon = '🔄';
-                            $status_text = 'Refunded';
                         } elseif ($has_stripe && $is_credit) {
-                            // Matched Stripe deposit = Green
+                            // Matched Stripe deposit = Green (even if refunded - it's still matched!)
                             $row_style = 'background: #d4edda;';
-                            $status_icon = '💳';
-                            $status_text = 'Stripe Deposit';
+                            // Show refund icon if refunded, otherwise standard deposit icon
+                            if ($is_refunded) {
+                                $status_icon = '🔄';
+                                $status_text = 'Stripe Deposit (Has Refunds)';
+                            } else {
+                                $status_icon = '💳';
+                                $status_text = 'Stripe Deposit';
+                            }
                         } elseif ($is_credit) {
                             // Cash/Check deposit = Green
                             $row_style = 'background: #d4edda;';
