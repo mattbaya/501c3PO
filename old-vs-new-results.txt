@@ -1,0 +1,20 @@
+=== OLD VS NEW TABLE COMPARISON ===
+
+Table existence:
+  swca_stripe_transactions (OLD): EXISTS
+  swca_c3_stripe_transactions (NEW): EXISTS
+
+OLD TABLE (swca_stripe_transactions):
+  Total rows: 223
+  With payout_id: 0
+  Unique payout IDs: 0
+
+
+NEW TABLE (swca_c3_stripe_transactions):
+  Total rows: 223
+  With payout_id: 0
+  Unique payout IDs: 0
+
+  ❌ NO transactions have payout data!
+
+=== ANALYSIS COMPLETE ===

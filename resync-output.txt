@@ -1,0 +1,11 @@
+═══════════════════════════════════════════════════════════════
+  RE-SYNCING STRIPE FOR JULY-AUGUST 2025
+═══════════════════════════════════════════════════════════════
+
+✓ Passphrase verified
+✓ API key decrypted successfully
+Syncing last 120 days (July 1 - Oct 16, 2025)...
+
+Start date: 2025-06-19
+
+Downloading balance transactions...

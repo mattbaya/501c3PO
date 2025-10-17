@@ -1,0 +1,931 @@
+=== UNMATCHED TRANSACTIONS INVESTIGATION ===
+
+1. STRIPE TRANSACTIONS NOT MATCHED TO GRAVITY FORMS (18 expected):
+--------------------------------------------------------------------------------
+
+#1 - Stripe DB ID: 223
+  Charge ID: py_3SHQA4JHWUaRCmpE0YmhJ85V
+  Type: charge
+  Status: succeeded
+  Amount: $51.80 (fee: $1.80, net: $51.80)
+  Date: 2025-10-12 14:22:15
+  Customer:  <sabina.chen.clark@gmail.com>
+  Description: Products: Donation amount, Credit Card Processing Fee
+
+#2 - Stripe DB ID: 1
+  Charge ID: ch_3S9fXWJHWUaRCmpE16qwuCKd
+  Type: charge
+  Status: succeeded
+  Amount: $5.00 (fee: $0.45, net: $5.00)
+  Date: 2025-09-21 05:10:24
+  Customer:  <matt@baya.net>
+  Description: Invoice 7E031817-0006
+
+#3 - Stripe DB ID: 4
+  Charge ID: ch_3S2MsvJHWUaRCmpE0fuVa5c5
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-09-01 01:50:19
+  Customer:  <matt@baya.net>
+  Description: Invoice HZ1IHT6L-0005
+
+#4 - Stripe DB ID: 4
+  Charge ID: ch_3S2MsvJHWUaRCmpE0fuVa5c5
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-09-01 01:50:19
+  Customer:  <matt@baya.net>
+  Description: Invoice HZ1IHT6L-0005
+
+#5 - Stripe DB ID: 5
+  Charge ID: py_3S1r34JHWUaRCmpE0bOfcKXR
+  Type: charge
+  Status: succeeded
+  Amount: $51.80 (fee: $1.80, net: $51.80)
+  Date: 2025-08-30 15:50:43
+  Customer:  <kcfrancis35@gmail.com>
+  Description: Products: Household - $50/year, Annual Credit Card Processing Fees
+
+#6 - Stripe DB ID: 5
+  Charge ID: py_3S1r34JHWUaRCmpE0bOfcKXR
+  Type: charge
+  Status: succeeded
+  Amount: $51.80 (fee: $1.80, net: $51.80)
+  Date: 2025-08-30 15:50:43
+  Customer:  <kcfrancis35@gmail.com>
+  Description: Products: Household - $50/year, Annual Credit Card Processing Fees
+
+#7 - Stripe DB ID: 6
+  Charge ID: py_3S1dk1JHWUaRCmpE1wTOsyg4
+  Type: charge
+  Status: succeeded
+  Amount: $51.80 (fee: $1.80, net: $51.80)
+  Date: 2025-08-30 01:38:12
+  Customer:  <chalpinhealy@gmail.com>
+  Description: Products: Household - $50/year, Annual Credit Card Processing Fees
+
+#8 - Stripe DB ID: 6
+  Charge ID: py_3S1dk1JHWUaRCmpE1wTOsyg4
+  Type: charge
+  Status: succeeded
+  Amount: $51.80 (fee: $1.80, net: $51.80)
+  Date: 2025-08-30 01:38:12
+  Customer:  <chalpinhealy@gmail.com>
+  Description: Products: Household - $50/year, Annual Credit Card Processing Fees
+
+#9 - Stripe DB ID: 9
+  Charge ID: py_3Ryf59JHWUaRCmpE1M57nSwF
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-08-21 20:27:42
+  Customer:  <suemead@aol.com>
+  Description: Products: Individual - $35/year, Annual Credit Card Processing Fees
+
+#10 - Stripe DB ID: 9
+  Charge ID: py_3Ryf59JHWUaRCmpE1M57nSwF
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-08-21 20:27:42
+  Customer:  <suemead@aol.com>
+  Description: Products: Individual - $35/year, Annual Credit Card Processing Fees
+
+#11 - Stripe DB ID: 10
+  Charge ID: ch_3RyQjtJHWUaRCmpE0CSQAou2
+  Type: charge
+  Status: succeeded
+  Amount: $5.00 (fee: $0.45, net: $5.00)
+  Date: 2025-08-21 05:08:43
+  Customer:  <matt@baya.net>
+  Description: Invoice 7E031817-0005
+
+#12 - Stripe DB ID: 10
+  Charge ID: ch_3RyQjtJHWUaRCmpE0CSQAou2
+  Type: charge
+  Status: succeeded
+  Amount: $5.00 (fee: $0.45, net: $5.00)
+  Date: 2025-08-21 05:08:43
+  Customer:  <matt@baya.net>
+  Description: Invoice 7E031817-0005
+
+#13 - Stripe DB ID: 12
+  Charge ID: ch_3RupHhJHWUaRCmpE1w2mHGKT
+  Type: charge
+  Status: succeeded
+  Amount: $5.44 (fee: $0.20, net: $5.44)
+  Date: 2025-08-11 06:32:58
+  Customer:  <>
+  Description: Raffle tickets (5) from Matthew Baya (includes $0.44 processing fee)
+
+#14 - Stripe DB ID: 13
+  Charge ID: ch_3RuocoJHWUaRCmpE0cPVgi2a
+  Type: charge
+  Status: succeeded
+  Amount: $20.88 (fee: $0.61, net: $20.88)
+  Date: 2025-08-11 05:50:37
+  Customer:  <>
+  Description: Raffle tickets purchase from Matthew Baya - 25 tickets (includes $0.88 processing fee)
+
+#15 - Stripe DB ID: 13
+  Charge ID: ch_3RuocoJHWUaRCmpE0cPVgi2a
+  Type: charge
+  Status: succeeded
+  Amount: $20.88 (fee: $0.61, net: $20.88)
+  Date: 2025-08-11 05:50:37
+  Customer:  <>
+  Description: Raffle tickets purchase from Matthew Baya - 25 tickets (includes $0.88 processing fee)
+
+#16 - Stripe DB ID: 14
+  Charge ID: ch_3Rukf6JHWUaRCmpE1jEVCGpg
+  Type: charge
+  Status: succeeded
+  Amount: $0.51 (fee: $0.06, net: $0.51)
+  Date: 2025-08-11 01:36:39
+  Customer:  <>
+  Description: Donation from M Baya (includes $0.31 processing fee)
+
+#17 - Stripe DB ID: 14
+  Charge ID: ch_3Rukf6JHWUaRCmpE1jEVCGpg
+  Type: charge
+  Status: succeeded
+  Amount: $0.51 (fee: $0.06, net: $0.51)
+  Date: 2025-08-11 01:36:39
+  Customer:  <>
+  Description: Donation from M Baya (includes $0.31 processing fee)
+
+#18 - Stripe DB ID: 15
+  Charge ID: ch_3RukduJHWUaRCmpE1FCpEvNp
+  Type: charge
+  Status: succeeded
+  Amount: $0.51 (fee: $0.06, net: $0.51)
+  Date: 2025-08-11 01:35:25
+  Customer:  <>
+  Description: Donation from Matthew Baya (includes $0.31 processing fee)
+
+#19 - Stripe DB ID: 15
+  Charge ID: ch_3RukduJHWUaRCmpE1FCpEvNp
+  Type: charge
+  Status: succeeded
+  Amount: $0.51 (fee: $0.06, net: $0.51)
+  Date: 2025-08-11 01:35:25
+  Customer:  <>
+  Description: Donation from Matthew Baya (includes $0.31 processing fee)
+
+#20 - Stripe DB ID: 16
+  Charge ID: ch_3RubhSJHWUaRCmpE1JRIhGJ0
+  Type: charge
+  Status: succeeded
+  Amount: $103.29 (fee: $3.30, net: $103.29)
+  Date: 2025-08-10 16:02:24
+  Customer:  <jfowler7@icloud.com>
+  Description: Products: Household - $50/year, Additional Donation, Annual Credit Card Processing Fees
+
+#21 - Stripe DB ID: 16
+  Charge ID: ch_3RubhSJHWUaRCmpE1JRIhGJ0
+  Type: charge
+  Status: succeeded
+  Amount: $103.29 (fee: $3.30, net: $103.29)
+  Date: 2025-08-10 16:02:24
+  Customer:  <jfowler7@icloud.com>
+  Description: Products: Household - $50/year, Additional Donation, Annual Credit Card Processing Fees
+
+#22 - Stripe DB ID: 17
+  Charge ID: ch_3RuZMeJHWUaRCmpE0l6VP6uY
+  Type: charge
+  Status: succeeded
+  Amount: $0.51 (fee: $0.06, net: $0.51)
+  Date: 2025-08-10 13:33:01
+  Customer:  <>
+  Description: Donation from Matthew Baya (includes $0.31 processing fee)
+
+#23 - Stripe DB ID: 18
+  Charge ID: ch_3RuZ6YJHWUaRCmpE1IXDuUHa
+  Type: charge
+  Status: succeeded
+  Amount: $1.33 (fee: $0.09, net: $1.33)
+  Date: 2025-08-10 13:16:21
+  Customer:  <>
+  Description: Donation from Matt (includes $0.33 processing fee)
+
+#24 - Stripe DB ID: 18
+  Charge ID: ch_3RuZ6YJHWUaRCmpE1IXDuUHa
+  Type: charge
+  Status: succeeded
+  Amount: $1.33 (fee: $0.09, net: $1.33)
+  Date: 2025-08-10 13:16:21
+  Customer:  <>
+  Description: Donation from Matt (includes $0.33 processing fee)
+
+#25 - Stripe DB ID: 19
+  Charge ID: ch_3RtrsSJHWUaRCmpE15YYwfbR
+  Type: charge
+  Status: succeeded
+  Amount: $1.00 (fee: $0.08, net: $1.00)
+  Date: 2025-08-08 15:06:50
+  Customer:  <>
+  Description: Donation from Matthew Baya
+
+#26 - Stripe DB ID: 19
+  Charge ID: ch_3RtrsSJHWUaRCmpE15YYwfbR
+  Type: charge
+  Status: succeeded
+  Amount: $1.00 (fee: $0.08, net: $1.00)
+  Date: 2025-08-08 15:06:50
+  Customer:  <>
+  Description: Donation from Matthew Baya
+
+#27 - Stripe DB ID: 20
+  Charge ID: ch_3RtrfGJHWUaRCmpE0pcu6Ub0
+  Type: charge
+  Status: succeeded
+  Amount: $1.33 (fee: $0.09, net: $1.33)
+  Date: 2025-08-08 14:53:25
+  Customer:  <>
+  Description: Donation from Matthew Baya (includes $0.33 processing fee)
+
+#28 - Stripe DB ID: 20
+  Charge ID: ch_3RtrfGJHWUaRCmpE0pcu6Ub0
+  Type: charge
+  Status: succeeded
+  Amount: $1.33 (fee: $0.09, net: $1.33)
+  Date: 2025-08-08 14:53:25
+  Customer:  <>
+  Description: Donation from Matthew Baya (includes $0.33 processing fee)
+
+#29 - Stripe DB ID: 21
+  Charge ID: ch_3Rr82oJHWUaRCmpE1GZ8ZCj8
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-08-01 01:46:04
+  Customer:  <matt@baya.net>
+  Description: Invoice HZ1IHT6L-0004
+
+#30 - Stripe DB ID: 24
+  Charge ID: ch_3RnBzAJHWUaRCmpE1nzqI9cW
+  Type: charge
+  Status: succeeded
+  Amount: $5.00 (fee: $0.45, net: $5.00)
+  Date: 2025-07-21 05:10:01
+  Customer:  <matt@baya.net>
+  Description: Invoice 7E031817-0004
+
+#31 - Stripe DB ID: 25
+  Charge ID: py_3RlXBYJHWUaRCmpE0oyw4qng
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-07-16 15:24:03
+  Customer:  <bhertzig@gmail.com>
+  Description: Products: Individual - $35/year, Annual Credit Card Processing Fees
+
+#32 - Stripe DB ID: 26
+  Charge ID: ch_3Rftk6JHWUaRCmpE02syRu9j
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-07-01 02:16:20
+  Customer:  <matt@baya.net>
+  Description: Invoice HZ1IHT6L-0003
+
+#33 - Stripe DB ID: 27
+  Charge ID: py_3ReljYJHWUaRCmpE0i5oitsD
+  Type: charge
+  Status: succeeded
+  Amount: $51.80 (fee: $1.80, net: $51.80)
+  Date: 2025-06-27 23:31:10
+  Customer:  <dennymene@gmail.com>
+  Description: Products: Household - $50/year, Annual Credit Card Processing Fees
+
+#34 - Stripe DB ID: 28
+  Charge ID: ch_3Re0TDJHWUaRCmpE1Mgv6lO2
+  Type: charge
+  Status: succeeded
+  Amount: $51.80 (fee: $1.80, net: $51.80)
+  Date: 2025-06-25 21:03:05
+  Customer:  <minhackner@yahoo.com>
+  Description: Products: Household - $50/year, Annual Credit Card Processing Fees
+
+#35 - Stripe DB ID: 29
+  Charge ID: ch_3RcoYjJHWUaRCmpE0JeXCqwS
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-06-22 14:07:50
+  Customer:  <parmbuck@gmail.com>
+  Description: Product: $35
+
+#36 - Stripe DB ID: 30
+  Charge ID: ch_3RcJgBJHWUaRCmpE0HPcSvsK
+  Type: charge
+  Status: succeeded
+  Amount: $5.00 (fee: $0.45, net: $5.00)
+  Date: 2025-06-21 05:09:29
+  Customer:  <matt@baya.net>
+  Description: Invoice 7E031817-0003
+
+#37 - Stripe DB ID: 31
+  Charge ID: ch_3RXVDRJHWUaRCmpE0Ly7bN7g
+  Type: charge
+  Status: succeeded
+  Amount: $100.00 (fee: $3.20, net: $100.00)
+  Date: 2025-06-07 22:27:53
+  Customer:  <duncan@cedarworks.com>
+  Description: Products: Other Amount, Other amount
+
+#38 - Stripe DB ID: 32
+  Charge ID: ch_3RXPBkJHWUaRCmpE1f4KYG4O
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-06-07 16:01:45
+  Customer:  <memeehan60@gmail.com>
+  Description: Product: $35
+
+#39 - Stripe DB ID: 33
+  Charge ID: ch_3RWLjVJHWUaRCmpE1tbIcD6q
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-06-04 18:08:14
+  Customer:  <janicehgoodman@gmail.com>
+  Description: Product: $35
+
+#40 - Stripe DB ID: 34
+  Charge ID: ch_3RWLiFJHWUaRCmpE08xK62FJ
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-06-04 18:06:56
+  Customer:  <xstclair@gmail.com>
+  Description: Product: $35
+
+#41 - Stripe DB ID: 35
+  Charge ID: ch_3RWK2pJHWUaRCmpE0AOwWuvl
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-06-04 16:20:04
+  Customer:  <lvenolia@williams.edu>
+  Description: Product: $35
+
+#42 - Stripe DB ID: 36
+  Charge ID: ch_3RVx2yJHWUaRCmpE0d024GjZ
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-06-03 15:46:41
+  Customer:  <elizabeth.b.burnett@gmail.com>
+  Description: Product: $35
+
+#43 - Stripe DB ID: 37
+  Charge ID: ch_3RVvNnJHWUaRCmpE1dNqN855
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-06-03 14:00:05
+  Customer:  <linsch5@gmail.com>
+  Description: Product: $35
+
+#44 - Stripe DB ID: 38
+  Charge ID: ch_3RV1K7JHWUaRCmpE1UhQoxkm
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-06-01 02:08:32
+  Customer:  <matt@baya.net>
+  Description: Invoice HZ1IHT6L-0002
+
+#45 - Stripe DB ID: 39
+  Charge ID: ch_3RR4uaJHWUaRCmpE1SHXSMJn
+  Type: charge
+  Status: succeeded
+  Amount: $5.00 (fee: $0.45, net: $5.00)
+  Date: 2025-05-21 05:09:57
+  Customer:  <matt@baya.net>
+  Description: Invoice 7E031817-0002
+
+#46 - Stripe DB ID: 40
+  Charge ID: ch_3RJlCnJHWUaRCmpE1RjZoerF
+  Type: charge
+  Status: succeeded
+  Amount: $36.35 (fee: $1.35, net: $36.35)
+  Date: 2025-05-01 00:42:27
+  Customer:  <matt@baya.net>
+  Description: Products: Individual - $35/year, Annual Credit Card Processing Fees
+
+#47 - Stripe DB ID: 41
+  Charge ID: ch_3RGJWqJHWUaRCmpE0lieAbvI
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-04-21 12:32:53
+  Customer:  <mrleyden@gmail.com>
+  Description: Product: $35
+
+#48 - Stripe DB ID: 42
+  Charge ID: ch_3RGBeMJHWUaRCmpE0W0Q6JBa
+  Type: charge
+  Status: succeeded
+  Amount: $5.00 (fee: $0.45, net: $5.00)
+  Date: 2025-04-21 04:08:09
+  Customer:  <matt@baya.net>
+  Description: Product: Individual - $5/month
+
+#49 - Stripe DB ID: 43
+  Charge ID: ch_3R44fLJHWUaRCmpE0djCPawO
+  Type: charge
+  Status: succeeded
+  Amount: $120.00 (fee: $3.78, net: $120.00)
+  Date: 2025-03-18 18:15:07
+  Customer: Janine Hetherington <janine.hetherington@gmail.com>
+  Description: Product: Donation amount
+
+#50 - Stripe DB ID: 44
+  Charge ID: ch_3R41zYJHWUaRCmpE0N2YQtme
+  Type: charge
+  Status: succeeded
+  Amount: $1.00 (fee: $0.33, net: $1.00)
+  Date: 2025-03-18 15:23:45
+  Customer: Owen Baya <owen@baya.net>
+  Description: Product: Donation amount
+
+#51 - Stripe DB ID: 45
+  Charge ID: ch_3R41udJHWUaRCmpE1pUYpv8j
+  Type: charge
+  Status: succeeded
+  Amount: $2.37 (fee: $0.37, net: $2.37)
+  Date: 2025-03-18 15:18:39
+  Customer: barry j meneghelli <barry.meneghelli@gmail.com>
+  Description: Products: Donation amount, Credit Card Processing Fee
+
+#52 - Stripe DB ID: 46
+  Charge ID: ch_3R3ot0JHWUaRCmpE1RGHBFhX
+  Type: charge
+  Status: succeeded
+  Amount: $3.40 (fee: $0.40, net: $3.40)
+  Date: 2025-03-18 01:24:27
+  Customer: Matthew Baya <spam@baya.net>
+  Description: Products: Donation amount, Credit Card Processing Fee
+
+#53 - Stripe DB ID: 47
+  Charge ID: ch_3R3oeKJHWUaRCmpE1NYGyvVo
+  Type: charge
+  Status: succeeded
+  Amount: $2.37 (fee: $0.37, net: $2.37)
+  Date: 2025-03-18 01:08:57
+  Customer: Tamanika T Steward <president@southwilliamstown.org>
+  Description: Products: Donation amount, Credit Card Processing Fee
+
+#54 - Stripe DB ID: 48
+  Charge ID: ch_3R3oHSJHWUaRCmpE0F8jUHyr
+  Type: charge
+  Status: succeeded
+  Amount: $1.60 (fee: $0.35, net: $1.60)
+  Date: 2025-03-18 00:45:19
+  Customer: Matthew Baya <matt@baya.net>
+  Description: Products: Donation amount, Credit Card Processing Fee
+
+#55 - Stripe DB ID: 49
+  Charge ID: ch_3R3Jf6JHWUaRCmpE0yezRyr2
+  Type: charge
+  Status: succeeded
+  Amount: $1.34 (fee: $0.34, net: $1.34)
+  Date: 2025-03-16 16:03:41
+  Customer: Matthew Baya <matt@baya.net>
+  Description: Products: Donation amount, Credit Card Processing Fee
+
+#56 - Stripe DB ID: 50
+  Charge ID: ch_3R3JTCJHWUaRCmpE1VoL6GX2
+  Type: charge
+  Status: succeeded
+  Amount: $2.37 (fee: $0.37, net: $2.37)
+  Date: 2025-03-16 15:51:23
+  Customer: Matthew Baya <matt@baya.net>
+  Description: Products: Donation amount, Credit Card Processing Fee
+
+#57 - Stripe DB ID: 51
+  Charge ID: ch_3R3IwnJHWUaRCmpE1prZHFjJ
+  Type: charge
+  Status: succeeded
+  Amount: $5.46 (fee: $0.46, net: $5.46)
+  Date: 2025-03-16 15:17:54
+  Customer: Matthew Baya <matt@baya.net>
+  Description: Products: Donation amount, Credit Card Processing Fee
+
+#58 - Stripe DB ID: 52
+  Charge ID: ch_3QzjoYJHWUaRCmpE0KT6VahR
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-03-06 19:10:39
+  Customer: Kim Block <barnard526@gmail.com>
+  Description: Product: $35
+
+#59 - Stripe DB ID: 52
+  Charge ID: ch_3QzjoYJHWUaRCmpE0KT6VahR
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-03-06 19:10:39
+  Customer: Kim Block <barnard526@gmail.com>
+  Description: Product: $35
+
+#60 - Stripe DB ID: 53
+  Charge ID: ch_3Qkb3fJHWUaRCmpE1iwxubZj
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2025-01-24 00:47:40
+  Customer: Kimberley Nicoll <nicoll.kimberley@gmail.com>
+  Description: Product: $35
+
+#61 - Stripe DB ID: 54
+  Charge ID: ch_3QjjZ4JHWUaRCmpE08vhLbpb
+  Type: charge
+  Status: succeeded
+  Amount: $100.00 (fee: $3.20, net: $100.00)
+  Date: 2025-01-21 15:40:31
+  Customer: Williamstown Historical Museum <michael@williamstownhistoricalmuseum.org>
+  Description: Product: Donation amount
+
+#62 - Stripe DB ID: 55
+  Charge ID: ch_3QcBlDJHWUaRCmpE1wv0NpKR
+  Type: charge
+  Status: succeeded
+  Amount: $300.00 (fee: $9.00, net: $300.00)
+  Date: 2024-12-31 20:09:52
+  Customer: Donald J Toumey <don.toumey@gmail.com>
+  Description: Products: $35, Additional Donation
+
+#63 - Stripe DB ID: 56
+  Charge ID: ch_3QboiYJHWUaRCmpE0zucr96u
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-12-30 19:33:35
+  Customer: Lynn A. Jankiewicz <lynnajankiewicz@gmail.com>
+  Description: Product: $35
+
+#64 - Stripe DB ID: 57
+  Charge ID: ch_3QaHzyJHWUaRCmpE1wcC4Lmr
+  Type: charge
+  Status: succeeded
+  Amount: $50.00 (fee: $1.75, net: $50.00)
+  Date: 2024-12-26 14:25:15
+  Customer: Amy Holzapfel <amyleona@me.com>
+  Description: Product: Donation amount
+
+#65 - Stripe DB ID: 58
+  Charge ID: ch_3QUusqJHWUaRCmpE1phzhKYD
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-12-11 18:43:41
+  Customer: Maureen Dietze <mdietze@altonwestall.com>
+  Description: Product: $35
+
+#66 - Stripe DB ID: 59
+  Charge ID: ch_3QUBMuJHWUaRCmpE0cpiFrIG
+  Type: charge
+  Status: succeeded
+  Amount: $50.00 (fee: $1.75, net: $50.00)
+  Date: 2024-12-09 18:07:41
+  Customer: Jason McDowell-Green <jason@countrystorejiminy.com>
+  Description: Products: $35, Additional Donation
+
+#67 - Stripe DB ID: 60
+  Charge ID: ch_3QS98HJHWUaRCmpE08x60Fza
+  Type: charge
+  Status: succeeded
+  Amount: $50.00 (fee: $1.75, net: $50.00)
+  Date: 2024-12-04 03:20:25
+  Customer: Shawn Burdick <sburdick@roadrunner.com>
+  Description: Product: Donation amount
+
+#68 - Stripe DB ID: 61
+  Charge ID: ch_3QOREWJHWUaRCmpE0OWdIKWR
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-11-23 21:51:17
+  Customer: Melanie Mowinski <moji29@gmail.com>
+  Description: Product: $35
+
+#69 - Stripe DB ID: 62
+  Charge ID: ch_3QBNq2JHWUaRCmpE1DhZfSNY
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-10-18 21:36:03
+  Customer: Carolyn Behr <CAROLYNBEHR@YAHOO.COM>
+  Description: Product: $35
+
+#70 - Stripe DB ID: 63
+  Charge ID: ch_3QAxZaJHWUaRCmpE0l3auj4v
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-10-17 17:33:19
+  Customer: Christina Votra <christina@greenriverregenerative.com>
+  Description: Product: $35
+
+#71 - Stripe DB ID: 64
+  Charge ID: ch_3Q1Uu0JHWUaRCmpE1sPP1wKW
+  Type: charge
+  Status: succeeded
+  Amount: $50.00 (fee: $1.75, net: $50.00)
+  Date: 2024-09-21 15:07:17
+  Customer: R Thomas Lutzy <tlutzy@gmail.com>
+  Description: Products: Other Amount, Other amount
+
+#72 - Stripe DB ID: 65
+  Charge ID: ch_3PywWqJHWUaRCmpE1YrsqSIl
+  Type: charge
+  Status: succeeded
+  Amount: $50.00 (fee: $1.75, net: $50.00)
+  Date: 2024-09-14 14:03:58
+  Customer: Matthew Baya <matt@baya.net>
+  Description: Products: Other Amount, Other amount
+
+#73 - Stripe DB ID: 66
+  Charge ID: ch_3PviJRJHWUaRCmpE0CF5BcFG
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-09-05 16:13:38
+  Customer: Seth Wax <sethwax@gmail.com>
+  Description: Product: $35
+
+#74 - Stripe DB ID: 67
+  Charge ID: ch_3Ps5CNJHWUaRCmpE1VeYKCFp
+  Type: charge
+  Status: succeeded
+  Amount: $50.00 (fee: $1.75, net: $50.00)
+  Date: 2024-08-26 15:51:20
+  Customer: R Thomas Lutzy <tlutzy@gmail.com>
+  Description: Products: Other Amount, Other amount
+
+#75 - Stripe DB ID: 68
+  Charge ID: ch_3PpBxJJHWUaRCmpE1hqUPtAi
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-08-18 16:27:50
+  Customer: MaryDelia Marshall <mdjcmw@gmail.com>
+  Description: Product: $35
+
+#76 - Stripe DB ID: 69
+  Charge ID: ch_3Pp9YQJHWUaRCmpE1aG64fmf
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-08-18 13:53:59
+  Customer: Timothy Jay <tjay@mcla.edu>
+  Description: Product: $35
+
+#77 - Stripe DB ID: 70
+  Charge ID: ch_3PlrJsJHWUaRCmpE17xkwkvc
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-08-09 11:49:21
+  Customer: Jane Miller <janesm@roadrunner.com>
+  Description: Product: $35
+
+#78 - Stripe DB ID: 71
+  Charge ID: ch_3Pk56OJHWUaRCmpE1JpR9Ffy
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-08-04 14:08:05
+  Customer: Barry J Meneghelli <dennymene@gmail.com>
+  Description: Product: $35
+
+#79 - Stripe DB ID: 72
+  Charge ID: ch_3Pk3TAJHWUaRCmpE1Czkqck5
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-08-04 12:23:29
+  Customer: Ben Scotto <cannondale800@yahoo.com>
+  Description: Product: $35
+
+#80 - Stripe DB ID: 73
+  Charge ID: ch_3PdXN5JHWUaRCmpE1gj3zLRt
+  Type: charge
+  Status: succeeded
+  Amount: $85.00 (fee: $2.77, net: $85.00)
+  Date: 2024-07-17 12:54:16
+  Customer: Gail Clott <grcnyc@gmail.com>
+  Description: Products: $35, Additional Donation
+
+#81 - Stripe DB ID: 74
+  Charge ID: ch_3PaQucJHWUaRCmpE0FmwN3T8
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-07-08 23:24:03
+  Customer: Kerry L Brenner <6.brenners@gmail.com>
+  Description: Product: $35
+
+#82 - Stripe DB ID: 75
+  Charge ID: ch_3PaJOvJHWUaRCmpE14mdHwpt
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-07-08 15:22:50
+  Customer: Gary A. Soucie <marinbrod05@gmail.com>
+  Description: Product: $35
+
+#83 - Stripe DB ID: 76
+  Charge ID: ch_3PaJKcJHWUaRCmpE0RQcHJVp
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-07-08 15:18:23
+  Customer: elisabeth naman <libbiep@gmail.com>
+  Description: Product: $35
+
+#84 - Stripe DB ID: 77
+  Charge ID: ch_3PU8uCJHWUaRCmpE1LEfA9hW
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-06-21 14:57:37
+  Customer: Elizabeth Redwing <liz@lizredwing.com>
+  Description: Product: $35
+
+#85 - Stripe DB ID: 78
+  Charge ID: ch_3PU6LjJHWUaRCmpE0BORlevi
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-06-21 12:13:52
+  Customer: Mary Lovvorn <zrobi@hotmail.com>
+  Description: Product: $35
+
+#86 - Stripe DB ID: 79
+  Charge ID: ch_3PTrHtJHWUaRCmpE0GzPoa6u
+  Type: charge
+  Status: succeeded
+  Amount: $50.00 (fee: $1.75, net: $50.00)
+  Date: 2024-06-20 20:08:54
+  Customer: Janine Hetherington <janine.hetherington@gmail.com>
+  Description: Products: $35, Additional Donation
+
+#87 - Stripe DB ID: 80
+  Charge ID: ch_3PQutAJHWUaRCmpE0pKwqSMk
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-06-12 17:23:13
+  Customer: Kaare Francis <kcfrancis35@gmail.com>
+  Description: Product: $35
+
+#88 - Stripe DB ID: 81
+  Charge ID: ch_3PIwxVJHWUaRCmpE1fUC1vsK
+  Type: charge
+  Status: succeeded
+  Amount: $50.00 (fee: $1.75, net: $50.00)
+  Date: 2024-05-21 17:58:46
+  Customer: Denise Lester <delsobay@gmail.com>
+  Description: Products: $35, Additional Donation
+
+#89 - Stripe DB ID: 82
+  Charge ID: ch_3P5xpbJHWUaRCmpE1p0OaPso
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-04-15 22:16:56
+  Customer: Alison Case <acase@williams.edu>
+  Description: Product: $35
+
+#90 - Stripe DB ID: 83
+  Charge ID: ch_3P5svXJHWUaRCmpE09ouRltZ
+  Type: charge
+  Status: succeeded
+  Amount: $25.00 (fee: $1.03, net: $25.00)
+  Date: 2024-04-15 17:02:49
+  Customer: Shawn Burdick <skat@roadrunner.com>
+  Description: Product: Donation amount
+
+#91 - Stripe DB ID: 84
+  Charge ID: ch_3OmlpHJHWUaRCmpE1agg0Z0M
+  Type: charge
+  Status: succeeded
+  Amount: $5.00 (fee: $0.45, net: $5.00)
+  Date: 2024-02-22 23:38:38
+  Customer: Matthew Baya <matt@baya.net>
+  Description: Product: Donation amount
+
+#92 - Stripe DB ID: 85
+  Charge ID: ch_3OjCxKJHWUaRCmpE1hfnCBxa
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-02-13 03:48:18
+  Customer: Laura Bentz <laurabentz@gmail.com>
+  Description: Product: $35
+
+#93 - Stripe DB ID: 86
+  Charge ID: ch_3OjAFyJHWUaRCmpE1S4jSLGH
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-02-13 00:54:42
+  Customer: MaryDinnis S Taylor <dtaylor@williams.edu>
+  Description: Product: $35
+
+#94 - Stripe DB ID: 87
+  Charge ID: ch_3OdwdEJHWUaRCmpE1j3zMxwU
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-01-29 15:21:48
+  Customer: Diana Brooks <dianadbrooks@gmail.com>
+  Description: Product: $35
+
+#95 - Stripe DB ID: 88
+  Charge ID: ch_3OXSJyJHWUaRCmpE0EaBJl4C
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-01-11 17:48:25
+  Customer: Sweetwood Williamstown ILC <akolis@care-one.com>
+  Description: Product: $35
+
+#96 - Stripe DB ID: 89
+  Charge ID: ch_3OVDH6JHWUaRCmpE050axW8l
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-01-05 13:20:52
+  Customer: rebecca j cook <rebecca.cook@utoronto.ca>
+  Description: Product: $35
+
+#97 - Stripe DB ID: 90
+  Charge ID: ch_3OUYNJJHWUaRCmpE1ObCnqNt
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-01-03 17:38:10
+  Customer: thomas morgan <tmorgan@mba1998.hbs.edu>
+  Description: Product: $35
+
+#98 - Stripe DB ID: 91
+  Charge ID: ch_3OTnxAJHWUaRCmpE157N8nOw
+  Type: charge
+  Status: succeeded
+  Amount: $35.00 (fee: $1.32, net: $35.00)
+  Date: 2024-01-01 16:03:25
+  Customer: Amy Russell <amy.r.russell@gmail.com>
+  Description: Product: $35
+
+#99 - Stripe DB ID: 92
+  Charge ID: ch_3OTQ34JHWUaRCmpE1EH7QEqH
+  Type: charge
+  Status: succeeded
+  Amount: $100.00 (fee: $3.20, net: $100.00)
+  Date: 2023-12-31 14:32:34
+  Customer: Richard Gillerman <rgillerman@gmail.com>
+  Description: Products: Other Amount, Additional Donation
+
+
+Total unmatched to GF: 99
+
+
+2. CHECKING FOR POTENTIAL GF MATCHES:
+--------------------------------------------------------------------------------
+Unmatched Gravity Forms transactions: 6
+
+Sample unmatched GF transactions:
+  GF ID 211: $51.80 on 2025-10-12 14:22:20 (txn: pi_3SHQA4JHWUaRCmpE0styRmlO)
+  GF ID 208: $51.80 on 2025-09-18 00:14:33 (txn: pi_3RotjaJHWUaRCmpE0d4xCWD8)
+  GF ID 207: $51.80 on 2025-09-18 00:11:13 (txn: pi_3RpezFJHWUaRCmpE1pozb2uN)
+  GF ID 206: $103.29 on 2025-09-17 23:48:30 (txn: pi_3S5rQ9JHWUaRCmpE0LhJ8CnX)
+  GF ID 205: $36.35 on 2025-09-17 23:27:54 (txn: pi_3RwmunJHWUaRCmpE1MGQt5Ng)
+  GF ID 10: $50.00 on 2019-10-17 19:39:06 (txn: ch_1FUd8UJHWUaRCmpEDneurNGg)
+
+
+3. STRIPE PAYOUT GROUPING ANALYSIS:
+--------------------------------------------------------------------------------
+This shows how many Stripe transactions are grouped into each payout
+(One payout = One bank deposit)
+
+Payout ID                 Arrival Date        Txns      Gross     Fees        Net   Bank
+------------------------------------------------------------------------------------------
+
+
+4. STRIPE TRANSACTIONS WITHOUT PAYOUT INFO:
+--------------------------------------------------------------------------------
+Transactions without payout ID: 223
+
+These transactions should be matched individually to bank deposits
+(or they haven't been paid out yet)
+
+
+=== INVESTIGATION COMPLETE ===

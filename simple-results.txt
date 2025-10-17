@@ -1,0 +1,29 @@
+=== SIMPLE MATCH CHECK ===
+
+1. Basic counts:
+  Stripe transactions: 223
+  GF payments: 211
+  Match records: 343
+
+2. Match table structure:
+  - id (mediumint(9))
+  - stripe_transaction_id (mediumint(9))
+  - gravity_form_transaction_id (mediumint(9))
+  - bank_transaction_id (mediumint(9))
+  - match_type (varchar(50))
+  - match_confidence (varchar(20))
+  - notes (text)
+  - matched_by (int(11))
+  - matched_at (datetime)
+
+3. Testing Stripe -> Match join:
+  Join result: 342 rows
+
+4. Counting matches:
+  Total Stripe (amount > 0): 223
+  With GF match: 205
+  With Bank match: 85
+  Unmatched to GF: 18
+  Unmatched to Bank: 138
+
+=== DONE ===

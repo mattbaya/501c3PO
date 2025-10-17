@@ -1,0 +1,14 @@
+=== STRIPE TRANSACTION DUPLICATE CHECK ===
+
+1. Checking table structure...
+Columns: id, stripe_charge_id, transaction_type, member_id, customer_email, amount, amount_refunded, net_amount, stripe_fee, currency, status, description, customer_name, payment_method, receipt_url, stripe_created, payout_id, payout_date, payout_arrival_date, payout_status, balance_transaction_id, synced_at
+
+2. Checking for duplicate Stripe charge IDs...
+✓ No duplicate Stripe charge IDs found
+
+3. Transaction counts:
+Total Stripe transactions: 223
+Total Gravity Forms payments: 211
+Total Bank transactions: 203
+
+4. Stripe -> Gravity Forms matching status:
