@@ -195,15 +195,60 @@ Each feature can be enabled/disabled via the Settings dashboard:
 - `wp_swca_bank_statements`: Monthly bank statement metadata for reconciliation (Oct 7, 2025)
 - `wp_swca_bank_transactions`: Bank CSV transaction data with running balances (Oct 7, 2025)
 
-### Transaction Matching Tables (Production Database: `swca_swca2019`)
-**CRITICAL:** Table prefixes are INCONSISTENT! Bank uses `wp_`, Stripe/matches use `swca_`
+### 501c3PO Table Naming Convention (STANDARDIZED - Oct 13, 2025)
 
-Production tables:
-- `swca_stripe_transactions`: 221 rows (NO wp_!) - Stripe API data with payout dates
-- `swca_gf_addon_payment_transaction`: 210 rows - Gravity Forms payment records
-- `wp_swca_bank_transactions`: 89 rows (WITH wp_!) - Bank CSV imports
-- `swca_transaction_matches`: 305 rows (NO wp_!) - Match records
-- `swca_stripe_balance_transactions`: 404 rows - Stripe balance data
+**Standard:** All 501c3PO plugin tables use `$wpdb->prefix . 'c3_'` naming convention
+
+**Format:** `{site_prefix}c3_{table_name}`
+**Example:** On multisite with prefix `swca_` → `swca_c3_stripe_transactions`
+
+**Migration Status (Phase 1 Complete - Oct 13, 2025):**
+
+✅ **Phase 1: Core Transaction Tables (MIGRATED)**
+- Old: `swca_stripe_transactions` → New: `swca_c3_stripe_transactions` (223 rows)
+- Old: `swca_stripe_balance_transactions` → New: `swca_c3_stripe_balance_transactions` (407 rows)
+- Old: `swca_transaction_matches` → New: `swca_c3_transaction_matches` (343 rows)
+- Old: `swca_gf_addon_payment_transaction` → New: `swca_c3_gf_payment_transaction` (211 rows)
+- Old: `wp_swca_bank_transactions` → New: `swca_c3_bank_transactions` (203 rows)
+- Old: `wp_swca_bank_statements` → New: `swca_c3_bank_statements` (31 rows)
+
+⚠️ **Phase 2: Member/Committee Tables (PENDING)**
+- `swca_members` → `swca_c3_members` (0 rows)
+- `swca_swca_members` → `swca_c3_members` (197 rows, merge required)
+- `swca_committees` → `swca_c3_committees` (0 rows)
+- `wp_swca_committees` → `swca_c3_committees` (6 rows)
+
+**Updated Files (Phase 1):**
+- ✅ `includes/features/transaction-ledger.php` - All table references updated to c3_
+- ⚠️ `includes/features/bank-transactions.php` - Pending update
+- ⚠️ `includes/features/transaction-matching.php` - Pending update
+- ⚠️ `includes/features/grouped-transactions.php` - Pending update
+- ⚠️ `includes/features/unified-transactions.php` - Pending update
+
+**Migration Scripts:**
+- Phase 1: `/scripts/501c3PO/migrate-phase1-standalone.php` (standalone, no WordPress dependency)
+- Backup Strategy: Old tables kept as backup for 30 days before removal
+
+**Why c3_ prefix:**
+- Shorter than `501c3po_` (easier to type/read)
+- Unique identifier for plugin tables
+- Consistent across all environments (multisite/single-site)
+- Uses WordPress standard `$wpdb->prefix` for portability
+
+**OLD Table Structure (INCONSISTENT - Being Phased Out):**
+
+Production tables (LEGACY):
+- `swca_stripe_transactions`: 223 rows (NO wp_!) - Stripe API data with payout dates
+- `swca_gf_addon_payment_transaction`: 211 rows - Gravity Forms payment records
+- `wp_swca_bank_transactions`: 203 rows (WITH wp_!) - Bank CSV imports
+- `swca_transaction_matches`: 343 rows (NO wp_!) - Match records
+- `swca_stripe_balance_transactions`: 407 rows - Stripe balance data
+
+**⚠️ LEGACY PREFIX ISSUE:** Old tables had inconsistent prefixes:
+- Some used `swca_` (without wp_)
+- Others used `wp_swca_` (with wp_)
+- This caused confusion and hard-to-maintain code
+- **Solution:** Migrated all to consistent `swca_c3_` format using `$wpdb->prefix . 'c3_'`
 
 **Bank Deposit Filtering Rule:**
 - **ONLY match deposits with "STRIPE" in description** - these are ACH transfers from Stripe

@@ -99,6 +99,28 @@ function five01c3po_auto_match_transactions($dry_run = false) {
         if ($stripe_match) {
             $time_diff = abs(strtotime($stripe_match->stripe_created) - strtotime($gf_datetime));
 
+            // DUPLICATE PREVENTION: Check if this exact match already exists
+            if (!$dry_run) {
+                $existing_match = $wpdb->get_var($wpdb->prepare(
+                    "SELECT id FROM $matches_table
+                     WHERE stripe_transaction_id = %d
+                     AND gravity_form_transaction_id = %d
+                     AND match_type = 'gravity_stripe'",
+                    $stripe_match->id,
+                    $gf_txn->id
+                ));
+
+                if ($existing_match) {
+                    $results['debug'][] = sprintf(
+                        "⏭ Skipped duplicate: GF #%d → Stripe #%d (Match #%d already exists)",
+                        $gf_txn->id,
+                        $stripe_match->id,
+                        $existing_match
+                    );
+                    continue; // Skip this match, it already exists
+                }
+            }
+
             $match_data = array(
                 'stripe_transaction_id' => $stripe_match->id,
                 'gravity_form_transaction_id' => $gf_txn->id,
@@ -129,46 +151,274 @@ function five01c3po_auto_match_transactions($dry_run = false) {
 
     // 2. Match Bank → Stripe Payouts (using payout_arrival_date)
     // Group Stripe transactions by payout date and match to bank deposits
+    // ONLY match deposits with "STRIPE" in description (filter out cash deposits, checks, etc.)
     $bank_txns = $wpdb->get_results("
         SELECT * FROM $bank_table
         WHERE credit > 0
+        AND description LIKE '%STRIPE%'
         AND id NOT IN (SELECT bank_transaction_id FROM $matches_table WHERE bank_transaction_id IS NOT NULL)
         ORDER BY post_date DESC
     ");
 
     $results['debug'][] = "Unmatched bank transactions: " . count($bank_txns);
 
+    // Debug: Show sample bank dates
+    if (count($bank_txns) > 0) {
+        $sample_bank = array_slice($bank_txns, 0, 3);
+        foreach ($sample_bank as $idx => $b) {
+            $results['debug'][] = sprintf("Sample Bank #%d: ID=%d, Amount=$%.2f, Date=%s, Desc=%s",
+                $idx + 1, $b->id, floatval($b->credit), $b->post_date, substr($b->description, 0, 30));
+        }
+    }
+
+    // Debug: Check payout data
+    $payout_count = $wpdb->get_var("SELECT COUNT(*) FROM $stripe_table WHERE payout_arrival_date IS NOT NULL");
+    $payout_id_count = $wpdb->get_var("SELECT COUNT(*) FROM $stripe_table WHERE payout_id IS NOT NULL");
+    $results['debug'][] = "Stripe transactions with payout dates: $payout_count";
+    $results['debug'][] = "Stripe transactions with payout IDs: $payout_id_count";
+
+    if ($payout_id_count == 0 && $payout_count > 0) {
+        $results['debug'][] = "⚠️ WARNING: Payout IDs are missing! Using fallback date-based matching.";
+    }
+
+    if ($payout_count > 0) {
+        $sample_payouts = $wpdb->get_results("
+            SELECT id, stripe_created, amount, payout_arrival_date
+            FROM $stripe_table
+            WHERE payout_arrival_date IS NOT NULL
+            ORDER BY payout_arrival_date DESC
+            LIMIT 3
+        ");
+        foreach ($sample_payouts as $idx => $p) {
+            $results['debug'][] = sprintf("Sample Payout #%d: ID=%d, Amount=$%.2f, Charge Date=%s, Payout Date=%s",
+                $idx + 1, $p->id, floatval($p->amount), substr($p->stripe_created, 0, 10), $p->payout_arrival_date);
+        }
+    } else {
+        $results['debug'][] = "⚠️ WARNING: No Stripe transactions have payout_arrival_date! Payout-based matching cannot work.";
+        $results['debug'][] = "Run Stripe sync again to populate payout dates.";
+    }
+
+    $balance_table = $wpdb->prefix . 'stripe_balance_transactions';
+    $balance_table_exists = $wpdb->get_var("SHOW TABLES LIKE '$balance_table'") === $balance_table;
+
+    $results['debug'][] = "\n=== STARTING PAYOUT-BASED BANK MATCHING ===";
+    if ($balance_table_exists) {
+        $results['debug'][] = "✓ Using EXACT payout amounts from Stripe balance transactions";
+    } else {
+        $results['debug'][] = "⚠️ Falling back to charge date grouping (balance transactions table not found)";
+    }
+    $results['debug'][] = "About to process " . count($bank_txns) . " unmatched bank transactions...";
+
+    $bank_processed = 0;
     foreach ($bank_txns as $bank_txn) {
         $bank_amount = floatval($bank_txn->credit);
         $bank_date = $bank_txn->post_date;
+        $bank_processed++;
 
-        // NEW PAYOUT-BASED MATCHING
-        // Group Stripe transactions by payout_arrival_date and match to bank deposit
-        $payout_groups = $wpdb->get_results($wpdb->prepare("
-            SELECT
-                payout_arrival_date,
-                COUNT(*) as txn_count,
-                SUM(net_amount) as payout_net_total,
-                SUM(stripe_fee) as payout_fees_total,
-                GROUP_CONCAT(id) as stripe_ids
-            FROM $stripe_table
-            WHERE payout_arrival_date BETWEEN DATE_SUB(%s, INTERVAL 2 DAY) AND DATE_ADD(%s, INTERVAL 2 DAY)
-            AND id NOT IN (SELECT stripe_transaction_id FROM $matches_table WHERE stripe_transaction_id IS NOT NULL)
-            GROUP BY payout_arrival_date
-            HAVING payout_net_total > 0
-            ORDER BY ABS(DATEDIFF(payout_arrival_date, %s)) ASC
-        ", $bank_date, $bank_date, $bank_date));
+        // PAYOUT-BASED MATCHING
+        // Match bank deposits to actual Stripe payout transactions
+        $payout_groups = array();
+
+        if ($balance_table_exists) {
+            // Match to actual payout transactions from balance_transactions
+            $payout_groups = $wpdb->get_results($wpdb->prepare("
+                SELECT
+                    balance_txn_id as payout_id,
+                    available_on as payout_arrival_date,
+                    ABS(net) as payout_net_total,
+                    description,
+                    balance_txn_id
+                FROM $balance_table
+                WHERE txn_type = 'payout'
+                AND DATE(available_on) BETWEEN DATE_SUB(%s, INTERVAL 7 DAY) AND DATE_ADD(%s, INTERVAL 2 DAY)
+                AND ABS(net) > 0
+                ORDER BY ABS(DATEDIFF(DATE(available_on), %s)) ASC,
+                         ABS(ABS(net) - %f) ASC
+            ", $bank_date, $bank_date, $bank_date, $bank_amount));
+        }
+
+        // Fallback: Group charges by payout date if no balance transactions table
+        if (empty($payout_groups)) {
+            $payout_groups = $wpdb->get_results($wpdb->prepare("
+                SELECT
+                    COALESCE(payout_id, CONCAT('date_', DATE(payout_arrival_date))) as payout_id,
+                    DATE(payout_arrival_date) as payout_arrival_date,
+                    COUNT(*) as txn_count,
+                    SUM(net_amount) as payout_net_total,
+                    SUM(stripe_fee) as payout_fees_total,
+                    GROUP_CONCAT(id) as stripe_ids
+                FROM $stripe_table
+                WHERE DATE(payout_arrival_date) BETWEEN DATE_SUB(%s, INTERVAL 7 DAY) AND DATE_ADD(%s, INTERVAL 2 DAY)
+                AND net_amount > 0
+                AND id NOT IN (
+                    SELECT stripe_transaction_id
+                    FROM $matches_table
+                    WHERE stripe_transaction_id IS NOT NULL
+                    AND bank_transaction_id = %d
+                )
+                GROUP BY COALESCE(payout_id, DATE(payout_arrival_date))
+                HAVING payout_net_total > 0
+                ORDER BY ABS(DATEDIFF(DATE(payout_arrival_date), %s)) ASC
+            ", $bank_date, $bank_date, $bank_txn->id, $bank_date));
+        }
+
+        // Debug first 3 bank transactions in detail
+        if ($bank_processed <= 3) {
+            $results['debug'][] = sprintf("\n--- Analyzing Bank #%d: $%.2f on %s ---", $bank_txn->id, $bank_amount, $bank_date);
+
+            // Calculate date range
+            $range_start = date('Y-m-d', strtotime($bank_date . ' -7 days'));
+            $range_end = date('Y-m-d', strtotime($bank_date . ' +2 days'));
+
+            // Check ALL Stripe transactions in date range (IGNORING match status for debug)
+            // First, simple direct query without subquery
+            $all_in_range = $wpdb->get_results($wpdb->prepare("
+                SELECT
+                    id,
+                    stripe_created,
+                    amount,
+                    net_amount,
+                    stripe_fee,
+                    payout_arrival_date,
+                    DATE(payout_arrival_date) as payout_date_only
+                FROM $stripe_table
+                WHERE DATE(payout_arrival_date) >= %s
+                AND DATE(payout_arrival_date) <= %s
+                AND net_amount > 0
+                ORDER BY payout_arrival_date, id
+            ", $range_start, $range_end));
+
+            $results['debug'][] = sprintf("SQL: payout_arrival_date >= '%s' AND <= '%s'", $range_start, $range_end);
+
+            $results['debug'][] = sprintf("Found %d Stripe charges in date range (%s to %s)",
+                count($all_in_range),
+                date('Y-m-d', strtotime($bank_date . ' -7 days')),
+                date('Y-m-d', strtotime($bank_date . ' +2 days'))
+            );
+
+            if (count($all_in_range) > 0) {
+                foreach ($all_in_range as $s) {
+                    $results['debug'][] = sprintf(
+                        "  Stripe #%d: Gross=$%.2f, Net=$%.2f, Fee=$%.2f, Payout=%s",
+                        $s->id,
+                        floatval($s->amount),
+                        floatval($s->net_amount),
+                        floatval($s->stripe_fee),
+                        $s->payout_arrival_date
+                    );
+                }
+            } else {
+                // If no results, check if ANY transactions have payout dates
+                $total_with_payouts = $wpdb->get_var("SELECT COUNT(*) FROM $stripe_table WHERE payout_arrival_date IS NOT NULL");
+                $results['debug'][] = "  ⚠️ No charges found. Total Stripe txns with payout dates: $total_with_payouts";
+
+                // DIAGNOSTIC: Check exact value of Stripe #2 and #3's payout dates AND net_amount
+                $diagnostic = $wpdb->get_results("SELECT id, amount, amount_refunded, stripe_fee, net_amount, payout_arrival_date FROM $stripe_table WHERE id IN (2,3) ORDER BY id");
+                foreach ($diagnostic as $d) {
+                    $results['debug'][] = sprintf("  DIAGNOSTIC Stripe #%d: Gross=$%.2f, Refunded=$%.2f, Fee=$%.2f, Net=$%.2f, Payout=%s",
+                        $d->id,
+                        floatval($d->amount),
+                        floatval($d->amount_refunded),
+                        floatval($d->stripe_fee),
+                        floatval($d->net_amount),
+                        $d->payout_arrival_date
+                    );
+                }
+
+                // Check if they're in the exclusion list
+                $excluded_check = $wpdb->get_results($wpdb->prepare("
+                    SELECT stripe_transaction_id, bank_transaction_id
+                    FROM $matches_table
+                    WHERE stripe_transaction_id IN (2,3)
+                    AND bank_transaction_id IS NOT NULL
+                    AND bank_transaction_id != %d
+                ", $bank_txn->id));
+                if (count($excluded_check) > 0) {
+                    foreach ($excluded_check as $ex) {
+                        $results['debug'][] = sprintf("  Stripe #%d is excluded (matched to Bank #%d)",
+                            $ex->stripe_transaction_id, $ex->bank_transaction_id);
+                    }
+                }
+
+                // Check if charges exist in range but are already matched
+                $already_matched = $wpdb->get_results($wpdb->prepare("
+                    SELECT
+                        s.id,
+                        s.amount,
+                        s.net_amount,
+                        s.payout_arrival_date as payout_date_raw,
+                        DATE(s.payout_arrival_date) as payout_date,
+                        GROUP_CONCAT(m.bank_transaction_id) as matched_banks
+                    FROM $stripe_table s
+                    LEFT JOIN $matches_table m ON s.id = m.stripe_transaction_id AND m.bank_transaction_id IS NOT NULL
+                    WHERE s.payout_arrival_date >= %s
+                    AND s.payout_arrival_date <= %s
+                    AND s.net_amount > 0
+                    GROUP BY s.id
+                ", $range_start . ' 00:00:00', $range_end . ' 23:59:59'));
+
+                if (count($already_matched) > 0) {
+                    $results['debug'][] = "  Found " . count($already_matched) . " charges in range BUT:";
+                    foreach ($already_matched as $am) {
+                        $status = $am->matched_banks ? "matched to Bank #" . $am->matched_banks : "NOT matched";
+                        $results['debug'][] = sprintf("    Stripe #%d: Net=$%.2f, Payout=%s - %s",
+                            $am->id, floatval($am->net_amount), $am->payout_date, $status);
+                    }
+                }
+            }
+
+            $results['debug'][] = sprintf("Found %d payout groups (%s)",
+                count($payout_groups),
+                $using_payout_txns ? 'using actual payout transactions' : 'using charge date grouping'
+            );
+
+            foreach ($payout_groups as $pg) {
+                $payout_total = floatval($pg->payout_net_total);
+                $amount_diff = abs($payout_total - $bank_amount);
+                $days_diff = abs((strtotime($pg->payout_arrival_date) - strtotime($bank_date)) / 86400);
+                $tolerance = $using_payout_txns ? 0.50 : max(10.00, $bank_amount * 0.05);
+
+                if ($using_payout_txns) {
+                    $results['debug'][] = sprintf(
+                        "  Payout %s (%s): Exact payout = $%.2f | Diff: $%.2f | Days: %.1f | Tolerance: $%.2f | %s",
+                        substr($pg->balance_txn_id, 0, 20),
+                        $pg->payout_arrival_date,
+                        $payout_total,
+                        $amount_diff,
+                        $days_diff,
+                        $tolerance,
+                        ($amount_diff <= $tolerance) ? '✓ EXACT Match!' : '✗ Too large'
+                    );
+                } else {
+                    $results['debug'][] = sprintf(
+                        "  Payout %s (%s): %d charges = $%.2f | Diff: $%.2f | Days: %.1f | Tolerance: $%.2f | %s",
+                        $pg->payout_id,
+                        $pg->payout_arrival_date,
+                        $pg->txn_count ?? 0,
+                        $payout_total,
+                        $amount_diff,
+                        $days_diff,
+                        $tolerance,
+                        ($amount_diff <= $tolerance) ? '✓ Match!' : '✗ Too large'
+                    );
+                }
+            }
+        }
 
         $best_match = null;
         $best_diff = PHP_FLOAT_MAX;
+        $using_payout_txns = $balance_table_exists && !empty($payout_groups) && isset($payout_groups[0]->balance_txn_id);
 
         // Find best matching payout group
         foreach ($payout_groups as $payout_group) {
             $payout_total = floatval($payout_group->payout_net_total);
             $amount_diff = abs($payout_total - $bank_amount);
 
-            // Consider match if within $1.00
-            if ($amount_diff <= 1.00 && $amount_diff < $best_diff) {
+            // Tight tolerance for actual payout transactions, looser for charge grouping
+            $tolerance = $using_payout_txns ? 0.50 : max(10.00, $bank_amount * 0.05);
+
+            // Consider match if within tolerance
+            if ($amount_diff <= $tolerance && $amount_diff < $best_diff) {
                 $best_match = $payout_group;
                 $best_diff = $amount_diff;
             }
@@ -184,21 +434,63 @@ function five01c3po_auto_match_transactions($dry_run = false) {
                 $confidence = 'auto_medium';
             }
 
-            $stripe_ids = explode(',', $best_match->stripe_ids);
-            $txn_count = intval($best_match->txn_count);
+            // Get Stripe charge IDs for this payout
+            $stripe_ids = array();
+            $txn_count = 0;
+
+            if ($using_payout_txns) {
+                // Look up charges by payout arrival date
+                $payout_date = $best_match->payout_arrival_date;
+                $charges = $wpdb->get_results($wpdb->prepare(
+                    "SELECT id FROM $stripe_table
+                     WHERE DATE(payout_arrival_date) = %s
+                     AND net_amount > 0
+                     ORDER BY id",
+                    $payout_date
+                ));
+                $stripe_ids = array_map(function($c) { return $c->id; }, $charges);
+                $txn_count = count($stripe_ids);
+            } else {
+                // Using charge grouping fallback
+                $stripe_ids = explode(',', $best_match->stripe_ids);
+                $txn_count = intval($best_match->txn_count);
+            }
 
             // Create match for each Stripe transaction in the payout
-            if (!$dry_run) {
+            if (!$dry_run && !empty($stripe_ids)) {
                 foreach ($stripe_ids as $idx => $stripe_id) {
+                    $match_type = ($idx === 0) ? 'bank_stripe_payout' : 'bank_stripe_payout_part';
+
+                    // DUPLICATE PREVENTION: Check if this exact match already exists
+                    $existing_match = $wpdb->get_var($wpdb->prepare(
+                        "SELECT id FROM $matches_table
+                         WHERE stripe_transaction_id = %d
+                         AND bank_transaction_id = %d
+                         AND match_type = %s",
+                        intval($stripe_id),
+                        $bank_txn->id,
+                        $match_type
+                    ));
+
+                    if ($existing_match) {
+                        $results['debug'][] = sprintf(
+                            "⏭ Skipped duplicate: Stripe #%d → Bank #%d (Match #%d already exists)",
+                            $stripe_id,
+                            $bank_txn->id,
+                            $existing_match
+                        );
+                        continue; // Skip this match, it already exists
+                    }
+
                     $match_data = array(
                         'stripe_transaction_id' => intval($stripe_id),
                         'bank_transaction_id' => $bank_txn->id,
-                        'match_type' => ($idx === 0) ? 'bank_stripe_payout' : 'bank_stripe_payout_part',
+                        'match_type' => $match_type,
                         'match_confidence' => $confidence,
                         'notes' => sprintf(
-                            'Payout match: %d charges on %s = $%.2f → Bank $%.2f on %s (diff: $%.2f, %d days)',
+                            'Payout %s: %d charges = $%.2f → Bank $%.2f on %s (diff: $%.2f, %d days)',
+                            $best_match->payout_id,
                             $txn_count,
-                            $best_match->payout_arrival_date,
                             floatval($best_match->payout_net_total),
                             $bank_amount,
                             $bank_date,
@@ -218,12 +510,12 @@ function five01c3po_auto_match_transactions($dry_run = false) {
             }
 
             $results['details'][] = sprintf(
-                "✓ Payout: Bank #%d (%s, $%.2f) → %d Stripe charges (%s, $%.2f) [%s]",
+                "✓ Payout %s: Bank #%d ($%.2f on %s) → %d Stripe charges ($%.2f) [%s confidence]",
+                $best_match->payout_id,
                 $bank_txn->id,
-                $bank_date,
                 $bank_amount,
+                $bank_date,
                 $txn_count,
-                $best_match->payout_arrival_date,
                 floatval($best_match->payout_net_total),
                 $confidence
             );
@@ -298,6 +590,13 @@ function five01c3po_transaction_matching_page() {
     if (isset($_POST['run_auto_match'])) {
         check_admin_referer('five01c3po_auto_match');
         $match_results = five01c3po_auto_match_transactions(false);
+    }
+
+    // Handle smart match
+    $smart_match_results = null;
+    if (isset($_POST['run_smart_match'])) {
+        check_admin_referer('five01c3po_smart_match');
+        $smart_match_results = five01c3po_smart_match_transactions();
     }
 
     // Handle manual match
@@ -385,6 +684,30 @@ function five01c3po_transaction_matching_page() {
             </div>
         <?php endif; ?>
 
+        <?php if ($smart_match_results): ?>
+            <div class="notice notice-success">
+                <h3>Smart Matching Complete!</h3>
+                <ul>
+                    <li><strong>Gravity Forms → Stripe:</strong> <?php echo $smart_match_results['gf_stripe_matches']; ?> matches</li>
+                    <li><strong>Bank → Stripe Payouts:</strong> <?php echo $smart_match_results['bank_payout_matches']; ?> matches</li>
+                    <li><strong>Non-Stripe Bank Deposits:</strong> <?php echo $smart_match_results['bank_non_stripe']; ?> identified</li>
+                    <li><strong>Refunded Stripe Transactions:</strong> <?php echo $smart_match_results['refunded_stripe_identified']; ?> identified</li>
+                </ul>
+                <?php if (!empty($smart_match_results['debug'])): ?>
+                    <details open>
+                        <summary><strong>🐛 Debug Information</strong></summary>
+                        <pre style="max-height: 300px; overflow-y: auto; background: #f5f5f5; padding: 10px; border-left: 4px solid #2271b1;"><?php echo esc_html(implode("\n", $smart_match_results['debug'])); ?></pre>
+                    </details>
+                <?php endif; ?>
+                <?php if (!empty($smart_match_results['details'])): ?>
+                    <details>
+                        <summary>View Match Details (<?php echo count($smart_match_results['details']); ?> items)</summary>
+                        <pre style="max-height: 400px; overflow-y: auto;"><?php echo esc_html(implode("\n", $smart_match_results['details'])); ?></pre>
+                    </details>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
         <div class="card">
             <h2>📊 Matching Statistics</h2>
             <table class="wp-list-table widefat fixed striped">
@@ -425,22 +748,41 @@ function five01c3po_transaction_matching_page() {
 
         <div class="card">
             <h2>🤖 Auto-Match Transactions</h2>
-            <p>Run automated matching to link related transactions across systems:</p>
-            <ul style="margin-left: 20px;">
-                <li><strong>Gravity Forms → Stripe:</strong> Matches by exact amount and timestamp (within 60 seconds)</li>
-                <li><strong>Bank → Stripe:</strong> Matches by net amount and date range (within 7 days)</li>
-                <li><strong>Combined Deposits:</strong> Detects when multiple Stripe transactions are combined into one bank deposit</li>
-            </ul>
+            <p>Choose a matching algorithm:</p>
 
-            <form method="post">
-                <?php wp_nonce_field('five01c3po_auto_match'); ?>
-                <?php submit_button('Run Auto-Match', 'primary', 'run_auto_match'); ?>
-            </form>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                <div style="border: 2px solid #2271b1; padding: 15px; border-radius: 8px;">
+                    <h3 style="margin-top: 0;">Payout-Based Matching</h3>
+                    <ul style="margin-left: 20px; font-size: 13px;">
+                        <li><strong>GF → Stripe:</strong> Exact amount + timestamp (±60s)</li>
+                        <li><strong>Bank → Stripe:</strong> Uses payout arrival dates from Stripe API</li>
+                        <li><strong>Date Window:</strong> -7 days before / +2 days after bank date</li>
+                        <li><strong>Amount Tolerance:</strong> $10 OR 5% (whichever is larger) - accounts for bank fees</li>
+                    </ul>
+                    <form method="post" style="margin-top: 15px;">
+                        <?php wp_nonce_field('five01c3po_auto_match'); ?>
+                        <?php submit_button('Run Payout-Based Match', 'primary', 'run_auto_match', false); ?>
+                    </form>
+                </div>
+
+                <div style="border: 2px solid #00a32a; padding: 15px; border-radius: 8px;">
+                    <h3 style="margin-top: 0;">Smart Matching (STRIPE Description)</h3>
+                    <ul style="margin-left: 20px; font-size: 13px;">
+                        <li><strong>Bank Filter:</strong> Only matches deposits with "STRIPE" in description</li>
+                        <li><strong>Date Strategy:</strong> Uses charge dates (stripe_created), grouped between consecutive deposits</li>
+                        <li><strong>Amount Tolerance:</strong> $0.50</li>
+                        <li><strong>Best For:</strong> When bank descriptions explicitly mention Stripe</li>
+                    </ul>
+                    <form method="post" style="margin-top: 15px;">
+                        <?php wp_nonce_field('five01c3po_smart_match'); ?>
+                        <?php submit_button('Run Smart Match', 'primary', 'run_smart_match', false); ?>
+                    </form>
+                </div>
+            </div>
 
             <p style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107;">
-                <strong>💡 Tip:</strong> Auto-matching is safe and can be run multiple times.
-                It only creates matches for unmatched transactions and uses confidence scoring.
-                Review the results and use manual matching below for any uncertain matches.
+                <strong>💡 Tip:</strong> Both algorithms are safe and can be run multiple times.
+                They only create matches for unmatched transactions. Try both and see which works better for your data!
             </p>
         </div>
 
@@ -451,186 +793,5 @@ function five01c3po_transaction_matching_page() {
             </a></p>
         </div>
     </div>
-    <?php
-}
-
-/**
- * Add Review Interface menu
- */
-add_action('admin_menu', 'five01c3po_add_transaction_review_menu', 25);
-
-function five01c3po_add_transaction_review_menu() {
-    add_submenu_page(
-        null, // Hidden from menu, accessed via link
-        'Review Transactions',
-        'Review Transactions',
-        'manage_options',
-        '501c3PO-transaction-review',
-        'five01c3po_transaction_review_page'
-    );
-}
-
-/**
- * Review interface page
- */
-function five01c3po_transaction_review_page() {
-    global $wpdb;
-
-    $matches_table = $wpdb->prefix . 'transaction_matches';
-    $stripe_table = $wpdb->prefix . 'stripe_transactions';
-    $bank_table = 'wp_swca_bank_transactions'; // Using actual table with data
-    $gf_table = 'swca_gf_addon_payment_transaction';
-
-    // Get unmatched Stripe transactions
-    $unmatched_stripe = $wpdb->get_results("
-        SELECT * FROM $stripe_table
-        WHERE id NOT IN (SELECT stripe_transaction_id FROM $matches_table WHERE stripe_transaction_id IS NOT NULL)
-        ORDER BY stripe_created DESC
-        LIMIT 50
-    ");
-
-    // Get unmatched Gravity Forms transactions
-    $unmatched_gf = $wpdb->get_results("
-        SELECT * FROM $gf_table
-        WHERE transaction_type = 'payment'
-        AND id NOT IN (SELECT gravity_form_transaction_id FROM $matches_table WHERE gravity_form_transaction_id IS NOT NULL)
-        ORDER BY date_created DESC
-        LIMIT 50
-    ");
-
-    // Get unmatched Bank transactions
-    $unmatched_bank = $wpdb->get_results("
-        SELECT * FROM $bank_table
-        WHERE credit > 0
-        AND id NOT IN (SELECT bank_transaction_id FROM $matches_table WHERE bank_transaction_id IS NOT NULL)
-        ORDER BY post_date DESC
-        LIMIT 50
-    ");
-
-    ?>
-    <div class="wrap">
-        <h1>👁️ Review Unmatched Transactions</h1>
-        <p><a href="<?php echo admin_url('admin.php?page=501c3PO-transaction-matching'); ?>">&larr; Back to Matching</a></p>
-
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
-
-            <!-- Unmatched Stripe -->
-            <div class="card">
-                <h3>💳 Unmatched Stripe (<?php echo count($unmatched_stripe); ?>)</h3>
-                <div style="max-height: 600px; overflow-y: auto;">
-                    <table class="wp-list-table widefat fixed striped" style="font-size: 12px;">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Email</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($unmatched_stripe as $txn): ?>
-                            <tr>
-                                <td><?php echo $txn->id; ?></td>
-                                <td><?php echo date('m/d/y', strtotime($txn->stripe_created)); ?></td>
-                                <td>$<?php echo number_format($txn->amount, 2); ?></td>
-                                <td style="font-size: 10px;"><?php echo esc_html(substr($txn->customer_email, 0, 20)); ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Unmatched Gravity Forms -->
-            <div class="card">
-                <h3>📝 Unmatched Gravity Forms (<?php echo count($unmatched_gf); ?>)</h3>
-                <div style="max-height: 600px; overflow-y: auto;">
-                    <table class="wp-list-table widefat fixed striped" style="font-size: 12px;">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Note</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($unmatched_gf as $txn): ?>
-                            <tr>
-                                <td><?php echo $txn->id; ?></td>
-                                <td><?php echo date('m/d/y', strtotime($txn->date_created)); ?></td>
-                                <td>$<?php echo number_format($txn->amount, 2); ?></td>
-                                <td style="font-size: 10px;"><?php echo esc_html(substr($txn->note, 0, 20)); ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Unmatched Bank -->
-            <div class="card">
-                <h3>🏦 Unmatched Bank (<?php echo count($unmatched_bank); ?>)</h3>
-                <div style="max-height: 600px; overflow-y: auto;">
-                    <table class="wp-list-table widefat fixed striped" style="font-size: 12px;">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Date</th>
-                                <th>Credit</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($unmatched_bank as $txn): ?>
-                            <tr>
-                                <td><?php echo $txn->id; ?></td>
-                                <td><?php echo date('m/d/y', strtotime($txn->post_date)); ?></td>
-                                <td>$<?php echo number_format($txn->credit, 2); ?></td>
-                                <td style="font-size: 10px;"><?php echo esc_html(substr($txn->description, 0, 20)); ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="card" style="margin-top: 20px;">
-            <h2>➕ Create Manual Match</h2>
-            <form method="post" action="<?php echo admin_url('admin.php?page=501c3PO-transaction-matching'); ?>">
-                <?php wp_nonce_field('five01c3po_manual_match'); ?>
-                <table class="form-table">
-                    <tr>
-                        <th>Stripe Transaction ID</th>
-                        <td><input type="number" name="stripe_id" class="regular-text"></td>
-                    </tr>
-                    <tr>
-                        <th>Gravity Form Transaction ID</th>
-                        <td><input type="number" name="gravity_id" class="regular-text"></td>
-                    </tr>
-                    <tr>
-                        <th>Bank Transaction ID</th>
-                        <td><input type="number" name="bank_id" class="regular-text"></td>
-                    </tr>
-                    <tr>
-                        <th>Notes</th>
-                        <td><textarea name="match_notes" class="large-text" rows="3" placeholder="Why did you match these transactions?"></textarea></td>
-                    </tr>
-                </table>
-                <?php submit_button('Save Manual Match', 'primary', 'save_manual_match'); ?>
-            </form>
-        </div>
-    </div>
-
-    <style>
-        .card h3 {
-            margin-top: 0;
-            padding: 10px;
-            background: #f9f9f9;
-            border-bottom: 1px solid #ddd;
-        }
-    </style>
     <?php
 }
