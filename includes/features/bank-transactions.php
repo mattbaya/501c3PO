@@ -22,6 +22,8 @@ function five01c3po_add_bank_transactions_menu() {
         'five01c3po_bank_transactions_page'
     );
 
+    // DISABLED: Redundant with Transaction Ledger feature
+    /*
     add_submenu_page(
         'membership-management',
         'Financial Transactions',
@@ -30,6 +32,7 @@ function five01c3po_add_bank_transactions_menu() {
         '501c3PO-transaction-viewer',
         'five01c3po_transaction_viewer_page'
     );
+    */
 }
 
 /**

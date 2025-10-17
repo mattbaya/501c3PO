@@ -9,10 +9,13 @@ defined('ABSPATH') or die('No script kiddies please!');
 
 /**
  * Add Unified Transactions menu
+ * DISABLED: Replaced by Transaction Ledger
  */
-add_action('admin_menu', 'five01c3po_add_unified_transactions_menu', 23);
+// add_action('admin_menu', 'five01c3po_add_unified_transactions_menu', 23);
 
 function five01c3po_add_unified_transactions_menu() {
+    // DISABLED: Redundant with Transaction Ledger feature
+    /*
     add_submenu_page(
         'membership-management',
         'All Transactions',
@@ -21,6 +24,7 @@ function five01c3po_add_unified_transactions_menu() {
         '501c3PO-unified-transactions',
         'five01c3po_unified_transactions_page'
     );
+    */
 }
 
 /**

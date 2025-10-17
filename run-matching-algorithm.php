@@ -1,93 +1,66 @@
 <?php
 /**
- * Run Transaction Matching Algorithm
- * Matches Stripe ↔ Gravity Forms ↔ Bank transactions
+ * Run the transaction matching algorithm directly
  */
 
-// Override wp_die to ignore JSON extension warnings (JSON is built into PHP 7.4+)
-if (!function_exists('wp_die')) {
-    function wp_die($message, $title = '', $args = array()) {
-        // If it's just the JSON warning, ignore it
-        if (is_string($message) && strpos($message, 'json') !== false && strpos($message, 'extension') !== false) {
-            return; // Silently ignore
-        }
-        // For actual errors, still die
-        die($message);
-    }
-}
-
 // Load WordPress
+define('WP_USE_THEMES', false);
 require_once('/home/swca/public_html/wp-load.php');
-global $wpdb;
 
-echo "=== RUNNING TRANSACTION MATCHING ALGORITHM ===\n\n";
+echo "═══════════════════════════════════════════════════════════════\n";
+echo "  RUNNING TRANSACTION MATCHING ALGORITHM\n";
+echo "═══════════════════════════════════════════════════════════════\n\n";
 
-// Check if the matching function exists
-if (!function_exists('five01c3po_auto_match_transactions')) {
-    echo "ERROR: Matching function not found. Make sure the plugin is loaded.\n";
-    exit(1);
-}
-
-echo "Running auto-match (Payout-Based Matching)...\n\n";
+// Load the matching function
+require_once('/home/swca/public_html/wp-content/plugins/501c3PO/includes/features/transaction-matching.php');
 
 // Run the matching algorithm
-$results = five01c3po_auto_match_transactions(false); // false = NOT a dry run
+echo "Starting auto-match...\n\n";
+$results = five01c3po_auto_match_transactions(false);
 
-echo "=== MATCHING RESULTS ===\n\n";
+echo "═══════════════════════════════════════════════════════════════\n";
+echo "  RESULTS\n";
+echo "═══════════════════════════════════════════════════════════════\n\n";
 
-echo "MATCHES CREATED:\n";
-echo "  Gravity Forms → Stripe: {$results['gravity_stripe_matches']}\n";
-echo "  Bank → Stripe (High Confidence): {$results['bank_stripe_matches_high']}\n";
-echo "  Bank → Stripe (Medium Confidence): {$results['bank_stripe_matches_medium']}\n";
-echo "  Bank → Stripe (Low Confidence): {$results['bank_stripe_matches_low']}\n\n";
-
-if (!empty($results['details'])) {
-    echo "MATCH DETAILS:\n";
-    foreach ($results['details'] as $detail) {
-        echo "  " . $detail . "\n";
-    }
-    echo "\n";
-}
+echo "✅ Gravity Forms → Stripe: {$results['gravity_stripe_matches']} matches\n";
+echo "✅ Bank → Stripe (High Confidence): {$results['bank_stripe_matches_high']} matches\n";
+echo "⚠️  Bank → Stripe (Medium Confidence): {$results['bank_stripe_matches_medium']} matches\n\n";
 
 if (!empty($results['debug'])) {
-    echo "DEBUG INFORMATION:\n";
-    foreach ($results['debug'] as $debug_line) {
-        echo $debug_line . "\n";
+    echo "═══════════════════════════════════════════════════════════════\n";
+    echo "  DEBUG INFORMATION\n";
+    echo "═══════════════════════════════════════════════════════════════\n\n";
+    foreach ($results['debug'] as $line) {
+        echo $line . "\n";
     }
-    echo "\n";
 }
 
-// Get updated statistics
-$matches_table = $wpdb->prefix . 'transaction_matches';
-$stripe_table = $wpdb->prefix . 'stripe_transactions';
-$bank_table = 'wp_swca_bank_transactions';
-$gf_table = 'swca_gf_addon_payment_transaction';
+echo "\n";
+echo "═══════════════════════════════════════════════════════════════\n";
+echo "  VERIFICATION\n";
+echo "═══════════════════════════════════════════════════════════════\n\n";
 
-$total_matches = $wpdb->get_var("SELECT COUNT(*) FROM $matches_table");
-$matched_stripe = $wpdb->get_var("SELECT COUNT(DISTINCT stripe_transaction_id) FROM $matches_table WHERE stripe_transaction_id IS NOT NULL");
-$matched_bank = $wpdb->get_var("SELECT COUNT(DISTINCT bank_transaction_id) FROM $matches_table WHERE bank_transaction_id IS NOT NULL");
-$matched_gf = $wpdb->get_var("SELECT COUNT(DISTINCT gravity_form_transaction_id) FROM $matches_table WHERE gravity_form_transaction_id IS NOT NULL");
+global $wpdb;
 
-$total_stripe = $wpdb->get_var("SELECT COUNT(*) FROM $stripe_table");
-$total_bank = $wpdb->get_var("SELECT COUNT(*) FROM $bank_table WHERE credit > 0");
-$total_gf = $wpdb->get_var("SELECT COUNT(*) FROM $gf_table WHERE transaction_type = 'payment'");
+// Check final match rates
+$total_stripe = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}c3_stripe_transactions");
+$matched_stripe_gf = $wpdb->get_var("SELECT COUNT(DISTINCT stripe_transaction_id) FROM {$wpdb->prefix}c3_transaction_matches WHERE gravity_form_transaction_id IS NOT NULL");
+$matched_stripe_bank = $wpdb->get_var("SELECT COUNT(DISTINCT stripe_transaction_id) FROM {$wpdb->prefix}c3_transaction_matches WHERE bank_transaction_id IS NOT NULL");
 
-echo "=== UPDATED STATISTICS ===\n";
-echo "Total Matches in Database: $total_matches\n\n";
+$gf_rate = $total_stripe > 0 ? round(($matched_stripe_gf / $total_stripe) * 100, 1) : 0;
+$bank_rate = $total_stripe > 0 ? round(($matched_stripe_bank / $total_stripe) * 100, 1) : 0;
 
-echo "Stripe Transactions:\n";
-echo "  Total: $total_stripe\n";
-echo "  Matched: $matched_stripe (" . round(($matched_stripe / $total_stripe) * 100, 1) . "%)\n";
-echo "  Unmatched: " . ($total_stripe - $matched_stripe) . "\n\n";
+echo "Final Matching Rates:\n";
+echo "  • Stripe → GF: {$matched_stripe_gf} / {$total_stripe} ({$gf_rate}%)\n";
+echo "  • Stripe → Bank: {$matched_stripe_bank} / {$total_stripe} ({$bank_rate}%)\n\n";
 
-echo "Bank Deposits:\n";
-echo "  Total: $total_bank\n";
-echo "  Matched: $matched_bank (" . round(($matched_bank / $total_bank) * 100, 1) . "%)\n";
-echo "  Unmatched: " . ($total_bank - $matched_bank) . "\n\n";
+if ($bank_rate >= 90) {
+    echo "🎉 SUCCESS! Bank matching is now {$bank_rate}%\n";
+} elseif ($bank_rate >= 70) {
+    echo "✅ GOOD! Bank matching improved to {$bank_rate}%\n";
+} else {
+    echo "⚠️  Bank matching at {$bank_rate}% - may need investigation\n";
+}
 
-echo "Gravity Forms:\n";
-echo "  Total: $total_gf\n";
-echo "  Matched: $matched_gf (" . round(($matched_gf / $total_gf) * 100, 1) . "%)\n";
-echo "  Unmatched: " . ($total_gf - $matched_gf) . "\n\n";
-
-echo "✅ Matching algorithm complete!\n";
+echo "\n";
+?>

@@ -364,6 +364,8 @@ function five01c3po_grouped_transactions_page() {
 }
 
 // Add menu item
+// DISABLED: Redundant with Transaction Ledger feature
+/*
 add_action('admin_menu', function() {
     add_submenu_page(
         'five01c3po-settings',
@@ -374,3 +376,4 @@ add_action('admin_menu', function() {
         'five01c3po_grouped_transactions_page'
     );
 }, 25);
+*/

@@ -49,7 +49,10 @@ $feature_files = array(
     'includes/features/stripe-integration.php',
     'includes/features/unified-transactions.php',
     'includes/features/transaction-matching.php',
-    'includes/features/grouped-transactions.php'
+    'includes/features/grouped-transactions.php',
+    'includes/features/transaction-ledger.php',
+    'includes/features/view-stripe-transaction.php',
+    'includes/features/view-bank-transaction.php'
 );
 
 foreach ($feature_files as $file) {
