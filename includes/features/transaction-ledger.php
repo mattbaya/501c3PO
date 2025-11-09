@@ -62,6 +62,102 @@ function five01c3po_add_ledger_menu() {
 }
 
 /**
+ * Batch fetch payout breakdown details for multiple transactions
+ * Eliminates N+1 query pattern by fetching all payout data in one query
+ *
+ * @param array $payout_info Array of objects with payout_id and/or payout_date
+ * @return array Grouped results by payout_id or payout_date
+ */
+function five01c3po_get_payout_breakdowns_batch($payout_info) {
+    global $wpdb;
+
+    if (empty($payout_info)) {
+        return array();
+    }
+
+    $balance_txns_table = $wpdb->prefix . 'c3_stripe_balance_transactions';
+
+    // Separate into two groups: those with payout_id and those with only date
+    $payout_ids = array();
+    $payout_dates = array();
+
+    foreach ($payout_info as $info) {
+        if (!empty($info->payout_id)) {
+            $payout_ids[] = $info->payout_id;
+        } elseif (!empty($info->payout_date)) {
+            $payout_dates[] = $info->payout_date;
+        }
+    }
+
+    $all_results = array();
+
+    // Query 1: Fetch by payout_id (most common case)
+    if (!empty($payout_ids)) {
+        $payout_ids = array_unique($payout_ids);
+        $placeholders = implode(',', array_fill(0, count($payout_ids), '%s'));
+
+        $query = "SELECT bt.*, bt.payout_id as grouping_key
+                  FROM {$balance_txns_table} bt
+                  WHERE bt.payout_id IN ($placeholders)
+                     OR (bt.source_id IN ($placeholders) AND bt.txn_type = 'payout')
+                  ORDER BY bt.payout_id,
+                      CASE bt.txn_type
+                          WHEN 'payment' THEN 1
+                          WHEN 'charge' THEN 1
+                          WHEN 'stripe_fee' THEN 2
+                          WHEN 'adjustment' THEN 3
+                          WHEN 'payout' THEN 4
+                          ELSE 5
+                      END,
+                      bt.created_at";
+
+        // Duplicate payout_ids array for both IN clauses
+        $params = array_merge($payout_ids, $payout_ids);
+        $results = $wpdb->get_results($wpdb->prepare($query, ...$params));
+
+        foreach ($results as $row) {
+            $key = $row->payout_id ?: $row->source_id;
+            if (!isset($all_results[$key])) {
+                $all_results[$key] = array();
+            }
+            $all_results[$key][] = $row;
+        }
+    }
+
+    // Query 2: Fetch by available_on date (fallback for older data)
+    if (!empty($payout_dates)) {
+        $payout_dates = array_unique($payout_dates);
+        $placeholders = implode(',', array_fill(0, count($payout_dates), '%s'));
+
+        $query = "SELECT bt.*, bt.available_on as grouping_key
+                  FROM {$balance_txns_table} bt
+                  WHERE bt.available_on IN ($placeholders)
+                  ORDER BY bt.available_on,
+                      CASE bt.txn_type
+                          WHEN 'payment' THEN 1
+                          WHEN 'charge' THEN 1
+                          WHEN 'stripe_fee' THEN 2
+                          WHEN 'adjustment' THEN 3
+                          WHEN 'payout' THEN 4
+                          ELSE 5
+                      END,
+                      bt.created_at";
+
+        $results = $wpdb->get_results($wpdb->prepare($query, ...$payout_dates));
+
+        foreach ($results as $row) {
+            $key = 'date_' . $row->available_on; // Prefix to distinguish from payout_id
+            if (!isset($all_results[$key])) {
+                $all_results[$key] = array();
+            }
+            $all_results[$key][] = $row;
+        }
+    }
+
+    return $all_results;
+}
+
+/**
  * Get complete ledger data
  */
 function five01c3po_get_transaction_ledger($filters = array()) {
@@ -406,6 +502,38 @@ function five01c3po_transaction_ledger_page() {
 
     // Get ledger data
     $transactions = five01c3po_get_transaction_ledger($filters);
+
+    // PERFORMANCE OPTIMIZATION: Batch-fetch all payout breakdown data
+    // This eliminates N+1 query pattern by fetching all payout data in one query
+    $payout_info_to_fetch = array();
+    $balance_txns_table = $wpdb->prefix . 'c3_stripe_balance_transactions';
+
+    foreach ($transactions as $txn) {
+        $has_stripe = intval($txn->stripe_match_count) > 0;
+        if (!$has_stripe) continue;
+
+        // Look up payout info for this transaction
+        $date_start = date('Y-m-d', strtotime($txn->transaction_date . ' -2 days'));
+        $date_end = date('Y-m-d', strtotime($txn->transaction_date . ' +2 days'));
+
+        $payout = $wpdb->get_row($wpdb->prepare(
+            "SELECT source_id as payout_id, available_on as payout_date
+             FROM {$balance_txns_table}
+             WHERE txn_type = 'payout'
+             AND available_on BETWEEN %s AND %s
+             AND ABS(ABS(amount) - %f) < 0.01
+             ORDER BY ABS(ABS(amount) - %f) ASC
+             LIMIT 1",
+            $date_start, $date_end, $txn->bank_credit, $txn->bank_credit
+        ));
+
+        if ($payout) {
+            $payout_info_to_fetch[] = $payout;
+        }
+    }
+
+    // Batch fetch all payout breakdowns in ONE query instead of N queries
+    $payout_breakdowns_cache = five01c3po_get_payout_breakdowns_batch($payout_info_to_fetch);
 
     // Calculate totals
     $total_credits = 0;
@@ -919,45 +1047,21 @@ function five01c3po_transaction_ledger_page() {
                                     $payout_id = $correct_payout->payout_id ?? null;
                                     $payout_arrival_date = $correct_payout->payout_date ?? null;
 
-                                    // Try to get balance transactions - either by payout_id or by available_on date
-                                    if ($payout_id || $payout_arrival_date):
-                                        echo '<div style="margin-top: 8px; font-family: monospace; font-size: 11px;">';
-
-                                        // Get all balance transactions - try payout_id first, then fall back to available_on date
-                                        if ($payout_id) {
-                                            $balance_txns = $wpdb->get_results($wpdb->prepare(
-                                                "SELECT * FROM {$balance_txns_table}
-                                                 WHERE payout_id = %s OR (source_id = %s AND txn_type = 'payout')
-                                                 ORDER BY
-                                                    CASE txn_type
-                                                        WHEN 'payment' THEN 1
-                                                        WHEN 'charge' THEN 1
-                                                        WHEN 'stripe_fee' THEN 2
-                                                        WHEN 'adjustment' THEN 3
-                                                        WHEN 'payout' THEN 4
-                                                        ELSE 5
-                                                    END,
-                                                    created_at",
-                                                $payout_id, $payout_id
-                                            ));
-                                        } else {
-                                            // Fall back to grouping by available_on date
-                                            $balance_txns = $wpdb->get_results($wpdb->prepare(
-                                                "SELECT * FROM {$balance_txns_table}
-                                                 WHERE available_on = %s
-                                                 ORDER BY
-                                                    CASE txn_type
-                                                        WHEN 'payment' THEN 1
-                                                        WHEN 'charge' THEN 1
-                                                        WHEN 'stripe_fee' THEN 2
-                                                        WHEN 'adjustment' THEN 3
-                                                        WHEN 'payout' THEN 4
-                                                        ELSE 5
-                                                    END,
-                                                    created_at",
-                                                $payout_arrival_date
-                                            ));
+                                    // PERFORMANCE FIX: Use cached payout breakdown data instead of querying
+                                    // This eliminates the N+1 query pattern (was querying for EACH transaction)
+                                    $balance_txns = array();
+                                    if ($payout_id && isset($payout_breakdowns_cache[$payout_id])) {
+                                        $balance_txns = $payout_breakdowns_cache[$payout_id];
+                                    } elseif ($payout_arrival_date) {
+                                        $cache_key = 'date_' . $payout_arrival_date;
+                                        if (isset($payout_breakdowns_cache[$cache_key])) {
+                                            $balance_txns = $payout_breakdowns_cache[$cache_key];
                                         }
+                                    }
+
+                                    // Try to get balance transactions - either by payout_id or by available_on date
+                                    if (!empty($balance_txns)):
+                                        echo '<div style="margin-top: 8px; font-family: monospace; font-size: 11px;">';
 
                                             $running_total = 0;
                                             foreach ($balance_txns as $bal_txn):
