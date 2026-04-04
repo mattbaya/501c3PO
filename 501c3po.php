@@ -39,6 +39,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/core/migrate-add-payout-colum
 
 // Include feature modules (if they exist)
 $feature_files = array(
+    'includes/features/member-management.php',
     'includes/features/email-management.php',
     'includes/features/event-management.php',
     'includes/features/financial-management.php',
