@@ -323,6 +323,39 @@ function five01c3po_create_tables() {
     ) $charset_collate;";
     dbDelta($sql);
 
+    // Mailing lists table
+    $table_name = $wpdb->prefix . 'c3_mailing_lists';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        name varchar(100) NOT NULL,
+        slug varchar(100) NOT NULL,
+        description text,
+        is_default tinyint(1) DEFAULT 0,
+        member_count int DEFAULT 0,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_slug (slug)
+    ) $charset_collate;";
+    dbDelta($sql);
+
+    // Mailing list members (many-to-many: lists <-> members)
+    $table_name = $wpdb->prefix . 'c3_mailing_list_members';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        list_id mediumint(9) NOT NULL,
+        member_id mediumint(9) NOT NULL,
+        status varchar(20) DEFAULT 'active',
+        subscribed_at datetime DEFAULT CURRENT_TIMESTAMP,
+        unsubscribed_at datetime,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_subscription (list_id, member_id),
+        KEY idx_list (list_id),
+        KEY idx_member (member_id),
+        KEY idx_status (status)
+    ) $charset_collate;";
+    dbDelta($sql);
+
     // Stripe transactions table (for complete historical Stripe data)
     $table_name = $wpdb->prefix . 'c3_stripe_transactions';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (

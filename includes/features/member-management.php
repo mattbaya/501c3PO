@@ -341,6 +341,12 @@ function five01c3po_member_form_page() {
         if (is_wp_error($result)) {
             echo '<div class="notice notice-error"><p>' . esc_html($result->get_error_message()) . '</p></div>';
         } else {
+            // Save mailing list subscriptions if the feature is available
+            $member_id = is_numeric($result) ? intval($result) : ($is_edit ? $member->id : $wpdb->insert_id);
+            if (function_exists('five01c3po_save_member_lists')) {
+                $selected_lists = isset($_POST['member_lists']) ? array_map('intval', $_POST['member_lists']) : array();
+                five01c3po_save_member_lists($member_id, $selected_lists);
+            }
             $redirect = admin_url('admin.php?page=501c3PO-members&msg=' . ($is_edit ? 'updated' : 'added'));
             wp_redirect($redirect);
             exit;
@@ -541,6 +547,37 @@ function five01c3po_member_form_page() {
                     <td><textarea id="notes" name="notes" class="large-text" rows="4"><?php echo esc_textarea($member->notes ?? ''); ?></textarea></td>
                 </tr>
             </table>
+
+            <?php
+            // Mailing list checkboxes (only if mailing-lists feature is loaded)
+            if (function_exists('five01c3po_get_member_lists')) {
+                $member_id = $is_edit ? $member->id : 0;
+                $all_lists = five01c3po_get_member_lists($member_id);
+                if (!empty($all_lists)):
+            ?>
+            <h2>Mailing Lists</h2>
+            <table class="form-table">
+                <tr>
+                    <th>List Subscriptions</th>
+                    <td>
+                        <?php foreach ($all_lists as $ml): ?>
+                            <label style="display:block;margin-bottom:6px;">
+                                <input type="checkbox" name="member_lists[]" value="<?php echo intval($ml->id); ?>"
+                                    <?php checked(!empty($ml->subscription_status) && $ml->subscription_status === 'active'); ?> />
+                                <?php echo esc_html($ml->name); ?>
+                                <?php if ($ml->description): ?>
+                                    <span style="color:#666;font-size:12px;">&mdash; <?php echo esc_html($ml->description); ?></span>
+                                <?php endif; ?>
+                            </label>
+                        <?php endforeach; ?>
+                        <p class="description">Select which mailing lists this member belongs to</p>
+                    </td>
+                </tr>
+            </table>
+            <?php
+                endif;
+            }
+            ?>
 
             <?php submit_button($is_edit ? 'Update Member' : 'Add Member', 'primary', 'save_member'); ?>
         </form>
