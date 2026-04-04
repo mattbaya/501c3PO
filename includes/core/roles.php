@@ -139,27 +139,44 @@ function five01c3po_dashboard_password_protection() {
     if (!is_page()) {
         return;
     }
-    
+
     $current_page = get_post();
     if (!$current_page) {
         return;
     }
-    
-    // Check if this is a dashboard page
-    $dashboard_pages = array('dashboard', 'current-membership', 'historical-membership', 
-                           'member-directory', 'stats', 'fiscal-table', 'email-dashboard',
-                           'event-dashboard', 'settings', 'officer-tools');
-    
+
+    // Get board portal slug from settings
+    $org_settings = get_option('five01c3po_organization_settings', array());
+    $board_portal_slug = $org_settings['board_portal_slug'] ?? 'board-portal';
+
+    // Check if this is the board-portal page or any child/descendant of it
+    $board_portal_page = get_page_by_path($board_portal_slug);
+
     $is_dashboard_page = false;
-    foreach ($dashboard_pages as $slug) {
-        if ($current_page->post_name === $slug || 
-            (strpos($current_page->post_name, $slug) === 0) ||
-            (get_page_by_path('dashboard/' . $slug))) {
-            $is_dashboard_page = true;
-            break;
+
+    // Check if current page is the board-portal page itself
+    if ($board_portal_page && $current_page->ID === $board_portal_page->ID) {
+        $is_dashboard_page = true;
+    }
+
+    // Check if current page is a child or descendant of board-portal
+    if ($board_portal_page && !$is_dashboard_page) {
+        $parent_id = $current_page->post_parent;
+        while ($parent_id > 0 && !$is_dashboard_page) {
+            if ($parent_id === $board_portal_page->ID) {
+                $is_dashboard_page = true;
+                break;
+            }
+            $parent_page = get_post($parent_id);
+            $parent_id = $parent_page ? $parent_page->post_parent : 0;
         }
     }
-    
+
+    // Also check for legacy 'dashboard' slug for backwards compatibility
+    if (!$is_dashboard_page && $current_page->post_name === 'dashboard') {
+        $is_dashboard_page = true;
+    }
+
     if (!$is_dashboard_page) {
         return;
     }
