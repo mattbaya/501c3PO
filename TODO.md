@@ -169,7 +169,7 @@ plugin features. Results are emailed back to the sender.
 - [x] Update `grouped-transactions.php` to use c3_ table names (2026-07-27) - already done, verified via grep
 - [x] Update `unified-transactions.php` to use c3_ table names (2026-07-27) - already done, verified via grep
 - [x] Audit `temp/` scripts for hardcoded passphrases (2026-07-27) - none found; all prompt via STDIN and verify against the stored bcrypt hash
-- [ ] Merge `main` and `master` branches (master is now obsolete) - NOTE: `master` is not an ancestor of `main` and contains a wholly different, older plugin structure (pre-rename). A real `git merge` isn't meaningful here; the likely intent is to delete the obsolete `master` branch (local + remote `origin/master`). Destructive/shared-state action - needs explicit user go-ahead.
+- [x] Merge `main` and `master` branches (2026-07-27) - `master` had a disjoint root history from `main` (28 commits, no common ancestor), so a literal merge wasn't meaningful. Tagged its tip as `archive/master` (pushed to origin, permanent) and deleted the `master` branch locally and on GitHub.
 - [x] Clean up untracked utility scripts in scripts repo (2026-07-27) - removed stale `wordpress-membership-management/` (old `master`-branch leftover, predates current plugin structure), 3 root-level scripts (`sync-stripe-latest.php`, `sync-stripe-simple.php`, `view-latest-stripe.php`) that hardcoded the live officer passphrase in plaintext (never committed to git), and an old redundant plugin backup dir (`backups-2025-10-05-13-14-14/`)
 
 ## Completed
