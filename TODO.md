@@ -20,14 +20,15 @@ into separate sub-plugins - the single plugin with feature toggles is the correc
 - [x] Add to `$feature_files` array in `501c3po.php`
 - [x] Deployed to production (2026-04-04)
 
-## Phase 2: Mailing List Management
-- [ ] Create `{prefix}c3_mailing_lists` table (name, slug, description, is_default)
-- [ ] Create `{prefix}c3_mailing_list_members` table (list_id, member_id, status, subscribed_at, unsubscribed_at)
-- [ ] Create `includes/features/mailing-lists.php` admin UI
-- [ ] Seed default lists on activation: "All Members", "Board", "Press Release"
-- [ ] Migrate existing `on_email_list` data into new list structure
-- [ ] Add list assignment to member edit form (Phase 1 integration)
-- [ ] Bulk add/remove members from lists via checkboxes
+## Phase 2: Mailing List Management -- COMPLETE
+- [x] Create `{prefix}c3_mailing_lists` table (name, slug, description, is_default)
+- [x] Create `{prefix}c3_mailing_list_members` table (list_id, member_id, status, subscribed_at, unsubscribed_at)
+- [x] Create `includes/features/mailing-lists.php` admin UI
+- [x] Seed default lists on activation: "All Members", "Board", "Press Release"
+- [x] Migrate existing `on_email_list` data into new list structure
+- [x] Add list assignment to member edit form (Phase 1 integration)
+- [x] Bulk add/remove members from lists via checkboxes
+- [x] Deployed to production (2026-04-04)
 
 ## Phase 3: Email Compose, Queue, and Send
 - [ ] Create `{prefix}c3_email_templates` table
@@ -167,9 +168,9 @@ plugin features. Results are emailed back to the sender.
 - [ ] Update `transaction-matching.php` to use c3_ table names
 - [ ] Update `grouped-transactions.php` to use c3_ table names
 - [ ] Update `unified-transactions.php` to use c3_ table names
-- [ ] Remove temp scripts with hardcoded passphrases (4 files in temp/)
+- [x] Audit `temp/` scripts for hardcoded passphrases (2026-07-27) - none found; all prompt via STDIN and verify against the stored bcrypt hash
 - [ ] Merge `main` and `master` branches (master is now obsolete)
-- [ ] Clean up untracked utility scripts in scripts repo
+- [x] Clean up untracked utility scripts in scripts repo (2026-07-27) - removed stale `wordpress-membership-management/` (old `master`-branch leftover, predates current plugin structure) and 3 root-level scripts (`sync-stripe-latest.php`, `sync-stripe-simple.php`, `view-latest-stripe.php`) that hardcoded the live officer passphrase in plaintext; never committed to git
 
 ## Completed
 - [x] Repos synced: production, scripts/main, and GitHub all at commit 511ad51 (2026-04-04)

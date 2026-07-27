@@ -27,11 +27,13 @@ keys.php
 # Organization-specific files
 *swca*
 *SWCA*
+treasurer-docs/
 
 # Development
 .DS_Store
 Thumbs.db
 *.log
+error_log
 *.sql
 *.sqlite
 node_modules/
