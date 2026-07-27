@@ -163,14 +163,14 @@ plugin features. Results are emailed back to the sender.
 ---
 
 ## Cleanup & Technical Debt
-- [ ] Complete Phase 2 table migration (members, committees to c3_ prefix)
-- [ ] Update `bank-transactions.php` to use c3_ table names
-- [ ] Update `transaction-matching.php` to use c3_ table names
-- [ ] Update `grouped-transactions.php` to use c3_ table names
-- [ ] Update `unified-transactions.php` to use c3_ table names
+- [ ] Rename `{prefix}members` and `{prefix}committees`/`{prefix}committee_members` tables to `c3_` prefix (NOTE: `{prefix}members` is the live `swca_swca_members` table, 197 rows, actively used by the deployed Member CRUD feature - needs a careful migration plan + production testing, not a quick edit; `data-export-import.php` also has `TODO: Make dynamic with org prefix` markers on this table name)
+- [x] Update `bank-transactions.php` to use c3_ table names (2026-07-27) - already done, verified via grep
+- [x] Update `transaction-matching.php` to use c3_ table names (2026-07-27) - already done, verified via grep
+- [x] Update `grouped-transactions.php` to use c3_ table names (2026-07-27) - already done, verified via grep
+- [x] Update `unified-transactions.php` to use c3_ table names (2026-07-27) - already done, verified via grep
 - [x] Audit `temp/` scripts for hardcoded passphrases (2026-07-27) - none found; all prompt via STDIN and verify against the stored bcrypt hash
-- [ ] Merge `main` and `master` branches (master is now obsolete)
-- [x] Clean up untracked utility scripts in scripts repo (2026-07-27) - removed stale `wordpress-membership-management/` (old `master`-branch leftover, predates current plugin structure) and 3 root-level scripts (`sync-stripe-latest.php`, `sync-stripe-simple.php`, `view-latest-stripe.php`) that hardcoded the live officer passphrase in plaintext; never committed to git
+- [ ] Merge `main` and `master` branches (master is now obsolete) - NOTE: `master` is not an ancestor of `main` and contains a wholly different, older plugin structure (pre-rename). A real `git merge` isn't meaningful here; the likely intent is to delete the obsolete `master` branch (local + remote `origin/master`). Destructive/shared-state action - needs explicit user go-ahead.
+- [x] Clean up untracked utility scripts in scripts repo (2026-07-27) - removed stale `wordpress-membership-management/` (old `master`-branch leftover, predates current plugin structure), 3 root-level scripts (`sync-stripe-latest.php`, `sync-stripe-simple.php`, `view-latest-stripe.php`) that hardcoded the live officer passphrase in plaintext (never committed to git), and an old redundant plugin backup dir (`backups-2025-10-05-13-14-14/`)
 
 ## Completed
 - [x] Repos synced: production, scripts/main, and GitHub all at commit 511ad51 (2026-04-04)
