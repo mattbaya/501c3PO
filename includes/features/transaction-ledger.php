@@ -286,8 +286,8 @@ function five01c3po_get_transaction_ledger($filters = array()) {
         LEFT JOIN swca_gf_entry_meta gf_lname ON gf_entry.id = gf_lname.entry_id AND gf_lname.meta_key = '4.6'
         LEFT JOIN swca_gf_entry_meta gf_email ON gf_entry.id = gf_email.entry_id AND gf_email.meta_key = '6'
 
-        -- Join to member directory via email (note: uses swca_members, not wp_swca_members)
-        LEFT JOIN swca_members mem ON (
+        -- Join to member directory via email
+        LEFT JOIN swca_c3_members mem ON (
             LOWER(TRIM(mem.email_1)) = LOWER(TRIM(gf_email.meta_value))
             OR LOWER(TRIM(mem.email_1)) = LOWER(TRIM(s.customer_email))
         )
@@ -358,7 +358,7 @@ function five01c3po_get_transaction_ledger($filters = array()) {
         LEFT JOIN swca_gf_entry_meta gf_email ON gf_entry.id = gf_email.entry_id AND gf_email.meta_key = '6'
 
         -- Join to member directory via email
-        LEFT JOIN swca_members mem ON (
+        LEFT JOIN swca_c3_members mem ON (
             LOWER(TRIM(mem.email_1)) = LOWER(TRIM(gf_email.meta_value))
             OR LOWER(TRIM(mem.email_1)) = LOWER(TRIM(s.customer_email))
         )

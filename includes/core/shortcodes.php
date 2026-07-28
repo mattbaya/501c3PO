@@ -141,7 +141,7 @@ function five01c3po_get_year_config_by_offset($offset = 0) {
  */
 function five01c3po_stats_shortcode() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'swca_members';  // TODO: Make dynamic with org prefix
+    $table_name = $wpdb->prefix . 'c3_members';  // TODO: Make dynamic with org prefix
 
     // Check if table exists
     if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
@@ -183,7 +183,7 @@ function five01c3po_stats_shortcode() {
  */
 function five01c3po_directory_shortcode() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'swca_members';  // TODO: Make dynamic with org prefix
+    $table_name = $wpdb->prefix . 'c3_members';  // TODO: Make dynamic with org prefix
     
     // Check if table exists
     if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
@@ -327,7 +327,7 @@ function five01c3po_dashboard_grid_shortcode() {
  */
 function five01c3po_current_list_shortcode() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'swca_members';  // TODO: Make dynamic with org prefix
+    $table_name = $wpdb->prefix . 'c3_members';  // TODO: Make dynamic with org prefix
 
     // Get current year members (2025-2026 calendar year)
     $members = $wpdb->get_results("
@@ -394,7 +394,7 @@ function five01c3po_current_list_shortcode() {
  */
 function five01c3po_historical_list_shortcode() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'swca_members';  // TODO: Make dynamic with org prefix
+    $table_name = $wpdb->prefix . 'c3_members';  // TODO: Make dynamic with org prefix
 
     // Get all members with historical data
     $members = $wpdb->get_results("
@@ -446,7 +446,7 @@ function five01c3po_historical_list_shortcode() {
  */
 function five01c3po_fiscal_table_shortcode() {
     global $wpdb;
-    $members_table = $wpdb->prefix . 'swca_members';
+    $members_table = $wpdb->prefix . 'c3_members';
     $bank_table = $wpdb->prefix . 'swca_bank_transactions'; // Using actual table name
     $financial_table = 'swca_swca_financial_transactions'; // Categorized transactions
     $gf_payments_table = 'swca_gf_addon_payment_transaction'; // Gravity Forms payments
@@ -941,7 +941,7 @@ function five01c3po_settings_dashboard_shortcode() {
 
                 <div style="background: #fff3cd; padding: 15px; border-radius: 4px; margin-top: 20px; border-left: 4px solid #f0ad4e;">
                     <p style="margin: 0; font-size: 13px;">
-                        <strong>Important:</strong> Database columns (like <code>status_2025_2026</code>) must exist in your <code>wp_swca_members</code> table.
+                        <strong>Important:</strong> Database columns (like <code>status_2025_2026</code>) must exist in your <code>c3_members</code> table.
                         The system uses these columns to store and retrieve membership status for each year.
                     </p>
                 </div>

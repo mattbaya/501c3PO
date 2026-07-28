@@ -418,7 +418,7 @@ function five01c3po_sync_stripe_transactions($api_key, $days_back = 30) {
     }
 
     // Process charges and match to members
-    $member_table = $wpdb->prefix . 'swca_members';
+    $member_table = $wpdb->prefix . 'c3_members';
     $stripe_table = $wpdb->prefix . 'c3_stripe_transactions';
     $matched_emails = array();
 

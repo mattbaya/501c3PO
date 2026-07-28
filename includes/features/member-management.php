@@ -32,7 +32,7 @@ function five01c3po_add_member_management_menu() {
  */
 function five01c3po_get_members_table() {
     global $wpdb;
-    return $wpdb->prefix . 'swca_members';
+    return $wpdb->prefix . 'c3_members';
 }
 
 /**

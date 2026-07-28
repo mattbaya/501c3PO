@@ -28,7 +28,7 @@ function five01c3po_add_export_import_menu() {
  */
 function five01c3po_export_import_page() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'swca_members'; // TODO: Make dynamic with org prefix
+    $table_name = $wpdb->prefix . 'c3_members'; // TODO: Make dynamic with org prefix
 
     // Handle CSV import
     if (isset($_POST['import_csv']) && !empty($_FILES['csv_file']['tmp_name'])) {
@@ -98,7 +98,7 @@ function five01c3po_export_import_page() {
  */
 function five01c3po_import_members_csv($file_path) {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'swca_members'; // TODO: Make dynamic with org prefix
+    $table_name = $wpdb->prefix . 'c3_members'; // TODO: Make dynamic with org prefix
 
     if (!file_exists($file_path)) {
         return 'File not found';
@@ -183,7 +183,7 @@ function five01c3po_import_members_csv($file_path) {
  */
 function five01c3po_export_members_csv() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'swca_members'; // TODO: Make dynamic with org prefix
+    $table_name = $wpdb->prefix . 'c3_members'; // TODO: Make dynamic with org prefix
 
     $members = $wpdb->get_results("SELECT * FROM $table_name ORDER BY last_name, first_name", ARRAY_A);
 
@@ -218,7 +218,7 @@ function five01c3po_export_members_csv() {
  */
 function five01c3po_display_recent_members() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'swca_members'; // TODO: Make dynamic with org prefix
+    $table_name = $wpdb->prefix . 'c3_members'; // TODO: Make dynamic with org prefix
 
     $members = $wpdb->get_results("SELECT * FROM $table_name ORDER BY id DESC LIMIT 10");
 

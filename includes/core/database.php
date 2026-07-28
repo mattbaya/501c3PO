@@ -16,45 +16,46 @@ function five01c3po_create_tables() {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     
     // Members table
-    $table_name = $wpdb->prefix . 'members';
+    $table_name = $wpdb->prefix . 'c3_members';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         first_name varchar(100) NOT NULL,
         last_name varchar(100) NOT NULL,
-        partner_first_name varchar(100),
-        partner_last_name varchar(100),
+        partner_first_name varchar(100) NOT NULL DEFAULT '',
+        partner_last_name varchar(100) NOT NULL DEFAULT '',
         family_members text,
-        email_1 varchar(100),
-        email_2 varchar(100),
-        email_3 varchar(100),
-        email_4 varchar(100),
-        phone varchar(20),
-        alternate_phone varchar(20),
-        address varchar(255),
-        city varchar(100),
-        state varchar(50),
-        zip_code varchar(10),
-        alternate_address varchar(255),
-        membership_type varchar(50),
-        status_current_year varchar(10),
-        status_previous_year varchar(10),
-        membership_amount decimal(10,2),
-        donation_amount decimal(10,2),
-        total_amount decimal(10,2),
-        payment_type varchar(50),
-        business_affiliation varchar(255),
-        on_email_list tinyint(1) DEFAULT 1,
-        notes longtext,
+        email_1 varchar(100) NOT NULL,
+        email_2 varchar(100) NOT NULL DEFAULT '',
+        email_3 varchar(100) NOT NULL DEFAULT '',
+        email_4 varchar(100) NOT NULL DEFAULT '',
+        phone varchar(20) NOT NULL DEFAULT '',
+        alternate_phone varchar(20) NOT NULL DEFAULT '',
+        address text,
+        city varchar(100) NOT NULL DEFAULT '',
+        state varchar(10) NOT NULL DEFAULT '',
+        zip_code varchar(10) NOT NULL DEFAULT '',
+        alternate_address text,
+        membership_type varchar(50) NOT NULL DEFAULT '',
+        status_2024_2025 varchar(50) NOT NULL DEFAULT '',
+        status_2023_2024 varchar(50) NOT NULL DEFAULT '',
+        membership_amount decimal(10,2) DEFAULT 0.00,
+        donation_amount decimal(10,2) DEFAULT 0.00,
+        total_amount decimal(10,2) DEFAULT 0.00,
+        payment_type varchar(50) NOT NULL DEFAULT '',
+        business_affiliation varchar(200) NOT NULL DEFAULT '',
+        on_swca_email_list tinyint(1) DEFAULT 1,
+        notes text,
         categories text,
         tags text,
-        membership_month int,
-        membership_month_previous int,
+        membership_month varchar(20) NOT NULL DEFAULT '',
+        membership_month_2023 varchar(20) NOT NULL DEFAULT '',
+        created_date datetime DEFAULT CURRENT_TIMESTAMP,
         created_at datetime DEFAULT CURRENT_TIMESTAMP,
         updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         KEY idx_last_name (last_name),
         KEY idx_email (email_1),
-        KEY idx_status (status_current_year)
+        KEY idx_status (status_2024_2025)
     ) $charset_collate;";
     dbDelta($sql);
     
@@ -226,7 +227,7 @@ function five01c3po_create_tables() {
     dbDelta($sql);
     
     // Committees table
-    $table_name = $wpdb->prefix . 'committees';
+    $table_name = $wpdb->prefix . 'c3_committees';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         name varchar(255) NOT NULL,
@@ -239,7 +240,7 @@ function five01c3po_create_tables() {
     dbDelta($sql);
     
     // Committee members table
-    $table_name = $wpdb->prefix . 'committee_members';
+    $table_name = $wpdb->prefix . 'c3_committee_members';
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         committee_id mediumint(9) NOT NULL,

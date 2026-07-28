@@ -82,7 +82,7 @@ function five01c3po_seed_mailing_lists() {
     global $wpdb;
     $lists_table = five01c3po_get_lists_table();
     $list_members_table = five01c3po_get_list_members_table();
-    $members_table = $wpdb->prefix . 'swca_members';
+    $members_table = $wpdb->prefix . 'c3_members';
 
     // Check if tables exist
     if ($wpdb->get_var("SHOW TABLES LIKE '$lists_table'") !== $lists_table) {
@@ -427,7 +427,7 @@ function five01c3po_mailing_list_view_page() {
     global $wpdb;
     $lists_table = five01c3po_get_lists_table();
     $list_members_table = five01c3po_get_list_members_table();
-    $members_table = $wpdb->prefix . 'swca_members';
+    $members_table = $wpdb->prefix . 'c3_members';
 
     $id = intval($_GET['id'] ?? 0);
     $list = $wpdb->get_row($wpdb->prepare("SELECT * FROM $lists_table WHERE id = %d", $id));
@@ -539,7 +539,7 @@ function five01c3po_mailing_list_add_members_page() {
     global $wpdb;
     $lists_table = five01c3po_get_lists_table();
     $list_members_table = five01c3po_get_list_members_table();
-    $members_table = $wpdb->prefix . 'swca_members';
+    $members_table = $wpdb->prefix . 'c3_members';
 
     $id = intval($_GET['id'] ?? 0);
     $list = $wpdb->get_row($wpdb->prepare("SELECT * FROM $lists_table WHERE id = %d", $id));
